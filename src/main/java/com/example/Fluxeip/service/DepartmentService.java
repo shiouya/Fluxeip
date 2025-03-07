@@ -1,12 +1,12 @@
-package com.example.Fluxeip.service;
+package com.example.fluxeip.service;
 
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.Fluxeip.model.Department;
-import com.example.Fluxeip.repository.DepartmentRepository;
+import com.example.fluxeip.model.Department;
+import com.example.fluxeip.repository.DepartmentRepository;
 
 @Service
 public class DepartmentService {

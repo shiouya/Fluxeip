@@ -1,4 +1,4 @@
-package com.example.Fluxeip.model;
+package com.example.fluxeip.model;
 
 import java.util.Date;
 

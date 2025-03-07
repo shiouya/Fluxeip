@@ -1,4 +1,4 @@
-package com.example.Fluxeip;
+package com.example.fluxeip;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;

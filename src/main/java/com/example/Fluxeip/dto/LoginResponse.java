@@ -1,4 +1,4 @@
-package com.example.Fluxeip.dto;
+package com.example.fluxeip.dto;
 
 public class LoginResponse {
 	private Boolean success;

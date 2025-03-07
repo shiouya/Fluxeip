@@ -1,4 +1,4 @@
-package com.example.Fluxeip.controller;
+package com.example.fluxeip.controller;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,11 +6,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.Fluxeip.dto.LoginRequest;
-import com.example.Fluxeip.dto.LoginResponse;
-import com.example.Fluxeip.jwt.JsonWebTokenUtility;
-import com.example.Fluxeip.model.Employee;
-import com.example.Fluxeip.service.EmployeeService;
+import com.example.fluxeip.dto.LoginRequest;
+import com.example.fluxeip.dto.LoginResponse;
+import com.example.fluxeip.jwt.JsonWebTokenUtility;
+import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.service.EmployeeService;
+
 
 @RestController
 public class LoginAjaxController {

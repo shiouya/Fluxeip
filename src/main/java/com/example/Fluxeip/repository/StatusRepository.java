@@ -1,9 +1,12 @@
-package com.example.Fluxeip.repository;
+package com.example.fluxeip.repository;
+
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.Fluxeip.model.Status;
+import com.example.fluxeip.model.Status;
 
 public interface StatusRepository extends JpaRepository<Status, Integer> {
 
+	Optional<Status> findByStatusName(String string);
 }

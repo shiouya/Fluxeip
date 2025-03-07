@@ -1,4 +1,4 @@
-package com.example.Fluxeip.dto;
+package com.example.fluxeip.dto;
 
 import java.util.Date;
 

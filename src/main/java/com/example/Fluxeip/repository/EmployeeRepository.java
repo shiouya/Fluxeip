@@ -1,8 +1,8 @@
-package com.example.Fluxeip.repository;
+package com.example.fluxeip.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.Fluxeip.model.Employee;
+import com.example.fluxeip.model.Employee;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 

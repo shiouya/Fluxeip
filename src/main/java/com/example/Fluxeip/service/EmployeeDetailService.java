@@ -1,10 +1,10 @@
-package com.example.Fluxeip.service;
+package com.example.fluxeip.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.Fluxeip.model.EmployeeDetail;
-import com.example.Fluxeip.repository.EmployeeDetailRepository;
+import com.example.fluxeip.model.EmployeeDetail;
+import com.example.fluxeip.repository.EmployeeDetailRepository;
 
 @Service
 public class EmployeeDetailService {

@@ -1,4 +1,4 @@
-package com.example.Fluxeip.jwt;
+package com.example.fluxeip.jwt;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

@@ -1,12 +1,12 @@
-package com.example.Fluxeip.service;
+package com.example.fluxeip.service;
 
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.Fluxeip.model.Position;
-import com.example.Fluxeip.repository.PositionRepository;
+import com.example.fluxeip.model.Position;
+import com.example.fluxeip.repository.PositionRepository;
 
 @Service
 public class PositionService {

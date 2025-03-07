@@ -1,12 +1,12 @@
-package com.example.Fluxeip.service;
+package com.example.fluxeip.service;
 
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.Fluxeip.model.Status;
-import com.example.Fluxeip.repository.StatusRepository;
+import com.example.fluxeip.model.Status;
+import com.example.fluxeip.repository.StatusRepository;
 
 @Service
 public class StatusService {
@@ -23,4 +23,4 @@ public class StatusService {
 		}
 	}
 
-}
+} 

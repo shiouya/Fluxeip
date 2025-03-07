@@ -1,4 +1,4 @@
-package com.example.Fluxeip.controller;
+package com.example.fluxeip.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -6,18 +6,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.Fluxeip.dto.EmployeeCreateRequest;
-import com.example.Fluxeip.dto.EmployeeCreateResponse;
-import com.example.Fluxeip.model.Department;
-import com.example.Fluxeip.model.Employee;
-import com.example.Fluxeip.model.EmployeeDetail;
-import com.example.Fluxeip.model.Position;
-import com.example.Fluxeip.model.Status;
-import com.example.Fluxeip.service.DepartmentService;
-import com.example.Fluxeip.service.EmployeeDetailService;
-import com.example.Fluxeip.service.EmployeeService;
-import com.example.Fluxeip.service.PositionService;
-import com.example.Fluxeip.service.StatusService;
+import com.example.fluxeip.dto.EmployeeCreateRequest;
+import com.example.fluxeip.dto.EmployeeCreateResponse;
+import com.example.fluxeip.model.Department;
+import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.EmployeeDetail;
+import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Status;
+import com.example.fluxeip.service.DepartmentService;
+import com.example.fluxeip.service.EmployeeDetailService;
+import com.example.fluxeip.service.EmployeeService;
+import com.example.fluxeip.service.PositionService;
+import com.example.fluxeip.service.StatusService;
+
 
 @RestController
 public class UserController {

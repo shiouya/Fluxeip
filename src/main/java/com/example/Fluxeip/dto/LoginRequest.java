@@ -1,4 +1,4 @@
-package com.example.Fluxeip.dto;
+package com.example.fluxeip.dto;
 
 public class LoginRequest {
 	private String userId;

@@ -1,4 +1,4 @@
-package com.example.Fluxeip.service;
+package com.example.fluxeip.service;
 
 import java.util.Optional;
 
@@ -7,8 +7,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Fluxeip.model.Employee;
-import com.example.Fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.repository.EmployeeRepository;
+
 
 @Service
 @Transactional

@@ -1,4 +1,4 @@
-package com.example.Fluxeip.jwt;
+package com.example.fluxeip.jwt;
 
 import java.security.SecureRandom;
 import java.time.Instant;
