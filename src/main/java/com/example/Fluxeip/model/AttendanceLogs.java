@@ -25,7 +25,8 @@ public class AttendanceLogs {
     @ManyToOne
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
-
+    
+    @Column(name = "clock_time")
     private LocalDateTime clockTime;
 
     @ManyToOne

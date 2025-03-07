@@ -34,17 +34,27 @@ public class Attendance {
     // 新增 OneToMany 關聯到 AttendanceViolations
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AttendanceViolations> attendanceViolations;
-
+    
+    @Column(name = "total_hours")
     private float totalHours;
+    
+    @Column(name = "regular_hours")
     private float regularHours;
+    
+    @Column(name = "overtime_hours")
     private float overtimeHours;
+    
+    @Column(name = "field_work_hours")
     private float fieldWorkHours;
+    
+    @Column(name = "has_violation")
     private boolean hasViolation;
 
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
 	

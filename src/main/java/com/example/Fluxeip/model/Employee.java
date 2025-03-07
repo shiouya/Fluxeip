@@ -17,7 +17,7 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
+//@ToString
 @Entity
 @Table(name = "employee")
 public class Employee {
@@ -47,7 +47,7 @@ public class Employee {
 	@ManyToOne
 	@JoinColumn(name = "status_id")
 	private Status status;
-
+	
 	@OneToOne(mappedBy = "employee")
 	private EmployeeDetail employeeDetail;
 //

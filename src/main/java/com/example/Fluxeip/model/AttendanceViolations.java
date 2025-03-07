@@ -2,7 +2,7 @@ package com.example.fluxeip.model;
 
 import java.time.LocalDateTime;
 
-
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,7 +38,10 @@ public class AttendanceViolations {
     @JoinColumn(name = "violation_type_id", nullable = false)
     private Type violationType;
 
+    @Column(name = "violation_minutes")
     private Integer violationMinutes;
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 	
 }

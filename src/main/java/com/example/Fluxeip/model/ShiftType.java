@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import java.util.List;
 public class ShiftType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "shift_type_id", nullable = false)
     private Integer shiftTypeId;
 
     @ManyToOne
@@ -32,11 +34,11 @@ public class ShiftType {
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    @Column(name = "finish_time", nullable = false)
+    private LocalDateTime finishTime;
 
     @Column(name = "estimated_hours", nullable = false)
-    private Integer estimatedHours;
+    private BigDecimal estimatedHours;
 
     @OneToMany(mappedBy = "shiftType", cascade = CascadeType.ALL)
     private List<Schedule> schedules;
