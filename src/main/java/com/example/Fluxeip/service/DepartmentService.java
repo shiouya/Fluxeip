@@ -1,5 +1,6 @@
 package com.example.fluxeip.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,11 @@ public class DepartmentService {
 		} else {
 			return null;
 		}
+	}
+
+	public List<Department> findAll() {
+		List<Department> departments = depRep.findAll();
+		return departments;
 	}
 
 }
