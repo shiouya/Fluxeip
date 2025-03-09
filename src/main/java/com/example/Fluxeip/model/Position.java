@@ -3,6 +3,8 @@ package com.example.fluxeip.model;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +20,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "position")
+@JsonIgnoreProperties({"employee"})  // 避免無限遞迴
 public class Position {
 
 	@Id
