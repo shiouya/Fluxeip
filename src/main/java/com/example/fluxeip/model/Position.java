@@ -18,10 +18,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-<<<<<<< HEAD:src/main/java/com/example/fluxeip/model/Position.java
 //@ToString
-=======
->>>>>>> origin/ming:src/main/java/com/example/Fluxeip/model/Position.java
 @Entity
 @Table(name = "position")
 @JsonIgnoreProperties({"employee"})  // 避免無限遞迴
