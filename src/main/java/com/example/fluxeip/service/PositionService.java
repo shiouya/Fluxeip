@@ -1,5 +1,6 @@
 package com.example.fluxeip.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,5 +24,9 @@ public class PositionService {
 		}
 	}
 
+	public List<Position> findAll() {
+		List<Position> positions = posRep.findAll();
+		return positions;
+	}
 
 }
