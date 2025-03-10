@@ -3,6 +3,8 @@ package com.example.fluxeip.model;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,6 +30,7 @@ public class Position {
 	@Column(name = "position_name")
 	private String positionName;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "position", cascade = CascadeType.ALL)
 	private List<Employee> employee = new LinkedList<Employee>();
 
