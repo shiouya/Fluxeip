@@ -3,7 +3,6 @@ package com.example.fluxeip.model;
 import java.time.LocalDateTime;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

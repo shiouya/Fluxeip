@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,7 +32,8 @@ public class Room {
 	@Column(name="capacity",nullable = false)
 	private int capacity;
 	
-	@Column(name="image")
+	@Lob
+	@Column(name = "image", columnDefinition = "VARBINARY(MAX)",nullable = true)
 	private byte[] image;
 	
 	@Column(name="location",nullable = false, length = 100)

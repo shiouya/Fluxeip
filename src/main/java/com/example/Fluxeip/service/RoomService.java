@@ -5,7 +5,9 @@ import com.example.fluxeip.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -80,13 +82,13 @@ public class RoomService {
         Optional<Room> optional = roomRepository.findById(room.getId());
 
         if (optional.isPresent()) {
-            Room insert = optional.get(); // 取得現有會議室
+            Room insert = optional.get(); 
             insert.setRoomName(room.getRoomName());
             insert.setCapacity(room.getCapacity());
             insert.setImage(room.getImage());
             insert.setLocation(room.getLocation());
 
-            Room updatedRoom = roomRepository.save(insert); // 儲存更新後的資料
+            Room updatedRoom = roomRepository.save(insert); 
             return Optional.of(updatedRoom);
         } else {
             System.out.println("錯誤：找不到 ID 為 " + room.getId() + " 的會議室");
@@ -104,7 +106,7 @@ public class RoomService {
         Optional<Room> optional = roomRepository.findById(id);
         
         if (optional.isPresent()) {
-            roomRepository.delete(optional.get()); // 刪除找到的 Room
+            roomRepository.delete(optional.get()); 
             System.out.println("成功刪除 ID 為 " + id + " 的會議室");
             return true;
         } else {
@@ -113,6 +115,37 @@ public class RoomService {
         }
     }
 
+    
+    public boolean insertImage(Integer roomId, MultipartFile file) {
+        if (roomId == null) {
+            System.out.println("錯誤：roomId 不能為 null");
+            return false;
+        }
+
+        Optional<Room> optional = roomRepository.findById(roomId);
+        if (optional.isEmpty()) {
+            System.out.println("錯誤：找不到 ID 為 " + roomId + " 的會議室");
+            return false;
+        }
+
+        Room room = optional.get();
+        if (file == null || file.isEmpty()) { 
+            System.out.println("沒有提供圖片，會議室 ID: " + roomId + " 的圖片未變更");
+            return false;
+        }
+
+        try {
+            byte[] bytes = file.getBytes();
+            room.setImage(bytes);
+            roomRepository.save(room);  
+
+            System.out.println("成功上傳圖片到會議室 ID: " + roomId + "，圖片大小：" + bytes.length + " bytes");
+            return true;
+        } catch (IOException e) {
+            System.out.println("錯誤：無法讀取圖片檔案 - " + e.getMessage());
+            return false;
+        }
+    }
 
 
     
