@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/rooms")
+@CrossOrigin(origins = "*")
+@RequestMapping("/pages/ajax/rooms")
 public class RoomController {
 
     @Autowired

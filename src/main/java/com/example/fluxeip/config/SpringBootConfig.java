@@ -29,9 +29,6 @@ public class SpringBootConfig implements WebMvcConfigurer {
 //				.addPathPatterns("/pages/ajax/products/**");
 	}
 
-	@Bean
-	PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+
 
 }
