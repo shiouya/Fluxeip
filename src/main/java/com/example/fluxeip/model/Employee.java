@@ -69,6 +69,10 @@ public class Employee {
 
 	public Employee() {
 	}
+	
+    public Employee(Integer employeeId) {
+        this.employeeId = employeeId;
+    }
 
 
 //	public List<WorkProgess> getWorkprogess() {
