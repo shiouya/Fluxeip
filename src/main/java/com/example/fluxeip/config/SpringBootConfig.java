@@ -22,6 +22,9 @@ public class SpringBootConfig implements WebMvcConfigurer {
 		registry.addMapping("/secure/ajax/login");
 		registry.addMapping("/department/find");
 		registry.addMapping("/position/find/**");
+		registry.addMapping("/check/email/**");
+		registry.addMapping("/check/identityCard/**");
+		registry.addMapping("/check/phone/**");
 		registry.addMapping("/employee/find");
 		registry.addMapping("/employee/detail/**");
 		registry.addMapping("/employee/create").allowedMethods("POST");

@@ -2,6 +2,8 @@ package com.example.fluxeip.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,6 +72,15 @@ public class UserController {
 		} else if (entity.getPhone() == null || entity.getPhone().length() == 0) {
 			empCreRes.setSuccess(false);
 			empCreRes.setMessage("請輸入員工電話");
+		} else if(empDetSer.isEmailExist(entity.getEmail())){
+			empCreRes.setSuccess(false);
+			empCreRes.setMessage("信箱已有人使用");
+		} else if(empDetSer.isIdentityCardExist(entity.getIdentityCard())){
+			empCreRes.setSuccess(false);
+			empCreRes.setMessage("身分證已有人使用");
+		} else if(empDetSer.isPhoneExist(entity.getPhone())){
+			empCreRes.setSuccess(false);
+			empCreRes.setMessage("電話已有人使用");
 		} else {
 			Position position = posSer.findByName(entity.getPositionName());
 			if (position == null) {
@@ -102,8 +113,34 @@ public class UserController {
 			empCreRes.setSuccess(true);
 			empCreRes.setMessage("員工新增成功");
 		}
-
 		return empCreRes;
 	}
-
+	
+	@GetMapping("/check/email/{email}")
+	public Boolean checkEmail(@PathVariable String email) {
+		boolean emailExist = empDetSer.isEmailExist(email);
+		if(emailExist) {
+			return true;
+		}else {
+		return false;
+		}
+	}
+	@GetMapping("/check/identityCard/{identityCard}")
+	public Boolean checkIdentityCard(@PathVariable String identityCard) {
+		boolean identityCardExist = empDetSer.isIdentityCardExist(identityCard);
+		if(identityCardExist) {
+			return true;
+		}else {
+			return false;
+		}
+	}
+	@GetMapping("/check/phone/{phone}")
+	public Boolean checkPhone(@PathVariable String phone) {
+		boolean phoneExist = empDetSer.isPhoneExist(phone);
+		if(phoneExist) {
+			return true;
+		}else {
+			return false;
+		}
+	}
 }

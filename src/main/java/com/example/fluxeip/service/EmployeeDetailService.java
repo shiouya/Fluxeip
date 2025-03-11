@@ -27,5 +27,18 @@ public class EmployeeDetailService {
 		}
 		return null;
 	}
+	
+	public boolean isEmailExist(String email) {
+        // 如果資料庫中有相同的信箱，則返回 true
+        return empDetRes.findByEmail(email).isPresent();
+    }
+	public boolean isIdentityCardExist(String identityCard) {
+		// 如果資料庫中有相同的身分證，則返回 true
+		return empDetRes.findByIdentityCard(identityCard).isPresent();
+	}
+	public boolean isPhoneExist(String phone) {
+		// 如果資料庫中有相同的電話，則返回 true
+		return empDetRes.findByPhone(phone).isPresent();
+	}
 
 }
