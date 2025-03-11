@@ -2,6 +2,8 @@ package com.example.fluxeip.model;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,10 +33,12 @@ public class Employee {
 	@Column(name = "password")
 	private String password;
 
+//	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "position_id")
 	private Position position;
 
+//	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "department_id")
 	private Department department;
@@ -42,10 +46,12 @@ public class Employee {
 	@Column(name = "hire_date")
 	private Date hireDate;
 
+//	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "status_id")
 	private Status status;
-	
+
+	@JsonIgnore
 	@OneToOne(mappedBy = "employee")
 	private EmployeeDetail employeeDetail;
 //

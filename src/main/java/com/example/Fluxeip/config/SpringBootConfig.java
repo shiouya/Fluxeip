@@ -21,7 +21,9 @@ public class SpringBootConfig implements WebMvcConfigurer {
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/secure/ajax/login");
 		registry.addMapping("/department/find");
-		registry.addMapping("/position/find");
+		registry.addMapping("/position/find/**");
+		registry.addMapping("/employee/find");
+		registry.addMapping("/employee/detail/**");
 		registry.addMapping("/employee/create").allowedMethods("POST");
 	}
 

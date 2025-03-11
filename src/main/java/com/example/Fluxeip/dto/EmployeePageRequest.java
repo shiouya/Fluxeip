@@ -7,7 +7,9 @@ import lombok.Setter;
 @Setter
 public class EmployeePageRequest {
 	
-	private Integer start;
+	private Integer current;
 	private Integer rows;
+	private String department;
+	private String position;
 
 }
