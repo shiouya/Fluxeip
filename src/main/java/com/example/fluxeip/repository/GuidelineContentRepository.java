@@ -11,4 +11,6 @@ public interface GuidelineContentRepository extends JpaRepository<GuidelineConte
 
 	public List<GuidelineContent> findByGuidelineGuideId(Integer guideId);
 	
+    public void deleteByGuidelineGuideId(Integer guideId);
+
 }

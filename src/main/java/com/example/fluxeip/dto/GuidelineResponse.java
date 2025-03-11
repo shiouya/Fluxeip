@@ -9,7 +9,10 @@ public class GuidelineResponse {
 	private Guideline guideline;
     private List<GuidelineContent> contents;
 
-    public GuidelineResponse(Guideline guideline, List<GuidelineContent> contents) {
+    public GuidelineResponse() {
+	}
+
+	public GuidelineResponse(Guideline guideline, List<GuidelineContent> contents) {
         this.guideline = guideline;
         this.contents = contents;
     }
