@@ -6,9 +6,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "status")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Status {
 
 	@Id
@@ -31,32 +39,7 @@ public class Status {
 //	@OneToMany(mappedBy = "status", cascade = CascadeType.ALL)
 //	private List<Taskassign> taskassign = new LinkedList<Taskassign>();
 
-	public Status() {
-	}
 
-	public Integer getStatusId() {
-		return statusId;
-	}
-
-	public void setStatusId(Integer statusId) {
-		this.statusId = statusId;
-	}
-
-	public String getStatusName() {
-		return statusName;
-	}
-
-	public void setStatusName(String statusName) {
-		this.statusName = statusName;
-	}
-
-	public String getStatusType() {
-		return statusType;
-	}
-
-	public void setStatusType(String statusType) {
-		this.statusType = statusType;
-	}
 
 //	public List<Taskassign> getTaskassign() {
 //		return taskassign;
