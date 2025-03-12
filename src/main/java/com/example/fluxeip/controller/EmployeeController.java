@@ -1,5 +1,6 @@
 package com.example.fluxeip.controller;
 
+import java.io.IOException;
 import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,14 +10,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fluxeip.dto.EmployeeDetailResponse;
+import com.example.fluxeip.dto.EmployeeDetailUpdate;
 import com.example.fluxeip.dto.EmployeePageRequest;
 import com.example.fluxeip.dto.EmployeePageResponse;
+import com.example.fluxeip.dto.LoginResponse;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.EmployeeDetail;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.repository.EmployeeDetailRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
@@ -38,6 +43,9 @@ public class EmployeeController {
 	
 	@Autowired
 	private EmployeeRepository empRep;
+
+	@Autowired
+	private EmployeeDetailRepository empDetRep;
 
 	@Autowired
 	private EmployeeDetailService empDetSer;
@@ -113,6 +121,56 @@ public class EmployeeController {
 		empDetRes.setIdentityCard(empDet.getIdentityCard());
 
 		return empDetRes;
+	}
+
+	@PostMapping("/employee/detail/update")
+	public LoginResponse employeeDetailUpdate(@RequestBody EmployeeDetailUpdate employeeDetail) {
+		LoginResponse response = new LoginResponse();
+		System.out.println(employeeDetail.getEmployeeId());
+		EmployeeDetail empDet = empDetSer.empDetByIdFind(employeeDetail.getEmployeeId());
+		if (empDetSer.isEmailExist(employeeDetail.getEmail()) && !empDet.getEmail().equals(employeeDetail.getEmail())) {
+			response.setMessage("此信箱有其他人使用");
+			response.setSuccess(false);
+			return response;
+		} else if (empDetSer.isPhoneExist(employeeDetail.getPhone())
+				&& !empDet.getPhone().equals(employeeDetail.getPhone())) {
+			response.setMessage("此電話有其他人使用");
+			response.setSuccess(false);
+			return response;
+		} else {
+			MultipartFile photoFile = employeeDetail.getPhotoFile();
+			if (!photoFile.isEmpty()) {
+				empDet.setAddress(employeeDetail.getAddress());
+				empDet.setEmail(employeeDetail.getEmail());
+				empDet.setEmergencyContact(employeeDetail.getEmergencyContact());
+				empDet.setEnergencyPhone(employeeDetail.getEnergencyPhone());
+				empDet.setPhone(employeeDetail.getPhone());
+				empDetRep.save(empDet);
+				response.setMessage("修改成功");
+				response.setSuccess(true);
+				return response;
+			} else {
+				try {
+					byte[] fileData = photoFile.getBytes();
+
+					empDet.setEmployeePhoto(fileData);
+
+					empDet.setAddress(employeeDetail.getAddress());
+					empDet.setEmail(employeeDetail.getEmail());
+					empDet.setEmergencyContact(employeeDetail.getEmergencyContact());
+					empDet.setEnergencyPhone(employeeDetail.getEnergencyPhone());
+					empDet.setPhone(employeeDetail.getPhone());
+					empDetRep.save(empDet);
+					response.setMessage("修改成功");
+					response.setSuccess(true);
+					return response;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return response;
 	}
 
 }
