@@ -1,6 +1,7 @@
 package com.example.fluxeip.model;
 
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -57,7 +59,9 @@ public class Employee {
 	@JsonIgnore
 	@OneToOne(mappedBy = "employee")
 	private EmployeeDetail employeeDetail;
-//
+
+	@ManyToMany(mappedBy = "employee")
+	private List<Roles> roles = new LinkedList<Roles>();
 //	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL)
 //	private List<WorkProgess> workprogess = new LinkedList<WorkProgess>();
 //
@@ -67,8 +71,6 @@ public class Employee {
 //	@OneToMany(mappedBy = "reveiew", cascade = CascadeType.ALL)
 //	private List<Taskassign> reveiew = new LinkedList<Taskassign>();
 //
-//	@ManyToMany(mappedBy = "employee")
-//	private List<Roles> roles = new LinkedList<Roles>();
 
 	public Employee() {
 	}
@@ -76,15 +78,5 @@ public class Employee {
     public Employee(Integer employeeId) {
         this.employeeId = employeeId;
     }
-    
-    @OneToMany(mappedBy = "employee",fetch = FetchType.LAZY)
-	private List<Attendance> attendance;
-//	public List<WorkProgess> getWorkprogess() {
-//		return workprogess;
-//	}
-//
-//	public void setWorkprogess(List<WorkProgess> workprogess) {
-//		this.workprogess = workprogess;
-//	}
 
 }
