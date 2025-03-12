@@ -18,4 +18,6 @@ public class ContactsDto {
 	private String department;
 	
 	private String position;
+	
+	private Integer empId;
 }

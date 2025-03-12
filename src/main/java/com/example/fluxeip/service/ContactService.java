@@ -43,6 +43,7 @@ public class ContactService {
 			contact.setPhone(empDet.getPhone());
 			contact.setPhoto(empDet.getEmployeePhoto());
 			contact.setPosition(emp.getPosition().getPositionName());
+			contact.setEmpId(emp.getEmployeeId());
 			
 			contacts.add(contact);
 		}
