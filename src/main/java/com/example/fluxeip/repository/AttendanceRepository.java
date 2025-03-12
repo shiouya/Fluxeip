@@ -17,7 +17,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
 //    Optional<Attendance> findByEmployeeAndCreatedAtBetween(Employee employee, LocalDateTime start, LocalDateTime end);
 
 	 @Query("SELECT a FROM Attendance a WHERE a.employee = :employee AND a.createdAt BETWEEN :startTime AND :endTime")
-	    Optional<Attendance> findByEmployeeAndCreatedAtBetween(@Param("employee") Employee employee,
+		Optional<Attendance> findByEmployeeAndCreatedAtBetween(@Param("employee") Employee employee,
 	                                                           @Param("startTime") LocalDateTime startTime,
 	                                                           @Param("endTime") LocalDateTime endTime);
 	 
