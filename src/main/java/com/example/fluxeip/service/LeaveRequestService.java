@@ -1,6 +1,7 @@
 package com.example.fluxeip.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.fluxeip.dto.LeaveRequestRequest;
+import com.example.fluxeip.dto.LeaveRequestResponseDTO;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.Status;
@@ -31,17 +33,48 @@ public class LeaveRequestService {
     
     @Autowired
     private StatusRepository statusRepository;
+    
+    @Autowired
+    private FileService fileService;
 
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRequestRepository.findAll();
     }
 
-    public Optional<LeaveRequest> getLeaveRequestById(Integer id) {
-        return leaveRequestRepository.findById(id);
+    public LeaveRequestResponseDTO getLeaveRequestById(Integer id) {
+        Optional<LeaveRequest> leaveRequestOpt = leaveRequestRepository.findById(id);
+        LeaveRequest leaveRequest = leaveRequestOpt.get();
+        LeaveRequestResponseDTO dto = convertToDTO(leaveRequest);
+        return dto;
     }
 
-    public List<LeaveRequest> getLeaveRequestsByEmployeeId(Integer employeeId) {
-        return leaveRequestRepository.findByEmployeeId(employeeId);
+    // 根據員工 ID 查詢所有請假申請
+    public List<LeaveRequestResponseDTO> getLeaveRequestsByEmployeeId(Integer employeeId) {
+        List<LeaveRequest> leaveRequests = leaveRequestRepository.findByEmployeeId(employeeId);
+        List<LeaveRequestResponseDTO> dtoList = new ArrayList<>();
+        for (LeaveRequest leaveRequest : leaveRequests) {
+            dtoList.add(convertToDTO(leaveRequest));
+        }
+        return dtoList;
+    }
+
+    private LeaveRequestResponseDTO convertToDTO(LeaveRequest leaveRequest) {
+        LeaveRequestResponseDTO dto = new LeaveRequestResponseDTO();
+        dto.setLeaveRequestId(leaveRequest.getId());
+        dto.setEmployeeName(leaveRequest.getEmployee().getEmployeeName());
+        dto.setLeaveType(leaveRequest.getLeaveType().getTypeName());
+        dto.setStartDatetime(leaveRequest.getStartDatetime());
+        dto.setEndDatetime(leaveRequest.getEndDatetime());
+        dto.setLeaveHours(leaveRequest.getLeaveHours());
+        dto.setReason(leaveRequest.getReason());
+        dto.setStatus(leaveRequest.getStatus().getStatusName());
+        dto.setSubmittedAt(leaveRequest.getSubmittedAt());
+        // 取得檔案名稱並處理
+        String attachmentPath = leaveRequest.getAttachments();
+        String attachmentName = fileService.extractOriginalFileName(attachmentPath);
+        dto.setAttachmentPath(attachmentPath);
+        dto.setAttachmentName(attachmentName);
+        return dto;
     }
 
     public void deleteLeaveRequest(Integer id) {
