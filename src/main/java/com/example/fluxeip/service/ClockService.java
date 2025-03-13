@@ -132,8 +132,8 @@ public class ClockService {
     }
 
     private long calculateViolationMinutes(LocalDateTime now, ShiftType shiftType, String typeName) {
-        LocalDateTime shiftStartTime = LocalDate.now().atTime(shiftType.getStartTime().toLocalTime());
-        LocalDateTime shiftEndTime = LocalDate.now().atTime(shiftType.getFinishTime().toLocalTime());
+        LocalDateTime shiftStartTime = LocalDate.now().atTime(shiftType.getStartTime());
+        LocalDateTime shiftEndTime = LocalDate.now().atTime(shiftType.getFinishTime());
         return switch (typeName) {
             case "上班" -> Duration.between(shiftStartTime.plusMinutes(10), now).toMinutes();
             case "下班" -> Duration.between(now, shiftEndTime.minusMinutes(10)).toMinutes();
@@ -154,8 +154,8 @@ public class ClockService {
     }
 
     private String checkForExceptions(LocalDateTime now, ShiftType shiftType, String typeName, Attendance attendance) {
-        LocalDateTime shiftStartTime = LocalDate.now().atTime(shiftType.getStartTime().toLocalTime());
-        LocalDateTime shiftEndTime = LocalDate.now().atTime(shiftType.getFinishTime().toLocalTime());
+        LocalDateTime shiftStartTime = LocalDate.now().atTime(shiftType.getStartTime());
+        LocalDateTime shiftEndTime = LocalDate.now().atTime(shiftType.getFinishTime());
 
         switch (typeName) {
             case "上班":

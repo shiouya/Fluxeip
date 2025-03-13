@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -32,10 +33,10 @@ public class ShiftType {
     private String shiftCategory;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
     @Column(name = "finish_time", nullable = false)
-    private LocalDateTime finishTime;
+    private LocalTime finishTime;
 
     @Column(name = "estimated_hours", nullable = false)
     private BigDecimal estimatedHours;
