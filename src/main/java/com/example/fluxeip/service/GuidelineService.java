@@ -52,10 +52,7 @@ public class GuidelineService {
 	}
 
 	@Transactional
-	public void createGuidelineWithContents(String jsonData, List<MultipartFile> files) throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		GuidelineResponse guidelineResponse = objectMapper.readValue(jsonData, GuidelineResponse.class);
+	public void createGuidelineWithContents(GuidelineResponse guidelineResponse, List<MultipartFile> files) throws Exception {
 
 		Guideline guideline = guidelineResponse.getGuideline();
 		// 先存 Guideline，讓它獲得 ID
@@ -72,10 +69,9 @@ public class GuidelineService {
 	}
 
 	@Transactional
-	public void updateGuidelineWithContents(Integer guidelineId,String jsonData, List<MultipartFile> files) throws Exception {
+	public void updateGuidelineWithContents(Integer guidelineId,GuidelineResponse guidelineResponse, List<MultipartFile> files) throws Exception {
 		
-		ObjectMapper objectMapper = new ObjectMapper();
-		GuidelineResponse guidelineResponse = objectMapper.readValue(jsonData, GuidelineResponse.class);
+
 		// 先檢查 Guideline 是否存在
 		Guideline existingGuideline = guidelineRepository.findById(guidelineId).orElse(null);
 		if (existingGuideline == null) {

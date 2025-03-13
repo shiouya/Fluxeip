@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,11 @@ public class ShiftTypeService {
 
 		return allShiftType;
 	}
+	
+	public ShiftType findShiftTypeById(Integer shiftTypeId) {
+		Optional<ShiftType> shiftType = shiftTypeRepository.findById(shiftTypeId);
+		return shiftType.orElse(null);
+	}
 
 	@Transactional
 	public void createShiftType(ShiftTypeRequest shiftTypeRequest) {
@@ -54,9 +60,38 @@ public class ShiftTypeService {
 
 	}
 	
+	@Transactional
 	public void updateShiftTypeById(Integer shiftTypeId,ShiftTypeRequest shiftTypeRequest) {
 		
+		ShiftType existingShiftType = findShiftTypeById(shiftTypeId);
 		
+		if(existingShiftType==null) {
+			throw new RuntimeException("ShiftType 不存在，無法更新");
+		}
+		
+		Department department = departmentService.findByName(shiftTypeRequest.getDepartmentName());
+
+		existingShiftType.setShiftTypeId(shiftTypeId);
+		existingShiftType.setDepartment(department);
+		existingShiftType.setShiftName(shiftTypeRequest.getShiftName());
+		existingShiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
+		existingShiftType.setStartTime(shiftTypeRequest.getStartTime());
+		existingShiftType.setFinishTime(shiftTypeRequest.getFinishTime());
+		existingShiftType.setEstimatedHours(estimatedHoursCompute(shiftTypeRequest.getStartTime(),shiftTypeRequest.getFinishTime()));
+		
+		
+		shiftTypeRepository.save(existingShiftType);
+	}
+	
+	@Transactional
+	public boolean deleteShiftTypeById(Integer shiftTypeId) {
+		
+		if(!shiftTypeRepository.existsById(shiftTypeId)) {
+			throw new RuntimeException("ShiftType 不存在，無法刪除");
+		}
+		
+		shiftTypeRepository.deleteById(shiftTypeId);
+		return true;
 	}
 	
 	
