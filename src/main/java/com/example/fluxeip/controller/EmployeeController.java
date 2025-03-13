@@ -2,6 +2,7 @@ package com.example.fluxeip.controller;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -9,24 +10,27 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fluxeip.dto.EmployeeDetailResponse;
-import com.example.fluxeip.dto.EmployeeDetailUpdate;
 import com.example.fluxeip.dto.EmployeePageRequest;
 import com.example.fluxeip.dto.EmployeePageResponse;
+import com.example.fluxeip.dto.EmployeeUpdateRequest;
 import com.example.fluxeip.dto.LoginResponse;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.EmployeeDetail;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Status;
 import com.example.fluxeip.repository.EmployeeDetailRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
+import com.example.fluxeip.service.StatusService;
 
 
 @RestController
@@ -50,42 +54,47 @@ public class EmployeeController {
 	@Autowired
 	private EmployeeDetailService empDetSer;
 
+	@Autowired
+	private StatusService staSer;
+
 //	@CrossOrigin
 	@PostMapping("/employee/find")
 	public EmployeePageResponse getEmployeesPage(@RequestBody EmployeePageRequest page) {
 		EmployeePageResponse empPage = new EmployeePageResponse();
+		Status status = staSer.findById(1);
 		if ((page.getDepartment() != null && page.getDepartment().length() > 0)
 				&& (page.getPosition() == null || page.getPosition().length() == 0)) {
 			Department department = depSer.findByName(page.getDepartment());
-			long countByDepartment = empRep.countByDepartment(department);
+			long countByDepartment = empRep.countByDepartmentAndStatus(department,status);
 			empPage.setCount(countByDepartment);
-			Page<Employee> employeesByDepartment = employeeService.getEmployeesByDepartment(department,
+			Page<Employee> employeesByDepartment = employeeService.getEmployeesByDepartment(department, status,
 					page.getCurrent(), page.getRows());
 			empPage.setLists(employeesByDepartment);
 			return empPage;
 		} else if ((page.getDepartment() == null || page.getDepartment().length() == 0)
 				&& (page.getPosition() != null && page.getPosition().length() > 0)) {
 			Position position = posSer.findByName(page.getPosition());
-			long countByPosition = empRep.countByPosition(position);
+			long countByPosition = empRep.countByPositionAndStatus(position,status);
 			empPage.setCount(countByPosition);
-			Page<Employee> employeesByPosition = employeeService.getEmployeesByPosition(position, page.getCurrent(),
+			Page<Employee> employeesByPosition = employeeService.getEmployeesByPosition(position, status,
+					page.getCurrent(),
 					page.getRows());
 			empPage.setLists(employeesByPosition);
 			return empPage;
 		} else if (page.getDepartment() == null || page.getDepartment().length() == 0 || page.getPosition() == null
 				|| page.getPosition().length() == 0) {
-		long allcount = empRep.count();
+			long allcount = empRep.countByStatus(status);
 		empPage.setCount(allcount);
-		Page<Employee> allemployees = employeeService.getEmployees(page.getCurrent(), page.getRows());
+			Page<Employee> allemployees = employeeService.getEmployees(status, page.getCurrent(), page.getRows());
 		empPage.setLists(allemployees);
 		return empPage;
 	}else {
 		Department department = depSer.findByName(page.getDepartment());
 		Position position = posSer.findByName(page.getPosition());
-		long countByDepartmentAndPosition = empRep.countByDepartmentAndPosition(department, position);
+		long countByDepartmentAndPosition = empRep.countByDepartmentAndPositionAndStatus(department, position,status);
 		empPage.setCount(countByDepartmentAndPosition);
 		Page<Employee> employeesByDepartmentAndPosition = employeeService
-				.getEmployeesByDepartmentAndPosition(department, position, page.getCurrent(), page.getRows());
+				.getEmployeesByDepartmentAndPosition(department, position, status, page.getCurrent(), page.getRows());
 		empPage.setLists(employeesByDepartmentAndPosition);
 		return empPage;
 	}
@@ -124,53 +133,62 @@ public class EmployeeController {
 	}
 
 	@PostMapping("/employee/detail/update")
-	public LoginResponse employeeDetailUpdate(@RequestBody EmployeeDetailUpdate employeeDetail) {
+	public boolean employeeDetailUpdate(@RequestParam Map<String, String> formData,
+			@RequestParam(value = "photoFile", required = false) MultipartFile photoFile) {
 		LoginResponse response = new LoginResponse();
-		System.out.println(employeeDetail.getEmployeeId());
-		EmployeeDetail empDet = empDetSer.empDetByIdFind(employeeDetail.getEmployeeId());
-		if (empDetSer.isEmailExist(employeeDetail.getEmail()) && !empDet.getEmail().equals(employeeDetail.getEmail())) {
-			response.setMessage("此信箱有其他人使用");
-			response.setSuccess(false);
-			return response;
-		} else if (empDetSer.isPhoneExist(employeeDetail.getPhone())
-				&& !empDet.getPhone().equals(employeeDetail.getPhone())) {
-			response.setMessage("此電話有其他人使用");
-			response.setSuccess(false);
-			return response;
-		} else {
-			MultipartFile photoFile = employeeDetail.getPhotoFile();
-			if (!photoFile.isEmpty()) {
-				empDet.setAddress(employeeDetail.getAddress());
-				empDet.setEmail(employeeDetail.getEmail());
-				empDet.setEmergencyContact(employeeDetail.getEmergencyContact());
-				empDet.setEnergencyPhone(employeeDetail.getEnergencyPhone());
-				empDet.setPhone(employeeDetail.getPhone());
+
+		Integer employeeId = Integer.valueOf(formData.get("employeeId"));
+		String email = formData.get("email");
+		String phone = formData.get("phone");
+		String address = formData.get("address");
+		String emergencyContact = formData.get("emergencyContact");
+		String emergencyPhone = formData.get("emergencyPhone");
+		EmployeeDetail empDet = empDetSer.empDetByIdFind(employeeId);
+		if (empDetSer.isEmailExist(email) && !empDet.getEmail().equals(email)) {
+			return false;
+		} else if (empDetSer.isPhoneExist(phone) && !empDet.getPhone().equals(phone)) {
+			return false;
+		}
+		if (photoFile != null && !photoFile.isEmpty()) {
+			try {
+				byte[] fileData = photoFile.getBytes();
+				empDet.setEmployeePhoto(fileData);
+				empDet.setAddress(address);
+				empDet.setEmail(email);
+				empDet.setEmergencyContact(emergencyContact);
+				empDet.setEnergencyPhone(emergencyPhone);
+				empDet.setPhone(phone);
 				empDetRep.save(empDet);
-				response.setMessage("修改成功");
-				response.setSuccess(true);
-				return response;
-			} else {
-				try {
-					byte[] fileData = photoFile.getBytes();
-
-					empDet.setEmployeePhoto(fileData);
-
-					empDet.setAddress(employeeDetail.getAddress());
-					empDet.setEmail(employeeDetail.getEmail());
-					empDet.setEmergencyContact(employeeDetail.getEmergencyContact());
-					empDet.setEnergencyPhone(employeeDetail.getEnergencyPhone());
-					empDet.setPhone(employeeDetail.getPhone());
-					empDetRep.save(empDet);
-					response.setMessage("修改成功");
-					response.setSuccess(true);
-					return response;
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				return true;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-		return response;
+		empDet.setAddress(address);
+		empDet.setEmail(email);
+		empDet.setEmergencyContact(emergencyContact);
+		empDet.setEnergencyPhone(emergencyPhone);
+		empDet.setPhone(phone);
+		empDetRep.save(empDet);
+		return true;
+	}
+
+	@PostMapping("/employee/update")
+	public boolean employeeUpdate(@RequestBody EmployeeUpdateRequest entity) {
+		Integer employeeId = entity.getEmployeeId();
+		String employeeName = entity.getEmployeeName();
+		String departmentName = entity.getDepartment();
+		String positionName = entity.getPosition();
+		Employee employee = employeeService.find(employeeId);
+		Department department = depSer.findByName(departmentName);
+		Position position = posSer.findByName(positionName);
+		employee.setDepartment(department);
+		employee.setEmployeeName(employeeName);
+		employee.setPosition(position);
+		empRep.save(employee);
+
+		return true;
 	}
 
 }
