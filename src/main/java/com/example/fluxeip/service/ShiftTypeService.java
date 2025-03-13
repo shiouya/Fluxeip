@@ -1,11 +1,18 @@
 package com.example.fluxeip.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.fluxeip.dto.ShiftTypeRequest;
+import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.ShiftType;
 import com.example.fluxeip.repository.ShiftTypeRepository;
 
@@ -14,16 +21,93 @@ public class ShiftTypeService {
 
 	@Autowired
 	private ShiftTypeRepository shiftTypeRepository;
-	
+
+	@Autowired
+	private DepartmentService departmentService;
+
 	public List<ShiftType> findAllShiftType() {
-		
+
 		List<ShiftType> allShiftType = shiftTypeRepository.findAll();
-		
+
 		return allShiftType;
 	}
 	
+	public ShiftType findShiftTypeById(Integer shiftTypeId) {
+		Optional<ShiftType> shiftType = shiftTypeRepository.findById(shiftTypeId);
+		return shiftType.orElse(null);
+	}
+
 	@Transactional
-	public void createShiftType(ShiftType shiftType) {
+	public void createShiftType(ShiftTypeRequest shiftTypeRequest) {
+		ShiftType shiftType = new ShiftType();
+
+		Department department = departmentService.findByName(shiftTypeRequest.getDepartmentName());
+
+		shiftType.setDepartment(department);
+
+		LocalTime start = shiftTypeRequest.getStartTime();
+		LocalTime finish = shiftTypeRequest.getFinishTime();
+
+		BigDecimal estimatedHours = estimatedHoursCompute(start, finish);
+
+		shiftType.setStartTime(start);
+		shiftType.setFinishTime(finish);
+		shiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
+		shiftType.setShiftName(shiftTypeRequest.getShiftName());
+		shiftType.setEstimatedHours(estimatedHours);
+
+		shiftTypeRepository.save(shiftType);
+
+	}
+	
+	@Transactional
+	public void updateShiftTypeById(Integer shiftTypeId,ShiftTypeRequest shiftTypeRequest) {
 		
+		ShiftType existingShiftType = findShiftTypeById(shiftTypeId);
+		
+		if(existingShiftType==null) {
+			throw new RuntimeException("ShiftType 不存在，無法更新");
+		}
+		
+		Department department = departmentService.findByName(shiftTypeRequest.getDepartmentName());
+
+		existingShiftType.setShiftTypeId(shiftTypeId);
+		existingShiftType.setDepartment(department);
+		existingShiftType.setShiftName(shiftTypeRequest.getShiftName());
+		existingShiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
+		existingShiftType.setStartTime(shiftTypeRequest.getStartTime());
+		existingShiftType.setFinishTime(shiftTypeRequest.getFinishTime());
+		existingShiftType.setEstimatedHours(estimatedHoursCompute(shiftTypeRequest.getStartTime(),shiftTypeRequest.getFinishTime()));
+		
+		
+		shiftTypeRepository.save(existingShiftType);
+	}
+	
+	@Transactional
+	public boolean deleteShiftTypeById(Integer shiftTypeId) {
+		
+		if(!shiftTypeRepository.existsById(shiftTypeId)) {
+			throw new RuntimeException("ShiftType 不存在，無法刪除");
+		}
+		
+		shiftTypeRepository.deleteById(shiftTypeId);
+		return true;
+	}
+	
+	
+	private BigDecimal estimatedHoursCompute(LocalTime start,LocalTime finish) {
+		
+		BigDecimal minutes = new BigDecimal(Duration.between(start, finish).toMinutes());
+
+		BigDecimal estimatedHours = minutes.divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
+		if (estimatedHours.compareTo(new BigDecimal(4)) == 1) {
+			if (estimatedHours.compareTo(new BigDecimal(8)) == 1) {
+				estimatedHours = estimatedHours.subtract(new BigDecimal(1));
+			}else {
+				estimatedHours = estimatedHours.subtract(new BigDecimal(0.5));
+			}
+		}
+		
+		return estimatedHours;
 	}
 }
