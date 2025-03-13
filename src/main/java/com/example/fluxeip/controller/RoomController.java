@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/pages/ajax/rooms")
+@RequestMapping("/api/rooms")
 public class RoomController {
 
     @Autowired
