@@ -13,40 +13,36 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/meetings")
+@CrossOrigin(origins = "*")
+@RequestMapping("/api/meetings")
 public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
 
-    // 查詢所有會議
-    @GetMapping
-    public List<MeetingDTO> getAllMeetings() {
-        return meetingService.findAll();
-    }
 
 
-    // 根據 ID 查詢會議
-    @GetMapping("/{id}")
-    public ResponseEntity<MeetingDTO> getMeetingById(@PathVariable Integer id) {
-        Optional<MeetingDTO> meetingDTO = meetingService.findById(id);
-
-        if (meetingDTO.isPresent()) {
-            return ResponseEntity.ok(meetingDTO.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
+    // 用id查會議
+   @GetMapping("/{id}")
+   public ResponseEntity<MeetingDTO> findById(@PathVariable Integer id){
+	   Optional<MeetingDTO> optional = meetingService.findById(id);
+	   
+	   if(optional.isPresent()) {
+		   return ResponseEntity.ok(optional.get());
+	   }else {
+		   return ResponseEntity.notFound().build();
+	   }   
+   }
+   
+   	// 用roomId查會議
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<MeetingDTO>> getMeetingsByRoomId(@PathVariable Integer roomId) {
+    public ResponseEntity<List<MeetingDTO>> findByRoomId(@PathVariable Integer roomId) {
         List<MeetingDTO> meetings = meetingService.findByRoomId(roomId);
 
-        if (meetings.isEmpty()) {
-            return ResponseEntity.noContent().build(); // **204 No Content**
+        if (!meetings.isEmpty()) {
+        	return ResponseEntity.ok(meetings); 
         } else {
-            return ResponseEntity.ok(meetings); // **200 OK**
+        	return ResponseEntity.noContent().build(); 
         }
     }
 
