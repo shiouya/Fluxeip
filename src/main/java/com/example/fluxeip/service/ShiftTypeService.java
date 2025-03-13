@@ -42,6 +42,26 @@ public class ShiftTypeService {
 		LocalTime start = shiftTypeRequest.getStartTime();
 		LocalTime finish = shiftTypeRequest.getFinishTime();
 
+		BigDecimal estimatedHours = estimatedHoursCompute(start, finish);
+
+		shiftType.setStartTime(start);
+		shiftType.setFinishTime(finish);
+		shiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
+		shiftType.setShiftName(shiftTypeRequest.getShiftName());
+		shiftType.setEstimatedHours(estimatedHours);
+
+		shiftTypeRepository.save(shiftType);
+
+	}
+	
+	public void updateShiftTypeById(Integer shiftTypeId,ShiftTypeRequest shiftTypeRequest) {
+		
+		
+	}
+	
+	
+	private BigDecimal estimatedHoursCompute(LocalTime start,LocalTime finish) {
+		
 		BigDecimal minutes = new BigDecimal(Duration.between(start, finish).toMinutes());
 
 		BigDecimal estimatedHours = minutes.divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
@@ -52,14 +72,7 @@ public class ShiftTypeService {
 				estimatedHours = estimatedHours.subtract(new BigDecimal(0.5));
 			}
 		}
-
-		shiftType.setStartTime(start);
-		shiftType.setFinishTime(finish);
-		shiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
-		shiftType.setShiftName(shiftTypeRequest.getShiftName());
-		shiftType.setEstimatedHours(estimatedHours);
-
-		shiftTypeRepository.save(shiftType);
-
+		
+		return estimatedHours;
 	}
 }
