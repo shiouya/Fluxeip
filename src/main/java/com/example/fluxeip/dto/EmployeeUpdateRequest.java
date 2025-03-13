@@ -11,5 +11,6 @@ public class EmployeeUpdateRequest {
 	private String employeeName;
 	private String department;
 	private String position;
+	private String status;
 
 }

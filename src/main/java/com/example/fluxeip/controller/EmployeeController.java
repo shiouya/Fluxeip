@@ -111,6 +111,7 @@ public class EmployeeController {
 		empDetRes.setDepartment(employee.getDepartment().getDepartmentName());
 		empDetRes.setPosition(employee.getPosition().getPositionName());
 		empDetRes.setHireDate(employee.getHireDate());
+		empDetRes.setStatus(employee.getStatus().getStatusName());
 
 		String photo = null;
 		if (empDet.getEmployeePhoto() == null) {
@@ -183,9 +184,11 @@ public class EmployeeController {
 		Employee employee = employeeService.find(employeeId);
 		Department department = depSer.findByName(departmentName);
 		Position position = posSer.findByName(positionName);
+		Status status = staSer.findByName(entity.getStatus());
 		employee.setDepartment(department);
 		employee.setEmployeeName(employeeName);
 		employee.setPosition(position);
+		employee.setStatus(status);
 		empRep.save(employee);
 
 		return true;
