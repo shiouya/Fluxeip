@@ -19,4 +19,10 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     
     @Query("SELECT s FROM Schedule s WHERE s.employee.employeeId = :employeeId AND s.scheduleDate = :date")
     List<Schedule> findScheduleByEmployeeIdAndDate(@Param("employeeId") int employeeId, @Param("date") LocalDate date);
+    
+    List<Schedule> findByEmployeeEmployeeIdAndScheduleDateBetween(int employeeId, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.employee.employeeId = :employeeId AND s.scheduleDate = :date")
+    long countByEmployeeAndDate(@Param("employeeId") Integer employeeId, @Param("date") LocalDate date);
+
 }
