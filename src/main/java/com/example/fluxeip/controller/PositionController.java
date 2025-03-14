@@ -25,6 +25,7 @@ public class PositionController {
 	@GetMapping("/position/find/{departmentName}")
 	public List<Position> positionFindAll(@PathVariable String departmentName) {
 		List<Position> positions = posSer.findAll();
+		System.out.println(departmentName);
 		if (departmentName.equals("總經理部")) {
 			Position position1 = posSer.findByName("經理");
 			Position position2 = posSer.findByName("組長");

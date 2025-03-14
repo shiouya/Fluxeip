@@ -1,6 +1,7 @@
 package com.example.fluxeip.service;
 
 import com.example.fluxeip.dto.MeetingDTO;
+import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Meeting;
 import com.example.fluxeip.model.Room;
@@ -36,20 +37,24 @@ public class MeetingService {
     private StatusRepository statusRepository;
 
     
-    public List<MeetingDTO> findAll() {
+
+    public List<MeetingResponse> findAll() {
         List<Meeting> meetings = meetingRepository.findAll();
 
         if (meetings.isEmpty()) {
-            System.out.println("目前沒有任何會議");
-        } else {
-            System.out.println("成功查詢所有會議，共 " + meetings.size() + " 場");
+            return new ArrayList<>(); 
         }
 
-        return meetings.stream().map(MeetingDTO::new).collect(Collectors.toList());
+        List<MeetingResponse> meetingResponses = new ArrayList<>();
+        for (Meeting meeting : meetings) {
+            meetingResponses.add(new MeetingResponse(meeting));
+        }
+
+        return meetingResponses;
     }
 
-
-   
+	  
+	  
     public Optional<MeetingDTO> findById(Integer id) {
         if (id == null) {
             System.out.println("錯誤：meetingId 不能為 null");

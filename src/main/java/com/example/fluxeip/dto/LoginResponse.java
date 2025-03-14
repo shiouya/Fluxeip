@@ -15,6 +15,7 @@ public class LoginResponse {
 	private Integer employeeId;
 	private String photo;
 	private String employeeName;
+	private String roleName;
 
 
 }

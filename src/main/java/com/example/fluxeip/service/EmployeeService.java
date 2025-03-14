@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Status;
 import com.example.fluxeip.repository.EmployeeRepository;
 
 
@@ -53,27 +54,28 @@ public class EmployeeService {
 		return emp;
 	}
 
-	public Page<Employee> getEmployees(int page, int size) {
+	public Page<Employee> getEmployees(Status status, int page, int size) {
 		PageRequest pageRequest = PageRequest.of(page, size);
-		return employeeRepository.findAll(pageRequest);
+		return employeeRepository.findByStatus(status, pageRequest);
 	}
 
-	public Page<Employee> getEmployeesByDepartmentAndPosition(Department department, Position position, int page,
+	public Page<Employee> getEmployeesByDepartmentAndPosition(Department department, Position position, Status status,
+			int page,
 			int size) {
 		PageRequest pageable = PageRequest.of(page, size);
-		return employeeRepository.findByDepartmentAndPosition(department, position, pageable);
+		return employeeRepository.findByDepartmentAndPositionAndStatus(department, position, status, pageable);
 	}
 
 	// 根據部門進行查詢並分頁
-	public Page<Employee> getEmployeesByDepartment(Department department, int page, int size) {
+	public Page<Employee> getEmployeesByDepartment(Department department, Status status, int page, int size) {
 		PageRequest request = PageRequest.of(page, size);
-		return employeeRepository.findByDepartment(department, request);
+		return employeeRepository.findByDepartmentAndStatus(department, status, request);
 	}
 
 	// 根據職位進行查詢並分頁
-	public Page<Employee> getEmployeesByPosition(Position position, int page, int size) {
+	public Page<Employee> getEmployeesByPosition(Position position, Status status, int page, int size) {
 		PageRequest pageable = PageRequest.of(page, size);
-		return employeeRepository.findByPosition(position, pageable);
+		return employeeRepository.findByPositionAndStatus(position, status, pageable);
 	}
 
 }

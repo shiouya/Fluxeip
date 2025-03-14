@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/pages/ajax/rooms")
+@RequestMapping("/api/rooms")
 public class RoomController {
 
     @Autowired
@@ -51,14 +51,16 @@ public class RoomController {
     // 更新會議室
     @PutMapping("/{id}")
     public ResponseEntity<Room> updateRoom(@PathVariable Integer id, @RequestBody Room room) {
-        room.setId(id); // 確保 ID 正確
-        Optional<Room> updatedRoom = roomService.update(room);
-        if (updatedRoom.isPresent()) {
-            return ResponseEntity.ok(updatedRoom.get());
-        } else {
-            return ResponseEntity.notFound().build();
+        if (id == null) {
+            return ResponseEntity.badRequest().body(null);
         }
+
+        room.setId(id); // 確保 ID 設定正確
+        Optional<Room> updatedRoom = roomService.update(room);
+        return updatedRoom.map(ResponseEntity::ok)
+                          .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
 
     // 刪除會議室
     @DeleteMapping("/{id}")

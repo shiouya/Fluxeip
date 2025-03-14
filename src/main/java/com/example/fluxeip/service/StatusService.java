@@ -22,5 +22,14 @@ public class StatusService {
 			return null;
 		}
 	}
+	
+	public Status findByName(String name) {
+		Optional<Status> status = staRep.findByStatusName(name);
+		if (status != null) {
+			return status.get();
+		} else {
+			return null;
+		}
+	}
 
 } 
