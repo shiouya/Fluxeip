@@ -69,14 +69,13 @@ public class ScheduleService {
 	public List<ScheduleResponse> findEmpScheduleWeek(Integer empId, String startDate) {
 
 		LocalDate start = LocalDate.parse(startDate);
-		start =start.with(DayOfWeek.MONDAY);
+		start = start.with(DayOfWeek.MONDAY);
 		LocalDate end = start.plusDays(6);
 
-		List<Schedule> weeklySchedules = scheduleRepository
-				.findByEmployeeEmployeeIdAndScheduleDateBetween(empId,start, end);
+		List<Schedule> weeklySchedules = schedulesInInterval(empId, start, end);
 		ArrayList<ScheduleResponse> responses = new ArrayList<ScheduleResponse>();
 		for (Schedule schedule : weeklySchedules) {
-			
+
 			ScheduleResponse scheduleResponse = changeScheduleIntoResponse(schedule);
 			responses.add(scheduleResponse);
 
@@ -98,14 +97,14 @@ public class ScheduleService {
 
 		Integer shiftId = scheduleRequest.getShiftTypeId();
 		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftId);
-		
-		LocalDate date=scheduleRequest.getDate();
 
-		if(scheduleRepository.countByEmployeeAndDate(empId,date)>0) {
+		LocalDate date = scheduleRequest.getDate();
+
+		if (scheduleRepository.countByEmployeeAndDate(empId, date) > 0) {
 			throw new RuntimeException("該日期已有排班");
-		}else if(!isRightDepartment(employee, depName, shiftType)){
+		} else if (!isRightDepartment(employee, depName, shiftType)) {
 			throw new RuntimeException("部門錯誤");
-		}else {
+		} else {
 			schedule.setDepartment(dep);
 			schedule.setEmployee(employee);
 			schedule.setShiftType(shiftType);
@@ -114,12 +113,10 @@ public class ScheduleService {
 
 			scheduleRepository.save(schedule);
 		}
-		
-		List<Schedule> schedules = scheduleRepository
-		.findByEmployeeEmployeeIdAndScheduleDateBetween(empId, date.with(DayOfWeek.MONDAY), date.plusDays(6));
-		if(isViolatingLaborLaw(schedules)==1) {
+
+		if (isViolatingLaborLawDays(date, empId)) {
 			throw new RuntimeException("違反勞基法，不符合一例一休");
-		}else if(isViolatingLaborLaw(schedules)==2){
+		} else if (isViolatingLaborLawHours(date, empId)) {
 			throw new RuntimeException("違反勞基法，超時工作");
 		}
 
@@ -187,21 +184,39 @@ public class ScheduleService {
 		return scheduleResponse;
 
 	}
-	
-	private int isViolatingLaborLaw(List<Schedule> schedules) {
-		
-		BigDecimal workhours=new BigDecimal(0);
-		for(Schedule s:schedules) {
-			workhours=workhours.add(s.getShiftType().getEstimatedHours());
+
+	private boolean isViolatingLaborLawDays(LocalDate date, int empId) {
+
+		List<Schedule> beforeSevenDays = schedulesInInterval(empId, date.minusDays(6), date);
+		List<Schedule> afterSevenDays = schedulesInInterval(empId, date, date.plusDays(6));
+
+		if (beforeSevenDays.size() > 6) {
+			return true;
+		} else if (afterSevenDays.size() > 6) {
+			return true;
 		}
-		
-		if(schedules.size()>5) {
-			return 1;
-		}else if(workhours.compareTo(new BigDecimal(40))==1) {
-			return 2;
+		return false;
+	}
+
+	private boolean isViolatingLaborLawHours(LocalDate date, int empId) {
+
+		List<Schedule> schedules = schedulesInInterval(empId, date.with(DayOfWeek.MONDAY),
+				date.with(DayOfWeek.MONDAY).plusDays(6));
+
+		BigDecimal workhours = new BigDecimal(0);
+		for (Schedule s : schedules) {
+			workhours = workhours.add(s.getShiftType().getEstimatedHours());
 		}
-		
-		return 0;
+
+		if (workhours.compareTo(new BigDecimal(40)) == 1) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
+		return scheduleRepository.findByEmployeeEmployeeIdAndScheduleDateBetween(employeeId, startDate, endDate);
 	}
 
 }
