@@ -1,5 +1,8 @@
 package com.example.fluxeip.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fluxeip.dto.ScheduleRequest;
+import com.example.fluxeip.dto.ScheduleResponse;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Schedule;
@@ -29,6 +33,35 @@ public class ScheduleService {
 		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
 
 		return schedule.orElse(null);
+	}
+	
+	public ScheduleResponse findScheduleResponseById(Integer schedulId) {
+		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
+
+		Schedule existingSchedule = schedule.orElse(null);
+		
+		if(existingSchedule==null) {
+			return null;
+		}else {
+			ScheduleResponse scheduleResponse = changeScheduleIntoResponse(existingSchedule);
+			
+			return scheduleResponse;
+		}
+	}
+	
+	public List<ScheduleResponse> findSchedulesByEmployeeAndDate(Integer empId, LocalDate date) {
+		
+		List<Schedule> schedules = scheduleRepository.findScheduleByEmployeeIdAndDate(empId, date);
+		
+		ArrayList<ScheduleResponse> responses = new ArrayList<ScheduleResponse>();
+
+		for(Schedule schedule:schedules) {
+			
+			ScheduleResponse scheduleResponse = changeScheduleIntoResponse(schedule);
+			responses.add(scheduleResponse);
+			
+		}
+		return responses;
 	}
 	
 	@Transactional
@@ -108,5 +141,17 @@ public class ScheduleService {
 			return true;
 		}
 		return false;
+	}
+	
+	private ScheduleResponse changeScheduleIntoResponse(Schedule schedule) {
+		ScheduleResponse scheduleResponse = new ScheduleResponse();
+		
+		scheduleResponse.setDate(schedule.getScheduleDate());
+		scheduleResponse.setDepartmentName(schedule.getDepartment().getDepartmentName());
+		scheduleResponse.setEmployeeName(schedule.getEmployee().getEmployeeName());
+		scheduleResponse.setShiftTypeName(schedule.getShiftType().getShiftName());
+		
+		return scheduleResponse;
+		
 	}
 }

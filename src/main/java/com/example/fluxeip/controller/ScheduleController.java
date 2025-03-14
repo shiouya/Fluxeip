@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ScheduleRequest;
+import com.example.fluxeip.dto.ScheduleResponse;
 import com.example.fluxeip.model.Schedule;
 import com.example.fluxeip.service.ScheduleService;
 
@@ -28,14 +29,16 @@ public class ScheduleController {
 	@Autowired
 	private ScheduleService scheduleService;
 	
+	
+	
 	@GetMapping("/{id}")
-	public ResponseEntity<Schedule> findScheduleById(@PathVariable("id") Integer scheduleId){
-		Schedule schedule = scheduleService.findScheduleById(scheduleId);
+	public ResponseEntity<ScheduleResponse> findScheduleById(@PathVariable("id") Integer scheduleId){
+		ScheduleResponse scheduleResponse = scheduleService.findScheduleResponseById(scheduleId);
 		
-		if(schedule==null) {
+		if(scheduleResponse==null) {
 			return ResponseEntity.notFound().build();
 		}
-		return ResponseEntity.ok(schedule);
+		return ResponseEntity.ok(scheduleResponse);
 	}
 	
 	@PostMapping
