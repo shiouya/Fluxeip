@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -22,6 +24,7 @@ public class ShiftType {
     @Column(name = "shift_type_id", nullable = false)
     private Integer shiftTypeId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
@@ -41,6 +44,7 @@ public class ShiftType {
     @Column(name = "estimated_hours", nullable = false)
     private BigDecimal estimatedHours;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "shiftType", cascade = CascadeType.ALL)
     private List<Schedule> schedules;
 

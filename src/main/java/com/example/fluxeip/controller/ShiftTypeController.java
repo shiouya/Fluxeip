@@ -65,7 +65,7 @@ public class ShiftTypeController {
 		try {
 	        shiftTypeService.updateShiftTypeById(shiftTypeId,shiftTypeRequest);
 	        
-	        return ResponseEntity.status(HttpStatus.OK).build();
+	        return ResponseEntity.status(HttpStatus.OK).body("Shift type updated successfully");
 	    } catch (Exception e) {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	        		.body("Error updating shift type: " + e.getMessage());
