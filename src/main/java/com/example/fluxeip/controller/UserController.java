@@ -1,20 +1,25 @@
 package com.example.fluxeip.controller;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.EmployeeCreateRequest;
 import com.example.fluxeip.dto.EmployeeCreateResponse;
+import com.example.fluxeip.jwt.JsonWebTokenUtility;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.EmployeeDetail;
 import com.example.fluxeip.model.Position;
 import com.example.fluxeip.model.Status;
+import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
@@ -24,6 +29,9 @@ import com.example.fluxeip.service.StatusService;
 
 @RestController
 public class UserController {
+
+	@Autowired
+	private JsonWebTokenUtility jsonWebTokenUtility;
 
 	@Autowired
 	private StatusService staSer;
@@ -42,6 +50,9 @@ public class UserController {
 
 	@Autowired
 	private EmployeeDetailService empDetSer;
+
+	@Autowired
+	private EmployeeRepository empRep;
 
 	@PostMapping("/employee/create")
 	public EmployeeCreateResponse employeeCreate(@RequestBody EmployeeCreateRequest entity) {
@@ -143,4 +154,46 @@ public class UserController {
 			return false;
 		}
 	}
+
+	@PostMapping("/password/update")
+	public boolean passwordUpdate(@RequestParam("newPassword") String newPassword,
+			@RequestParam("oldPassword") String oldPassword,@RequestHeader("Authorization") String authorization) {
+		int employeeId = extractEmployeeIdFromToken(authorization);
+        if (employeeId == -1) {
+            return false;
+        }
+        Employee employee = empService.find(employeeId);
+		String dbEncodedPasswprd = employee.getPassword();
+		if (!pwdEncoder.matches(oldPassword, dbEncodedPasswprd)) {
+			return false;
+		} else {
+			String encode = pwdEncoder.encode(newPassword);
+			employee.setPassword(encode);
+			empRep.save(employee);
+			return true;
+	}
+
+	}
+
+	private int extractEmployeeIdFromToken(String authorization) {
+		if (authorization == null || !authorization.startsWith("Bearer ")) {
+			return -1;
+		}
+
+		String token = authorization.substring(7);
+		String userJsonString = jsonWebTokenUtility.validateToken(token);
+
+		if (userJsonString == null || userJsonString.isEmpty()) {
+			return -1;
+		}
+
+		try {
+			JSONObject userJson = new JSONObject(userJsonString);
+			return userJson.getInt("id");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return -1;
+		}
+	}
+
 }
