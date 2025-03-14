@@ -27,7 +27,7 @@ public class BulletinService {
     }
 
     // 依 statusId 分頁查詢公告
-    public Page<Bulletin> getBulletinsByStatus(Integer statusId, int page, int size) {
+    public Page<Bulletin> getBulletinsByStatus(String statusId, int page, int size) {
         return bulletinRepository.findByStatusId(statusId, PageRequest.of(page, size));
     }
 

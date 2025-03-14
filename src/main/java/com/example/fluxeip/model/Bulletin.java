@@ -37,7 +37,7 @@ public class Bulletin {
 	private String content;
 
 	@Column(name = "status_id", nullable = false)
-	private Integer statusId;
+	private String statusId;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;

@@ -5,14 +5,17 @@ import com.example.fluxeip.repository.BulletinRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/bulletins")
+@RequestMapping("/bulletin")
+@CrossOrigin(origins = "http://localhost:5173") // 允許 Vue 前端訪問
 public class BulletinController {
 
     @Autowired
@@ -34,28 +37,37 @@ public class BulletinController {
 
     // 依 statusId 分頁查詢公告
     @GetMapping("/status/{statusId}")
-    public Page<Bulletin> getBulletinsByStatus(@PathVariable Integer statusId,
+    public Page<Bulletin> getBulletinsByStatus(@PathVariable String statusId,
                                                @RequestParam(defaultValue = "0") int page,
                                                @RequestParam(defaultValue = "10") int size) {
         return bulletinRepository.findByStatusId(statusId, PageRequest.of(page, size));
     }
 
     // 新增公告
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<Bulletin> createBulletin(@RequestBody Bulletin bulletin) {
+        bulletin.setCreatedAt(LocalDateTime.now()); // 確保 createdAt 有值
         Bulletin savedBulletin = bulletinRepository.save(bulletin);
-        return ResponseEntity.ok(savedBulletin);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedBulletin);
     }
 
     // 更新公告
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Bulletin> updateBulletin(@PathVariable Integer id, @RequestBody Bulletin updatedBulletin) {
         return bulletinRepository.findById(id)
                 .map(bulletin -> {
-                    bulletin.setTitle(updatedBulletin.getTitle());
-                    bulletin.setCreater(updatedBulletin.getCreater());
-                    bulletin.setContent(updatedBulletin.getContent());
-                    bulletin.setStatusId(updatedBulletin.getStatusId());
+                    if (updatedBulletin.getTitle() != null) {
+                        bulletin.setTitle(updatedBulletin.getTitle());
+                    }
+                    if (updatedBulletin.getCreater() != null) {
+                        bulletin.setCreater(updatedBulletin.getCreater());
+                    }
+                    if (updatedBulletin.getContent() != null) {
+                        bulletin.setContent(updatedBulletin.getContent());
+                    }
+                    if (updatedBulletin.getStatusId() != null) {
+                        bulletin.setStatusId(updatedBulletin.getStatusId());
+                    }
                     Bulletin savedBulletin = bulletinRepository.save(bulletin);
                     return ResponseEntity.ok(savedBulletin);
                 })
@@ -63,7 +75,7 @@ public class BulletinController {
     }
 
     // 刪除公告
-    @DeleteMapping("/{id}")
+    @DeleteMapping("delete/{id}")
     public ResponseEntity<Void> deleteBulletin(@PathVariable Integer id) {
         if (bulletinRepository.existsById(id)) {
             bulletinRepository.deleteById(id);
@@ -73,3 +85,4 @@ public class BulletinController {
         }
     }
 }
+
