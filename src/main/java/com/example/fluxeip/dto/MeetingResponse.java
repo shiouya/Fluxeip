@@ -35,5 +35,6 @@ public class MeetingResponse {
 	// 用於回傳錯誤訊息
 	public MeetingResponse(String message) {
 		this.message = message;
+		
 	}
 }
