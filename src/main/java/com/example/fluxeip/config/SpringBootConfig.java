@@ -27,13 +27,17 @@ public class SpringBootConfig implements WebMvcConfigurer {
 		registry.addMapping("/check/phone/**");
 		registry.addMapping("/employee/find");
 		registry.addMapping("/employee/detail/**");
+		registry.addMapping("/employee/update");
 		registry.addMapping("/employee/create").allowedMethods("POST");
-		registry.addMapping("/api/clock/*").allowedMethods("POST");
+
 		registry.addMapping("/bulletin/create").allowedMethods("POST");
 		registry.addMapping("/bulletin/delete").allowedMethods("DELETE");
 		registry.addMapping("/bulletin/update").allowedMethods("PUT");
-		
-		
+
+		registry.addMapping("/api/clock/**").allowedMethods("POST");
+		registry.addMapping("/api/attendancelogs/**");
+		registry.addMapping("/api/leave-requests/**").allowedMethods("GET", "POST");
+
 	}
 
 	@Override
@@ -47,6 +51,5 @@ public class SpringBootConfig implements WebMvcConfigurer {
 	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-
 
 }

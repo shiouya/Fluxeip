@@ -7,25 +7,31 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Status;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
+	Page<Employee> findByStatus(Status status, Pageable pageable);
+
 	// 根據部門和職位進行查詢
-	Page<Employee> findByDepartmentAndPosition(Department department, Position position, Pageable pageable);
+	Page<Employee> findByDepartmentAndPositionAndStatus(Department department, Position position, Status status,
+			Pageable pageable);
 
 	// 根據部門進行查詢
-	Page<Employee> findByDepartment(Department department, Pageable pageable);
+	Page<Employee> findByDepartmentAndStatus(Department department, Status status, Pageable pageable);
 
 	// 根據職位進行查詢
-	Page<Employee> findByPosition(Position position, Pageable pageable);
+	Page<Employee> findByPositionAndStatus(Position position, Status status, Pageable pageable);
+
+	long countByStatus(Status status);
 
 	// 根據部門和職位查詢符合條件的員工總數
-	long countByDepartmentAndPosition(Department department, Position position);
+	long countByDepartmentAndPositionAndStatus(Department department, Position position, Status status);
 
 	// 根據部門查詢符合條件的員工總數
-	long countByDepartment(Department department);
+	long countByDepartmentAndStatus(Department department, Status status);
 
 	// 根據職位查詢符合條件的員工總數
-	long countByPosition(Position position);
+	long countByPositionAndStatus(Position position, Status status);
 
 }

@@ -3,6 +3,10 @@ package com.example.fluxeip.model;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,21 +14,28 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-//@Entity
-//@Table(name = "roles")
+@Getter
+@Setter
+@Entity
+@Table(name = "roles")
 public class Roles {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "role_id")
 	private Integer roleId;
 
+	@Column(name = "role_name")
 	private String roleName;
 
-	@OneToMany(mappedBy = "roles")
-	private List<Permissions> permissions = new LinkedList<Permissions>();
+//	@OneToMany(mappedBy = "roles")
+//	private List<Permissions> permissions = new LinkedList<Permissions>();
 
+	@JsonIgnore
 	@ManyToMany(fetch=FetchType.LAZY)
 	@JoinTable(name = "employee_roles",
 	joinColumns={@JoinColumn(name="role_id",referencedColumnName="role_id")},
@@ -32,30 +43,6 @@ public class Roles {
 	private List<Employee> employee = new LinkedList<Employee>();
 
 	public Roles() {
-	}
-
-	public Integer getRoleId() {
-		return roleId;
-	}
-
-	public void setRoleId(Integer roleId) {
-		this.roleId = roleId;
-	}
-
-	public String getRoleName() {
-		return roleName;
-	}
-
-	public void setRoleName(String roleName) {
-		this.roleName = roleName;
-	}
-
-	public List<Permissions> getPermissions() {
-		return permissions;
-	}
-
-	public void setPermissions(List<Permissions> permissions) {
-		this.permissions = permissions;
 	}
 
 }
