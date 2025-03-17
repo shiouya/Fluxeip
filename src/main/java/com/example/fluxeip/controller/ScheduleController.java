@@ -1,7 +1,5 @@
 package com.example.fluxeip.controller;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ScheduleRequest;
 import com.example.fluxeip.dto.ScheduleResponse;
-import com.example.fluxeip.model.Schedule;
 import com.example.fluxeip.service.ScheduleService;
 
 @RestController
@@ -39,7 +36,7 @@ public class ScheduleController {
 
 		List<ScheduleResponse> response = scheduleService.findEmpScheduleWeek(scheduleId, startDate);
 		if (response == null||response.size()==0) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("查無班表");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("查無當週班表");
 		}
 		return ResponseEntity.ok(response);
 		
@@ -74,7 +71,7 @@ public class ScheduleController {
 		try {
 			scheduleService.updateScheduleById(scheduleId, request);
 
-			return ResponseEntity.status(HttpStatus.OK).build();
+			return ResponseEntity.status(HttpStatus.OK).body("Schedule updated successfully");
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("Error creating schedule: " + e.getMessage());

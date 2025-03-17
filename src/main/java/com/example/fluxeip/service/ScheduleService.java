@@ -138,6 +138,8 @@ public class ScheduleService {
 		Integer shiftId = scheduleRequest.getShiftTypeId();
 		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftId);
 
+		LocalDate date = scheduleRequest.getDate();
+
 		if (isRightDepartment(employee, depName, shiftType)) {
 			Schedule existingSchedule = findScheduleById(scheduleId);
 
@@ -149,6 +151,11 @@ public class ScheduleService {
 			scheduleRepository.save(existingSchedule);
 		} else {
 			throw new RuntimeException("部門錯誤");
+		}
+		if (isViolatingLaborLawDays(date, empId)) {
+			throw new RuntimeException("違反勞基法，不符合一例一休");
+		} else if (isViolatingLaborLawHours(date, empId)) {
+			throw new RuntimeException("違反勞基法，超時工作");
 		}
 
 	}

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ShiftTypeRequest;
+import com.example.fluxeip.dto.ShiftTypeResponse;
 import com.example.fluxeip.model.ShiftType;
 import com.example.fluxeip.service.ShiftTypeService;
 
@@ -30,22 +31,22 @@ public class ShiftTypeController {
 	private ShiftTypeService shiftTypeService;
 	
 	@GetMapping
-	public ResponseEntity<List<ShiftType>> showAllShiftType(){
+	public ResponseEntity<List<ShiftTypeResponse>> showAllShiftType(){
 		
-		List<ShiftType> allShiftType = shiftTypeService.findAllShiftType();
+		List<ShiftTypeResponse> allShiftType = shiftTypeService.findAllShiftType();
 		
 		return ResponseEntity.ok(allShiftType);
 	}
 	
 	@GetMapping("/{id}")
-	public ResponseEntity<ShiftType> showShiftTypeById(@PathVariable("id") Integer shiftTypeId){
+	public ResponseEntity<ShiftTypeResponse> showShiftTypeById(@PathVariable("id") Integer shiftTypeId){
 		
-		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftTypeId);
+		ShiftTypeResponse shiftTypeResponse = shiftTypeService.findShiftTypeByIdToResponse(shiftTypeId);
 		
-		if(shiftType==null) {
+		if(shiftTypeResponse==null) {
 			return ResponseEntity.notFound().build();
 		}
-		return ResponseEntity.ok(shiftType);
+		return ResponseEntity.ok(shiftTypeResponse);
 	}
 	
 	@PostMapping
