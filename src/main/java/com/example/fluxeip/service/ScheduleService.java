@@ -186,15 +186,15 @@ public class ScheduleService {
 	}
 
 	private boolean isViolatingLaborLawDays(LocalDate date, int empId) {
-
-		List<Schedule> beforeSevenDays = schedulesInInterval(empId, date.minusDays(6), date);
-		List<Schedule> afterSevenDays = schedulesInInterval(empId, date, date.plusDays(6));
-
-		if (beforeSevenDays.size() > 6) {
-			return true;
-		} else if (afterSevenDays.size() > 6) {
-			return true;
+		
+		for(int i=0;i<7;i++) {
+			List<Schedule> sevenDays=schedulesInInterval(empId, date.minusDays(6-i), date.plusDays(i));
+			
+			if(sevenDays.size()>6) {
+				return true;
+			}
 		}
+		
 		return false;
 	}
 
