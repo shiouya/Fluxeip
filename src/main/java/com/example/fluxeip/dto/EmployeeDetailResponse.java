@@ -23,5 +23,6 @@ public class EmployeeDetailResponse {
 	private String address;
 	private String emergencyContact;
 	private String energencyPhone;
+	private String status;
 
 }

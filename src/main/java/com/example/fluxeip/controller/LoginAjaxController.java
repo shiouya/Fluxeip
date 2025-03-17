@@ -53,6 +53,7 @@ public class LoginAjaxController {
 			JSONObject user = new JSONObject().put("id", bean.getEmployeeId()).put("name", bean.getEmployeeName())
 					.put("department", bean.getDepartment()).put("position", bean.getPosition());
 			String token = jsonWebTokenUtility.createToken(user.toString());
+
 			EmployeeDetail empDet = employeeDetailService.empDetByIdFind(bean.getEmployeeId());
 			String photo = null;
 			if (empDet.getEmployeePhoto() == null) {
@@ -64,6 +65,7 @@ public class LoginAjaxController {
 			response.setPhoto(photo);
 			response.setToken(token);
 			response.setEmployeeId(bean.getEmployeeId());
+			response.setRoleName(bean.getRoles().get(0).getRoleName());
 
 		}
 		return response;

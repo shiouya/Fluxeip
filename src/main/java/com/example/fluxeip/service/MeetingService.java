@@ -1,6 +1,7 @@
 package com.example.fluxeip.service;
 
 import com.example.fluxeip.dto.MeetingDTO;
+import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Meeting;
 import com.example.fluxeip.model.Room;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.foreign.Linker.Option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,36 +38,40 @@ public class MeetingService {
     private StatusRepository statusRepository;
 
     
-    public List<MeetingDTO> findAll() {
+    // 查詢有會議
+    public List<MeetingResponse> findAll() {
         List<Meeting> meetings = meetingRepository.findAll();
 
         if (meetings.isEmpty()) {
-            System.out.println("目前沒有任何會議");
-        } else {
-            System.out.println("成功查詢所有會議，共 " + meetings.size() + " 場");
+            return new ArrayList<>(); 
         }
 
-        return meetings.stream().map(MeetingDTO::new).collect(Collectors.toList());
+        List<MeetingResponse> meetingResponses = new ArrayList<>();
+        for (Meeting meeting : meetings) {
+            meetingResponses.add(new MeetingResponse(meeting));
+        }
+
+        return meetingResponses;
     }
+    
+     // 用Id查會議
+     public Optional<MeetingResponse> findById(Integer id){
+    	 Optional<Meeting> optMeeting = meetingRepository.findById(id);
+    	 
+    	 if(id == null) {
+    		 return Optional.empty();
+    	 }
 
-
-   
-    public Optional<MeetingDTO> findById(Integer id) {
-        if (id == null) {
-            System.out.println("錯誤：meetingId 不能為 null");
-            return Optional.empty();
-        }
-
-        Optional<Meeting> optional = meetingRepository.findById(id);
-
-        if (optional.isPresent()) {
-            System.out.println("成功查詢到 ID 為 " + id + " 的會議：" + optional.get().getTitle());
-            return Optional.of(new MeetingDTO(optional.get()));
-        } else {
-            System.out.println("錯誤：找不到 ID 為 " + id + " 的會議");
-            return Optional.empty();
-        }
-    }
+    	 if(optMeeting.isPresent()){
+    		 
+    		 Meeting meeting = optMeeting.get();
+    		 
+    		 return Optional.of(new MeetingResponse(meeting));
+    				 
+    	 }else {
+    		 return Optional.empty();
+    	 }
+     }
 
     
     public List<MeetingDTO> findByRoomId(Integer roomId) {

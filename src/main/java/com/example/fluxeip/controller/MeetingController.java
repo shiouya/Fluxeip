@@ -1,6 +1,7 @@
 package com.example.fluxeip.controller;
 
 import com.example.fluxeip.dto.MeetingDTO;
+import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,40 +14,52 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/meetings")
+@CrossOrigin(origins = "*")
+@RequestMapping("/api/meetings")
 public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
-
-    // 查詢所有會議
+    
+    
+    // 查詢有會議
     @GetMapping
-    public List<MeetingDTO> getAllMeetings() {
-        return meetingService.findAll();
+    public ResponseEntity<List<MeetingResponse>> findAll(){
+    	List<MeetingResponse> meeting = meetingService.findAll();
+    	
+    	if(meeting.isEmpty()) {
+    		return ResponseEntity.notFound().build();
+    	}else {
+    		return ResponseEntity.ok(meeting);
+    	}
     }
 
-
-    // 根據 ID 查詢會議
+    
+    // 用Id查會議
     @GetMapping("/{id}")
-    public ResponseEntity<MeetingDTO> getMeetingById(@PathVariable Integer id) {
-        Optional<MeetingDTO> meetingDTO = meetingService.findById(id);
-
-        if (meetingDTO.isPresent()) {
-            return ResponseEntity.ok(meetingDTO.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<MeetingResponse> findById(@PathVariable Integer id){
+    	Optional<MeetingResponse> optMeeting = meetingService.findById(id);
+    	
+    	if(optMeeting.isPresent()) {
+    		return ResponseEntity.ok(optMeeting.get());
+    	}else {
+    		return ResponseEntity.notFound().build();
+    	}
+    	
     }
 
-
+   
+    
+    
+   	// 用roomId查會議
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<MeetingDTO>> getMeetingsByRoomId(@PathVariable Integer roomId) {
+    public ResponseEntity<List<MeetingDTO>> findByRoomId(@PathVariable Integer roomId) {
         List<MeetingDTO> meetings = meetingService.findByRoomId(roomId);
 
-        if (meetings.isEmpty()) {
-            return ResponseEntity.noContent().build(); // **204 No Content**
+        if (!meetings.isEmpty()) {
+        	return ResponseEntity.ok(meetings); 
         } else {
-            return ResponseEntity.ok(meetings); // **200 OK**
+        	return ResponseEntity.noContent().build(); 
         }
     }
 
