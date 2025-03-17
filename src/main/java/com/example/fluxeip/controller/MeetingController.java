@@ -99,6 +99,21 @@ public class MeetingController {
             return ResponseEntity.badRequest().body(new MeetingResponse("刪除失敗，會議不存在"));
         }
     }
+    
+    @GetMapping("/user/{employeeId}")
+    public ResponseEntity<List<MeetingResponse>> getMeetingsByUser(@PathVariable Integer employeeId) {
+        // 取得該員工的會議列表
+        List<MeetingResponse> meetings = meetingService.findByUser(employeeId);
+
+        // 如果會議列表為空，回傳 204 No Content
+        if (meetings.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            // 否則，回傳 200 OK，並附帶會議列表
+            return ResponseEntity.ok(meetings);
+        }
+    }
+
 
 
 }

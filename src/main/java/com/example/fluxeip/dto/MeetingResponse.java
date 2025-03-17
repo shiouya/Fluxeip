@@ -15,8 +15,9 @@ public class MeetingResponse {
 	private String employeeName;
 	private String roomName;
 	private String statusName;
-	private String message; // 可選的錯誤訊息
-
+	private String message; 
+	private LocalDateTime createdAt; 
+	
 	public MeetingResponse(Meeting meeting) {
 		this.id = meeting.getId();
 		this.title = meeting.getTitle();
@@ -26,13 +27,14 @@ public class MeetingResponse {
 		this.employeeName = meeting.getEmployee().getEmployeeName();
 		this.roomName = meeting.getRoom().getRoomName();
 		this.statusName = meeting.getStatus().getStatusName();
+		this.createdAt = meeting.getCreatedAt(); 
 	}
 
 	public MeetingResponse() {
 
 	}
 
-	// 用於回傳錯誤訊息
+	
 	public MeetingResponse(String message) {
 		this.message = message;
 		
