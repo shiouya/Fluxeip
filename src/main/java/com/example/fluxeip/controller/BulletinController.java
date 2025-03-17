@@ -2,6 +2,8 @@ package com.example.fluxeip.controller;
 
 import com.example.fluxeip.model.Bulletin;
 import com.example.fluxeip.repository.BulletinRepository;
+import com.example.fluxeip.service.BulletinService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,9 @@ public class BulletinController {
     @Autowired
     private BulletinRepository bulletinRepository;
 
+    @Autowired
+    private BulletinService bulletinService;
+    
     // 取得所有公告
     @GetMapping
     public List<Bulletin> getAllBulletins() {
@@ -30,9 +35,9 @@ public class BulletinController {
     // 取得單一公告
     @GetMapping("/{id}")
     public ResponseEntity<Bulletin> getBulletinById(@PathVariable Integer id) {
-        Optional<Bulletin> bulletin = bulletinRepository.findById(id);
+        Optional<Bulletin> bulletin = bulletinService.getBulletinById(id); // ✅ 正確：使用實例
         return bulletin.map(ResponseEntity::ok)
-                       .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // 依 statusId 分頁查詢公告
