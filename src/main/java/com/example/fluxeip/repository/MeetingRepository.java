@@ -1,5 +1,6 @@
 package com.example.fluxeip.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,5 +10,7 @@ import com.example.fluxeip.model.Meeting;
 
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Integer> {
-	List<Meeting> findByRoomId(Integer room);
+    boolean existsByRoomIdAndStartTimeBeforeAndEndTimeAfter(Integer roomId, LocalDateTime endTime, LocalDateTime startTime);
+    boolean existsByRoomIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(Integer roomId, LocalDateTime endTime, LocalDateTime startTime, Integer id);
+    List<Meeting> findByRoomId(Integer roomId); // 根據 Room ID 查詢所有會議
 }

@@ -1,6 +1,7 @@
 package com.example.fluxeip.controller;
 
 import com.example.fluxeip.dto.MeetingDTO;
+import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,21 +20,37 @@ public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
+    
+    
+    // 查詢有會議
+    @GetMapping
+    public ResponseEntity<List<MeetingResponse>> findAll(){
+    	List<MeetingResponse> meeting = meetingService.findAll();
+    	
+    	if(meeting.isEmpty()) {
+    		return ResponseEntity.notFound().build();
+    	}else {
+    		return ResponseEntity.ok(meeting);
+    	}
+    }
 
+    
+    // 用Id查會議
+    @GetMapping("/{id}")
+    public ResponseEntity<MeetingResponse> findById(@PathVariable Integer id){
+    	Optional<MeetingResponse> optMeeting = meetingService.findById(id);
+    	
+    	if(optMeeting.isPresent()) {
+    		return ResponseEntity.ok(optMeeting.get());
+    	}else {
+    		return ResponseEntity.notFound().build();
+    	}
+    	
+    }
 
-
-    // 用id查會議
-   @GetMapping("/{id}")
-   public ResponseEntity<MeetingDTO> findById(@PathVariable Integer id){
-	   Optional<MeetingDTO> optional = meetingService.findById(id);
-	   
-	   if(optional.isPresent()) {
-		   return ResponseEntity.ok(optional.get());
-	   }else {
-		   return ResponseEntity.notFound().build();
-	   }   
-   }
    
+    
+    
    	// 用roomId查會議
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<MeetingDTO>> findByRoomId(@PathVariable Integer roomId) {
