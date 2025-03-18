@@ -160,11 +160,13 @@ public class ClockService {
         switch (typeName) {
             case "上班":
                 if (now.isBefore(shiftStartTime.minusHours(1))) return "非上班時間";
+                if (hasClockedIn(attendance)) return "重複打卡";
                 if (now.isAfter(shiftStartTime.plusMinutes(10))) return "遲到";
                 break;
 
             case "下班":
             	if (!hasClockedIn(attendance)) return "非上班時間";
+            	if (hasClockedOut(attendance)) return "重複打卡";
                 if (now.isBefore(shiftEndTime.minusMinutes(10))) return "早退";
                 if (hasUnfinishedFieldWork(attendance)) return "缺外出結束"; // 需完成所有外出結束
                 break;

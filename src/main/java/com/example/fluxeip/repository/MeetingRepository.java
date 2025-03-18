@@ -13,4 +13,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Integer> {
     boolean existsByRoomIdAndStartTimeBeforeAndEndTimeAfter(Integer roomId, LocalDateTime endTime, LocalDateTime startTime);
     boolean existsByRoomIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(Integer roomId, LocalDateTime endTime, LocalDateTime startTime, Integer id);
     List<Meeting> findByRoomId(Integer roomId); // 根據 Room ID 查詢所有會議
+ 
+    List<Meeting> findByEmployeeEmployeeId(Integer employeeId);
+
+    List<Meeting> findAllByOrderByCreatedAtDesc();
+
 }

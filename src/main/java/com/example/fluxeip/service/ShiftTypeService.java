@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fluxeip.dto.ShiftTypeRequest;
+import com.example.fluxeip.dto.ShiftTypeResponse;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.ShiftType;
 import com.example.fluxeip.repository.ShiftTypeRepository;
@@ -25,16 +27,27 @@ public class ShiftTypeService {
 	@Autowired
 	private DepartmentService departmentService;
 
-	public List<ShiftType> findAllShiftType() {
+	public List<ShiftTypeResponse> findAllShiftType() {
 
 		List<ShiftType> allShiftType = shiftTypeRepository.findAll();
 
-		return allShiftType;
+		ArrayList<ShiftTypeResponse> responses = new ArrayList<ShiftTypeResponse>();
+		
+		for(ShiftType shiftType:allShiftType) {
+			responses.add(toResponse(shiftType));
+		}
+		return responses;
 	}
 	
 	public ShiftType findShiftTypeById(Integer shiftTypeId) {
 		Optional<ShiftType> shiftType = shiftTypeRepository.findById(shiftTypeId);
 		return shiftType.orElse(null);
+	}
+	
+	public ShiftTypeResponse findShiftTypeByIdToResponse(Integer shiftTypeId) {
+		Optional<ShiftType> shiftType = shiftTypeRepository.findById(shiftTypeId);
+		
+		return toResponse(shiftType.orElse(null));
 	}
 
 	@Transactional
@@ -109,5 +122,24 @@ public class ShiftTypeService {
 		}
 		
 		return estimatedHours;
+	}
+	
+	private ShiftTypeResponse toResponse(ShiftType shiftType) {
+		
+		if(shiftType!=null) {
+			ShiftTypeResponse shiftTypeResponse = new ShiftTypeResponse();
+			
+			shiftTypeResponse.setShiftTypeId(shiftType.getShiftTypeId());
+			shiftTypeResponse.setShiftName(shiftType.getShiftName());
+			shiftTypeResponse.setDepartmentName(shiftType.getDepartment().getDepartmentName());
+			shiftTypeResponse.setShiftCategory(shiftType.getShiftCategory());
+			shiftTypeResponse.setStartTime(shiftType.getStartTime());
+			shiftTypeResponse.setFinishTime(shiftType.getFinishTime());
+			shiftTypeResponse.setEstimatedHours(shiftType.getEstimatedHours());
+			
+			return shiftTypeResponse;
+		}
+		return null;
+
 	}
 }
