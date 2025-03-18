@@ -146,7 +146,7 @@ public class MeetingService {
 
 		Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
 		Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
-		Optional<Status> optStatus = statusRepository.findById(4); 
+		Optional<Status> optStatus = statusRepository.findById(5); 
 
 		if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
 			 return Optional.of(new MeetingResponse("員工、會議室或狀態不存在"));
