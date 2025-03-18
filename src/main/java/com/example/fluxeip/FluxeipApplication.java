@@ -13,7 +13,6 @@ public class FluxeipApplication {
 		Dotenv dotenv = Dotenv.load();
 		String username = dotenv.get("username.email");
         String password = dotenv.get("password");
-        System.out.println(username);
         System.setProperty("username", username);
         System.setProperty("password", password);
 		SpringApplication.run(FluxeipApplication.class, args);

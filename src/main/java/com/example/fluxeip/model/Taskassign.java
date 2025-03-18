@@ -2,26 +2,36 @@ package com.example.fluxeip.model;
 
 import java.util.Date;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-//@Entity
-//@Table(name = "taskassign")
+@Getter
+@Setter
+@Entity
+@Table(name = "taskassign")
 public class Taskassign {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "task_id")
 	private Integer taskId;
 
 	@ManyToOne
 	@JoinColumn(name = "workprogress_id")
 	private WorkProgess workprogess;
 
+	@Column(name = "task_name")
 	private String taskName;
 
+	@Column(name = "task_content")
 	private String taskContent;
 
 	@ManyToOne
@@ -32,10 +42,13 @@ public class Taskassign {
 	@JoinColumn(name = "reveiew_id")
 	private Employee reveiew;
 
+	@Column(name = "create_date")
 	private Date createDate;
 
+	@Column(name = "expected_finish_date")
 	private Date expectedFinishDate;
 
+	@Column(name = "finish_date")
 	private Date finishDate;
 
 	@ManyToOne
@@ -43,86 +56,6 @@ public class Taskassign {
 	private Status status;
 
 	public Taskassign() {
-	}
-
-	public Integer getTaskId() {
-		return taskId;
-	}
-
-	public void setTaskId(Integer taskId) {
-		this.taskId = taskId;
-	}
-
-	public WorkProgess getWorkprogess() {
-		return workprogess;
-	}
-
-	public void setWorkprogess(WorkProgess workprogess) {
-		this.workprogess = workprogess;
-	}
-
-	public String getTaskName() {
-		return taskName;
-	}
-
-	public void setTaskName(String taskName) {
-		this.taskName = taskName;
-	}
-
-	public String getTaskContent() {
-		return taskContent;
-	}
-
-	public void setTaskContent(String taskContent) {
-		this.taskContent = taskContent;
-	}
-
-	public Employee getAssign() {
-		return assign;
-	}
-
-	public void setAssign(Employee assign) {
-		this.assign = assign;
-	}
-
-	public Employee getReveiew() {
-		return reveiew;
-	}
-
-	public void setReveiew(Employee reveiew) {
-		this.reveiew = reveiew;
-	}
-
-	public Date getCreateDate() {
-		return createDate;
-	}
-
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
-
-	public Date getExpectedFinishDate() {
-		return expectedFinishDate;
-	}
-
-	public void setExpectedFinishDate(Date expectedFinishDate) {
-		this.expectedFinishDate = expectedFinishDate;
-	}
-
-	public Date getFinishDate() {
-		return finishDate;
-	}
-
-	public void setFinishDate(Date finishDate) {
-		this.finishDate = finishDate;
-	}
-
-	public Status getStatus() {
-		return status;
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
 	}
 
 }
