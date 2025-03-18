@@ -77,10 +77,10 @@ public class ScheduleController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<String> updateSchedule(@RequestBody ScheduleRequest request,
+	public ResponseEntity<String> updateSchedule(@RequestParam Integer shiftTypeId,
 			@PathVariable("id") Integer scheduleId) {
 		try {
-			scheduleService.updateScheduleById(scheduleId, request);
+			scheduleService.updateScheduleById(scheduleId, shiftTypeId);
 
 			return ResponseEntity.status(HttpStatus.OK).body("Schedule updated successfully");
 		} catch (Exception e) {
