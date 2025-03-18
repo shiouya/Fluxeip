@@ -1,16 +1,13 @@
 package com.example.fluxeip.controller;
 
-import com.example.fluxeip.dto.MeetingDTO;
+import com.example.fluxeip.dto.MeetingRequest;
 import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -25,12 +22,12 @@ public class MeetingController {
     // 查詢有會議
     @GetMapping
     public ResponseEntity<List<MeetingResponse>> findAll(){
-    	List<MeetingResponse> meeting = meetingService.findAll();
+    	List<MeetingResponse> meetings = meetingService.findAll();
     	
-    	if(meeting.isEmpty()) {
+    	if(meetings.isEmpty()) {
     		return ResponseEntity.notFound().build();
     	}else {
-    		return ResponseEntity.ok(meeting);
+    		return ResponseEntity.ok(meetings);
     	}
     }
 
@@ -38,69 +35,85 @@ public class MeetingController {
     // 用Id查會議
     @GetMapping("/{id}")
     public ResponseEntity<MeetingResponse> findById(@PathVariable Integer id){
-    	Optional<MeetingResponse> optMeeting = meetingService.findById(id);
+    	Optional<MeetingResponse> optMeetings = meetingService.findById(id);
     	
-    	if(optMeeting.isPresent()) {
-    		return ResponseEntity.ok(optMeeting.get());
+    	if(optMeetings.isPresent()) {
+    		return ResponseEntity.ok(optMeetings.get());
     	}else {
     		return ResponseEntity.notFound().build();
     	}
     	
     }
 
-   
-    
-    
-   	// 用roomId查會議
+ // 用roomId查會議
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<MeetingDTO>> findByRoomId(@PathVariable Integer roomId) {
-        List<MeetingDTO> meetings = meetingService.findByRoomId(roomId);
-
-        if (!meetings.isEmpty()) {
-        	return ResponseEntity.ok(meetings); 
-        } else {
-        	return ResponseEntity.noContent().build(); 
-        }
+    public ResponseEntity <List<MeetingResponse>> findByRoomId(@PathVariable Integer roomId){
+    	List<MeetingResponse> meetings = meetingService.findByRoomId(roomId);
+    	
+    	if(!meetings.isEmpty()) {
+    		return ResponseEntity.ok(meetings);
+    	}else {
+    		return ResponseEntity.notFound().build();
+    	}
     }
 
-    // 新增會議
+    // 新增
     @PostMapping
-    public ResponseEntity<MeetingDTO> createMeeting(@RequestBody MeetingDTO meetingDTO) {
-        Optional<MeetingDTO> savedMeeting = meetingService.create(meetingDTO);
-
-        if (savedMeeting.isPresent()) {
-            return ResponseEntity.ok(savedMeeting.get());
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<MeetingResponse> creat(@RequestBody MeetingRequest meetingRequest){
+    	
+    	Optional<MeetingResponse> optmeeting = meetingService.create(meetingRequest);
+    	
+    	if(optmeeting.isPresent()) {
+    		return ResponseEntity.status(201).body(optmeeting.get());
+    	}else {
+    		return ResponseEntity.badRequest().body(new MeetingResponse("會議室時段衝突或不符合規則"));
+    	}
+    			
     }
-
-    // 更新會議
+    
+    // 更新
     @PutMapping("/{id}")
-    public ResponseEntity<MeetingDTO> updateMeeting(@PathVariable Integer id, @RequestBody MeetingDTO meetingDTO) {
-        Optional<MeetingDTO> updatedMeeting = meetingService.update(id, meetingDTO);
-
-        if (updatedMeeting.isPresent()) {
-            return ResponseEntity.ok(updatedMeeting.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<MeetingResponse> update(@PathVariable Integer id,@RequestBody MeetingRequest meetingRequest){
+    	
+    	Optional<MeetingResponse> optmeeting = meetingService.update(id, meetingRequest);
+    	
+    	if(optmeeting.isPresent()) {
+    		 return ResponseEntity.ok(optmeeting.get());
+    	}else {
+    		 return ResponseEntity.badRequest().body(new MeetingResponse("更新失敗，會議不存在或時段衝突"));
+    	}
+    	
     }
-
-
+    
+    
     // 刪除會議
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteMeeting(@PathVariable Integer id) {
+    public ResponseEntity<MeetingResponse> deleteMeeting(@PathVariable Integer id) {
+        
         boolean deleted = meetingService.delete(id);
-
-        Map<String, String> response = new HashMap<>();
+      
         if (deleted) {
-            response.put("message", "成功刪除會議 ID: " + id);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new MeetingResponse("成功刪除會議"));
         } else {
-            response.put("message", "找不到 ID 為 " + id + " 的會議");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            
+            return ResponseEntity.badRequest().body(new MeetingResponse("刪除失敗，會議不存在"));
         }
     }
+    
+    @GetMapping("/user/{employeeId}")
+    public ResponseEntity<List<MeetingResponse>> getMeetingsByUser(@PathVariable Integer employeeId) {
+        // 取得該員工的會議列表
+        List<MeetingResponse> meetings = meetingService.findByUser(employeeId);
+
+        // 如果會議列表為空，回傳 204 No Content
+        if (meetings.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            // 否則，回傳 200 OK，並附帶會議列表
+            return ResponseEntity.ok(meetings);
+        }
+    }
+
+
 
 }
