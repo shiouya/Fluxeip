@@ -1,5 +1,7 @@
 package com.example.fluxeip.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,5 +35,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
 	// 根據職位查詢符合條件的員工總數
 	long countByPositionAndStatus(Position position, Status status);
+	
+	List<Employee> findByDepartmentDepartmentId(Integer departmentId);
 
 }

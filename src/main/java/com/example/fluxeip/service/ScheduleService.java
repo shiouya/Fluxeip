@@ -17,6 +17,7 @@ import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Schedule;
 import com.example.fluxeip.model.ShiftType;
+import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.ScheduleRepository;
 
 @Service
@@ -30,6 +31,8 @@ public class ScheduleService {
 	private EmployeeService employeeService;
 	@Autowired
 	private ShiftTypeService shiftTypeService;
+	@Autowired
+	private EmployeeRepository employeeRepository;
 
 	public Schedule findScheduleById(Integer schedulId) {
 		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
@@ -49,6 +52,20 @@ public class ScheduleService {
 
 			return scheduleResponse;
 		}
+	}
+	
+	public List<ScheduleResponse> findScheduleResponseByEmpId(Integer empId) {
+		List<Schedule> schedules = scheduleRepository.findByEmployeeEmployeeId(empId);
+		
+		ArrayList<ScheduleResponse> responses = new ArrayList<ScheduleResponse>();
+
+		for (Schedule schedule : schedules) {
+
+			ScheduleResponse scheduleResponse = changeScheduleIntoResponse(schedule);
+			responses.add(scheduleResponse);
+
+		}
+		return responses;
 	}
 
 	public List<ScheduleResponse> findSchedulesByEmployeeAndDate(Integer empId, LocalDate date) {
@@ -224,6 +241,11 @@ public class ScheduleService {
 
 	private List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
 		return scheduleRepository.findByEmployeeEmployeeIdAndScheduleDateBetween(employeeId, startDate, endDate);
+	}
+	
+	
+	public List<Employee> findAllEmpByDepartmentId(Integer departmentId){
+		return employeeRepository.findByDepartmentDepartmentId(departmentId);
 	}
 
 }
