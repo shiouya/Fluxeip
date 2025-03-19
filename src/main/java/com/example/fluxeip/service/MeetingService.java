@@ -128,30 +128,37 @@ public class MeetingService {
 	// 檢查是否有重疊的會議（更新用 不含自己）
 	private boolean isOverlappingExceptSelf(Integer meetingId, Integer roomId, LocalDateTime startTime,
 			LocalDateTime endTime) {
-		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(roomId, startTime, startTime,
+		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(roomId, startTime, endTime,
 				meetingId);
 	}
+	
+	
+	
+	
+	
+	
+	
 
 	// 新增
 	public Optional<MeetingResponse> create(MeetingRequest meetingRequest) {
 
-		if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-			return Optional.of(new MeetingResponse("會議時間不合法（跨天或不在上班時間內）"));
-		}
+		 // **檢查時間是否合法（不能跨天、必須在 08:00-18:00）**
+	    if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+	        return Optional.empty(); // **回傳 empty，表示時間不合法**
+	    }
 
-
-		if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-			 return Optional.of(new MeetingResponse("會議室時段衝突"));
-		}
+	    // **檢查是否與其他會議時間衝突**
+	    if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+	        return Optional.empty(); // **回傳 empty，表示時間衝突**
+	    }
 
 		Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
 		Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
 		Optional<Status> optStatus = statusRepository.findById(5); 
 
-		if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
-			 return Optional.of(new MeetingResponse("員工、會議室或狀態不存在"));
-		}
-
+		  if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
+		        return Optional.empty(); // **回傳 empty，表示參數錯誤**
+		    }
 		Meeting meeting = new Meeting();
 
 		meeting.setTitle(meetingRequest.getTitle());
