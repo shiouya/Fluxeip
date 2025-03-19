@@ -1,5 +1,7 @@
 package com.example.fluxeip.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +12,8 @@ import com.example.fluxeip.model.Position;
 import com.example.fluxeip.model.Status;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+
+	List<Employee> findByDepartment(Department department);
 
 	Page<Employee> findByStatus(Status status, Pageable pageable);
 

@@ -2,10 +2,12 @@ package com.example.fluxeip.controller;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +34,7 @@ import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
 import com.example.fluxeip.service.StatusService;
 
-
+@CrossOrigin
 @RestController
 public class EmployeeController {
 	
@@ -57,7 +59,6 @@ public class EmployeeController {
 	@Autowired
 	private StatusService staSer;
 
-//	@CrossOrigin
 	@PostMapping("/employee/find")
 	public EmployeePageResponse getEmployeesPage(@RequestBody EmployeePageRequest page) {
 		EmployeePageResponse empPage = new EmployeePageResponse();
@@ -192,6 +193,14 @@ public class EmployeeController {
 		empRep.save(employee);
 
 		return true;
+	}
+
+	@GetMapping("/employee/find/department/{dep}")
+	public List<Employee> employeeFindDepartment(@PathVariable String dep) {
+		Department department = depSer.findByName(dep);
+		List<Employee> employeeFindByDepartment = employeeService.employeeFindByDepartment(department);
+
+		return employeeFindByDepartment;
 	}
 
 }

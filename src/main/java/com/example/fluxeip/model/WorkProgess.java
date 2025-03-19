@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,10 +42,12 @@ public class WorkProgess {
 	@Column(name = "finish_date")
 	private Date finishDate;
 
+//	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "supervisor_id")
 	private Employee supervisor;
 
+	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "status_id")
 	private Status status;

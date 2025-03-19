@@ -1,5 +1,6 @@
 package com.example.fluxeip.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,10 @@ public class EmployeeService {
 	public Page<Employee> getEmployeesByPosition(Position position, Status status, int page, int size) {
 		PageRequest pageable = PageRequest.of(page, size);
 		return employeeRepository.findByPositionAndStatus(position, status, pageable);
+	}
+
+	public List<Employee> employeeFindByDepartment(Department dep) {
+		return employeeRepository.findByDepartment(dep);
 	}
 
 }
