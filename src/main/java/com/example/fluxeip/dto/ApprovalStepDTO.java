@@ -14,6 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ApprovalStepDTO {
 //    private Integer id;
+	private Integer stepId;
 	private Integer leaveRequestId;
 	private Integer requestEmployeeId;
     private String requestEmployeeName;

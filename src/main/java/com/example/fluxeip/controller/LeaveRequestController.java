@@ -119,6 +119,7 @@ public class LeaveRequestController {
             LeaveRequest request = (LeaveRequest) leaveRequest;
             approvalFlowService.startApprovalProcess(request);  // 呼叫簽核服務啟動流程
         } catch (Exception e) {
+        	System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("啟動簽核流程時發生錯誤: " + e.getMessage());
         }
         

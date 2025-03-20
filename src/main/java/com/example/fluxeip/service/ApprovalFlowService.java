@@ -1,6 +1,7 @@
 package com.example.fluxeip.service;
 
 import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -48,6 +49,7 @@ public class ApprovalFlowService {
 
         // 將 ApprovalStep 轉換為 ApprovalStepDTO
         return pendingSteps.stream().map(step -> new ApprovalStepDTO(
+        		step.getId(),
         		step.getLeaveRequest().getId(),
                 step.getLeaveRequest().getEmployee().getEmployeeId(),
                 step.getLeaveRequest().getEmployee().getEmployeeName(),
@@ -69,27 +71,22 @@ public class ApprovalFlowService {
     }
 
     public void startApprovalProcess(LeaveRequest leaveRequest) {
-    	System.out.println("hahaha");
         // 取得員工的職位
         Integer positionId = leaveRequest.getEmployee().getPosition().getPositionId();
-        System.out.println("positionId"+positionId);
         Integer requestTypeId = leaveRequest.getLeaveType().getId();
-        System.out.println("requestTypeId"+requestTypeId);
         // 查詢對應的第一步驟簽核流程
         Optional<ApprovalFlow> firstStepFlowOpt = approvalFlowRepository
             .findApprovalFlow(positionId, requestTypeId, 1);
-        System.out.println(firstStepFlowOpt.get().getFlowName());
         
         if (!firstStepFlowOpt.isPresent()) {
             throw new RuntimeException("未找到對應的簽核流程");
         }
         ApprovalFlow firstStepFlow = firstStepFlowOpt.get();
 
-        
 
         // 找到該部門中符合該職位的第一位簽核人
         Optional<Employee> approverOpt = employeeRepository
-            .findByPositionAndDepartment(firstStepFlow.getApproverPosition(), leaveRequest.getEmployee().getDepartment())
+            .findTopByPositionAndDepartmentAndStatus(firstStepFlow.getApproverPosition(), leaveRequest.getEmployee().getDepartment(),statusRepository.findByStatusName("在職").get())
             .stream()
             .findFirst();
         System.out.println(approverOpt.get().getEmployeeName());
@@ -104,71 +101,76 @@ public class ApprovalFlowService {
         approvalStep.setLeaveRequest(leaveRequest);
         approvalStep.setCurrentStep(1);
         approvalStep.setApprover(approver);
-        approvalStep.setStatus(statusRepository.findByStatusName("待審核").orElse(null));
+        approvalStep.setStatus(statusRepository.findByStatusNameAndStatusType("待審核","表單狀態").orElse(null));
         approvalStep.setUpdatedAt(LocalDateTime.now());
 
         // 儲存簽核步驟
         approvalStepRepository.save(approvalStep);
-        System.out.println("hehehe");
     }
-
     
     
-    public String approveLeaveRequest(Integer approvalStepId, Integer approverUserId, Integer statusId, String comment) {
-        Optional<ApprovalStep> stepOpt = approvalStepRepository.findById(approvalStepId);
-        if (!stepOpt.isPresent()) {
-            return "簽核步驟不存在";
-        }
-        ApprovalStep step = stepOpt.get();
-
+    public String approveLeaveRequest(Integer approvalStepId, Integer approverUserId, String statusName, String comment) {
+        ApprovalStep step = approvalStepRepository.findById(approvalStepId)
+                .orElseThrow(() -> new RuntimeException("簽核步驟不存在"));
         // 檢查是否是正確的審核人
         if (!step.getApprover().getEmployeeId().equals(approverUserId)) {
             return "你沒有權限審核這個請假單";
         }
 
         // 更新當前審核步驟狀態
-        step.setStatus(statusRepository.findById(statusId).orElse(null));
+        step.setStatus(statusRepository.findByStatusNameAndStatusType(statusName,"表單狀態").orElseThrow(() -> new RuntimeException("狀態不存在")));
         step.setComment(comment);
         step.setUpdatedAt(LocalDateTime.now());
         approvalStepRepository.save(step);
 
-        // 透過 `ApprovalFlowRepository` 查找下一個審核步驟 
+        // **✅ 如果否決，直接更新請假單狀態**
+        if ("未核准".equals(step.getStatus().getStatusName())) {
+            LeaveRequest leaveRequest = step.getLeaveRequest();
+            leaveRequest.setStatus(statusRepository.findByStatusNameAndStatusType("未核准","表單狀態")
+                    .orElseThrow(() -> new RuntimeException("狀態不存在")));
+            
+            leaveRequestRepository.save(leaveRequest);
+            return "已否決請假單";
+        }
+
+        // **✅ 否則進入「核准」流程**
         ApprovalFlow currentFlow = step.getFlow();
         Optional<ApprovalFlow> nextFlowOpt = approvalFlowRepository.findApprovalFlow(
-            step.getFlow().getPosition().getPositionId(), 
-            step.getFlow().getRequestType().getId(), 
+            currentFlow.getPosition().getPositionId(), 
+            currentFlow.getRequestType().getId(), 
             currentFlow.getStepOrder() + 1
         );
 
         if (nextFlowOpt.isPresent()) {
             // 若有下一步驟，新增下一個 `ApprovalStep`
+        	LeaveRequest leaveRequest = step.getLeaveRequest();
+            leaveRequest.setStatus(statusRepository.findByStatusNameAndStatusType("審核中","表單狀態").orElseThrow(() -> new RuntimeException("狀態不存在")));
+            leaveRequestRepository.save(leaveRequest);
             ApprovalFlow nextFlow = nextFlowOpt.get();
-            Optional<Employee> nextApproverOpt = employeeRepository
-                    .findByPositionAndDepartment(nextFlow.getApproverPosition(), step.getApprover().getDepartment())
-                    .stream()
-                    .findFirst(); // 取第一位符合條件的員工
-            if (!nextApproverOpt.isPresent()) {
-                return "找不到該部門的審核人，請確認設定";
-            }
-            Employee nextApprover = nextApproverOpt.get();
+            Employee nextApprover = employeeRepository
+                    .findTopByPositionAndDepartmentAndStatus(nextFlow.getApproverPosition(), step.getApprover().getDepartment(),statusRepository.findByStatusName("在職").get())
+                    .orElseThrow(() -> new RuntimeException("找不到該部門的審核人，請確認設定"));
+
             ApprovalStep nextStep = new ApprovalStep();
             nextStep.setFlow(nextFlow);
             nextStep.setLeaveRequest(step.getLeaveRequest());
             nextStep.setCurrentStep(nextFlow.getStepOrder());
             nextStep.setApprover(nextApprover);
-            nextStep.setStatus(statusRepository.findByStatusName("待審核").get());
+            nextStep.setStatus(statusRepository.findByStatusNameAndStatusType("待審核","表單狀態").orElseThrow(() -> new RuntimeException("狀態不存在")));
             nextStep.setUpdatedAt(LocalDateTime.now());
 
             approvalStepRepository.save(nextStep);
         } else {
             // 若沒有下一步，代表簽核完成，更新請假單狀態
             LeaveRequest leaveRequest = step.getLeaveRequest();
-            leaveRequest.setStatus(statusRepository.findByStatusName("核准").get());
+            leaveRequest.setStatus(statusRepository.findByStatusNameAndStatusType("已核決","表單狀態").orElseThrow(() -> new RuntimeException("狀態不存在")));
             leaveRequestRepository.save(leaveRequest);
         }
 
         return "簽核成功";
     }
+
+
 
 }
 

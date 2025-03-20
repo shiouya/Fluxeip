@@ -16,10 +16,13 @@ public class ApprovalService {
     private ApprovalStepRepository approvalStepRepository;
 
     @Autowired
-    private EmployeeApprovalFlowRepository employeeApprovalFlowRepository;
+    private EmployeeApprovalFlowRepository employeeApprovalFlowRepository; 
     
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
+    
+    @Autowired
+    private StatusRepository statusRepository;
 
     // 取得某類請求的簽核流程
     public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
@@ -41,16 +44,68 @@ public class ApprovalService {
         return approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
     }
 
-    // 更新簽核狀態
-    public ApprovalStep updateApprovalStep(Integer stepId, Integer statusId, String comment) {
-        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);
-        if (optionalStep.isPresent()) {
-            ApprovalStep step = optionalStep.get();
-            step.setStatus(new Status(statusId, statusId == 2 ? "Approved" : "Rejected","all_approval"));
-            step.setComment(comment);
-            return approvalStepRepository.save(step);
-        } 
-        return null;  
-    }
+//    // 更新簽核狀態
+//    public ApprovalStep updateApprovalStep(Integer stepId, Integer statusId, String comment) {
+//        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);
+//        if (optionalStep.isPresent()) {
+//            ApprovalStep step = optionalStep.get();
+//            step.setStatus(new Status(statusId, statusId == 2 ? "Approved" : "Rejected","all_approval"));
+//            step.setComment(comment);
+//            return approvalStepRepository.save(step);
+//        } 
+//        return null;  
+//    }
+    
+//    public boolean approveStep(Integer stepId, String comment) {
+//        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);
+//        if (optionalStep.isPresent()) {
+//            ApprovalStep step = optionalStep.get();
+//            step.setStatus("已核准");
+//            step.setComment(comment);
+//            approvalStepRepository.save(step);
+//
+//            // 從 ApprovalFlow 中取得下一個步驟
+//            ApprovalFlow nextFlowStep = approvalFlowRepository.findNextFlowStep(step.getFlow().getNextStep().getId());
+//            if (nextFlowStep != null) {
+//                // 建立新的 ApprovalStep
+//                ApprovalStep nextStep = new ApprovalStep();
+//                nextStep.setLeaveRequest(step.getLeaveRequest());
+//                nextStep.setFlow(step.getFlow());
+//                nextStep.setCurrentStep(nextFlowStep.getStepOrder());
+//                nextStep.setApprover(nextFlowStep.getApproverPosition()); // 指定下一個審核人
+//                nextStep.setStatus("待審核");
+//                approvalStepRepository.save(nextStep);
+//            } else {
+//                // 如果沒有下一步，則更新請假表單狀態為「已核決」
+//                LeaveRequest leaveRequest = leaveRequestRepository.findById(step.getRequestId()).orElse(null);
+//                if (leaveRequest != null) {
+//                    leaveRequest.setStatus("已核決");
+//                    leaveRequestRepository.save(leaveRequest);
+//                }
+//            }
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//
+//    public boolean rejectStep(Integer stepId, String comment) {
+//        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);
+//        if (optionalStep.isPresent()) {
+//            ApprovalStep step = optionalStep.get();
+//            step.setStatus(statusRepository.findByStatusName("未核准").get());
+//            step.setComment(comment);
+//            approvalStepRepository.save(step);
+//
+//            // 更新請假表單狀態為「未核准」
+//            LeaveRequest leaveRequest = leaveRequestRepository.findById(step.getLeaveRequest().getId()).orElse(null);
+//            if (leaveRequest != null) {
+//                leaveRequest.setStatus(statusRepository.findByStatusName("未核准").get());
+//                leaveRequestRepository.save(leaveRequest);
+//            }
+//            return true;
+//        }
+//        return false;
+//    }
 }
 

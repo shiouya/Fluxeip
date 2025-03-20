@@ -44,13 +44,23 @@ public class ApprovalController {
         return ResponseEntity.ok(steps);
     }
 
-    // 更新簽核狀態
-    @PutMapping("/step/{stepId}")
-    public ResponseEntity<?> updateApprovalStep(@PathVariable Integer stepId, @RequestParam Integer statusId, @RequestParam String comment) {
-        ApprovalStep step = approvalService.updateApprovalStep(stepId, statusId, comment);
-        return step != null ? ResponseEntity.ok(step) : ResponseEntity.badRequest().body("簽核步驟不存在");
+    @PutMapping("/step/{stepId}/review")
+    public ResponseEntity<String> approveOrRejectStep(
+            @PathVariable Integer stepId,
+            @RequestParam Integer approverId,
+            @RequestParam String status,
+            @RequestParam(required = false) String comment) {
+        
+        String result = approvalFlowService.approveLeaveRequest(stepId, approverId, status, comment);
+        
+        if ("簽核成功".equals(result)) {
+            return ResponseEntity.ok(result);
+        }else if("已否決請假單".equals(result)){
+        	return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.badRequest().body(result);
+        }
     }
-    
     @Autowired
     private ApprovalFlowService approvalFlowService;
 

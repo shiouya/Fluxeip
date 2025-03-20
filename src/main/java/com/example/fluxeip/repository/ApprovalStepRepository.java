@@ -19,4 +19,7 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Inte
            "WHERE a.approver.employeeId = :approverId " +
            "AND a.status.statusName = :status")
     List<ApprovalStep> findPendingApprovalSteps(@Param("approverId") Integer approverId, @Param("status") String status);
+    
+//    @Query("SELECT s FROM ApprovalStep s WHERE s.requestId = :requestId AND s.stepOrder > :currentStepOrder ORDER BY s.stepOrder ASC")
+//    ApprovalStep findNextApprovalStep(@Param("requestId") Integer requestId, @Param("currentStepOrder") Integer currentStepOrder);
 }

@@ -22,6 +22,7 @@ public interface ApprovalFlowRepository extends JpaRepository<ApprovalFlow, Inte
         @Param("requestTypeId") Integer requestTypeId, 
         @Param("stepOrder") Integer stepOrder
     );
+    
 }
 
 
