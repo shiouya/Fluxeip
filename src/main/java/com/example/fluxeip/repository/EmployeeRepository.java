@@ -13,6 +13,8 @@ import com.example.fluxeip.model.Status;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
+	Employee findByEmployeeName(String employeeName);
+	
 	List<Employee> findByDepartment(Department department);
 
 	Page<Employee> findByStatus(Status status, Pageable pageable);
