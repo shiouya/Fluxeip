@@ -11,4 +11,7 @@ import java.util.List;
 @Repository
 public interface SalarySettingRepository extends JpaRepository<SalarySetting, Integer>{
 	SalarySetting findByEmployee(Employee employee);
+	
+    // 檢查某位員工是否已有薪資設定
+    boolean existsByEmployeeEmployeeId(Integer employeeId);
 }

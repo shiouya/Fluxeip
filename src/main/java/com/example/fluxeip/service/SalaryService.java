@@ -53,7 +53,44 @@ public class SalaryService {
 
 		SalarySetting salary = salaryDefaultSettingRequsetToObject(setting);
 
-		settingRepository.save(salary);
+		boolean exist = settingRepository.existsByEmployeeEmployeeId(setting.getEmployeeID());
+		
+		if(exist) {
+			throw new RuntimeException("該員工已設定薪資");
+		}else {			
+			settingRepository.save(salary);
+		}
+	}
+	
+	@Transactional
+	public void updateSalarySetting(Integer empId,SalaryDefaultSetting setting) {
+		
+		Employee employee = employeeService.find(empId);
+		SalarySetting existSalary = settingRepository.findByEmployee(employee);
+		
+		if(existSalary!=null) {
+			if(existSalary.getSalaryId()==setting.getSalaryId()) {
+				SalarySetting salary = salaryDefaultSettingRequsetToObject(setting);
+				
+				settingRepository.save(salary);
+			}else {
+				throw new RuntimeException("ID錯誤");
+			}
+		}else {
+			throw new RuntimeException("員工沒有設定薪資");
+		}
+
+	}
+	
+	@Transactional
+	public boolean deleteSalarySettingByEmpId(Integer empId){
+		Employee employee = employeeService.find(empId);
+		
+		SalarySetting setting = settingRepository.findByEmployee(employee);
+		
+		setting.setEmployee(null);
+		settingRepository.delete(setting);
+		return true;
 	}
 
 	public Integer caculateHourlyWage(Integer monthlySalary) {

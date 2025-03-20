@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,5 +66,37 @@ public class SalaryController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(e.getMessage());
 		}
+	}
+	
+	@PostMapping("/{id}")
+	public ResponseEntity<?> updateSalarySetting(@PathVariable("id") Integer empId,@RequestBody SalaryDefaultSetting salaryDefaultSetting){
+		
+		try {
+			salaryService.updateSalarySetting(empId, salaryDefaultSetting);
+			return ResponseEntity.status(HttpStatus.CREATED).body("Updated successfully");
+
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?> deleteSalarySetting(@PathVariable("id") Integer empId){
+		
+		boolean delete = salaryService.deleteSalarySettingByEmpId(empId);
+		
+		Map<String, String> response = new HashMap<>();
+		if (delete) {
+			response.put("message", "success");
+			response.put("success", "true");
+
+			return ResponseEntity.ok(response); // 200 OK，帶回訊息
+		} else {
+			response.put("message", "false");
+			response.put("success", "false");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 404 Not Found
+		}
+		
 	}
 }
