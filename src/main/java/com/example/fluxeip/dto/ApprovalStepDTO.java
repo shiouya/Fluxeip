@@ -3,7 +3,6 @@ package com.example.fluxeip.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,11 +10,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class LeaveRequestResponseDTO {
+@AllArgsConstructor
+public class ApprovalStepDTO {
+//    private Integer id;
 	private Integer leaveRequestId;
-	private String employeeName;
+	private Integer requestEmployeeId;
+    private String requestEmployeeName;
     private String leaveType; 
     private LocalDateTime startDatetime;
     private LocalDateTime endDatetime;
@@ -24,5 +25,11 @@ public class LeaveRequestResponseDTO {
     private LocalDateTime submittedAt;
     private String attachmentName;
     private String attachmentPath;
-    private String status;    
+    private Integer approverId;
+    private String approverName;
+    private String status;
+    private Integer currentStep;
+    private String comment;
+    private LocalDateTime updatedAt;
+    
 }

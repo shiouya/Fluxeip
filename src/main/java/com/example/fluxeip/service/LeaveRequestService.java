@@ -36,6 +36,9 @@ public class LeaveRequestService {
     
     @Autowired
     private FileService fileService;
+    
+    @Autowired
+    private ApprovalFlowService approvalFlowService;
 
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRequestRepository.findAll();
@@ -104,7 +107,7 @@ public class LeaveRequestService {
         }
         Status status = statusOpt.get();
     	
-
+        // 創建請假申請
         LeaveRequest leaveRequest = new LeaveRequest();
         leaveRequest.setEmployee(employee);
         leaveRequest.setLeaveType(leaveType);
@@ -115,8 +118,10 @@ public class LeaveRequestService {
         leaveRequest.setStatus(status);
         leaveRequest.setSubmittedAt(LocalDateTime.now());
         leaveRequest.setAttachments(dto.getAttachments()); // 附件路徑
-
-        return leaveRequestRepository.save(leaveRequest); 
+        LeaveRequest savedLeaveRequest = leaveRequestRepository.save(leaveRequest);
+        // **初始化第一個簽核步驟**
+//        approvalFlowService.startApprovalProcess(savedLeaveRequest);
+        return savedLeaveRequest; 
     }
 
 

@@ -1,13 +1,22 @@
 package com.example.fluxeip.controller;
 
-import com.example.fluxeip.model.ApprovalStep;
-import com.example.fluxeip.model.Employee;
-import com.example.fluxeip.service.ApprovalService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.example.fluxeip.dto.ApprovalStepDTO;
+import com.example.fluxeip.model.ApprovalStep;
+import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.service.ApprovalFlowService;
+import com.example.fluxeip.service.ApprovalService;
 
 @RestController
 @RequestMapping("/api/approval")
@@ -40,6 +49,20 @@ public class ApprovalController {
     public ResponseEntity<?> updateApprovalStep(@PathVariable Integer stepId, @RequestParam Integer statusId, @RequestParam String comment) {
         ApprovalStep step = approvalService.updateApprovalStep(stepId, statusId, comment);
         return step != null ? ResponseEntity.ok(step) : ResponseEntity.badRequest().body("簽核步驟不存在");
+    }
+    
+    @Autowired
+    private ApprovalFlowService approvalFlowService;
+
+    // 查詢當前審核人待審核的請假單
+    @GetMapping("/pending/{approverId}")
+    public ResponseEntity<List<ApprovalStepDTO>> getPendingApprovals(@PathVariable Integer approverId) {
+        List<ApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingApprovalSteps(approverId);
+        if (pendingApprovals.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(pendingApprovals);
+        }
     }
 }
 

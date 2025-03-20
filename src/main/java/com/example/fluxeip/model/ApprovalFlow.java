@@ -16,13 +16,19 @@ public class ApprovalFlow {
 
     @Column(name = "flow_name", nullable = false)
     private String flowName;
-
-    @Column(name = "request_type_id", nullable = false)
-    private Integer requestTypeId;
+    
+    @ManyToOne
+    @JoinColumn(name = "request_type_id", nullable = false)
+    private Type requestType; 
+    
+    @ManyToOne
+    @JoinColumn(name = "position_id", nullable = false)
+    private Position position;
 
     @Column(name = "step_order", nullable = false)
     private Integer stepOrder;
 
+    
     @ManyToOne
     @JoinColumn(name = "approver_position_id", nullable = false)
     private Position approverPosition;

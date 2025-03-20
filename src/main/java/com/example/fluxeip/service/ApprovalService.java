@@ -17,16 +17,19 @@ public class ApprovalService {
 
     @Autowired
     private EmployeeApprovalFlowRepository employeeApprovalFlowRepository;
+    
+    @Autowired
+    private LeaveRequestRepository leaveRequestRepository;
 
     // 取得某類請求的簽核流程
     public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
-        return approvalFlowRepository.findByRequestTypeIdOrderByStepOrderAsc(requestTypeId);
+        return approvalFlowRepository.findByRequestTypeId(requestTypeId);
     }
 
     // 建立新的簽核步驟
     public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
         ApprovalStep step = new ApprovalStep();
-        step.setRequestId(requestId);
+        step.setLeaveRequest(leaveRequestRepository.findById(requestId).get());
         step.setFlow(approvalFlowRepository.findById(flowId).orElseThrow());
         step.setApprover(approver);
         step.setStatus(new Status(1, "Pending","all_approval"));
@@ -46,8 +49,8 @@ public class ApprovalService {
             step.setStatus(new Status(statusId, statusId == 2 ? "Approved" : "Rejected","all_approval"));
             step.setComment(comment);
             return approvalStepRepository.save(step);
-        }
-        return null; 
+        } 
+        return null;  
     }
 }
 

@@ -1,5 +1,6 @@
 package com.example.fluxeip.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -36,7 +37,7 @@ public class LeaveRequest {
     private LocalDateTime endDatetime;
 
     @Column(name = "leave_hours", nullable = false)
-    private Integer leaveHours;
+    private BigDecimal leaveHours;
 
     @Column(name = "reason")
     private String reason;
