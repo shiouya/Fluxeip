@@ -260,7 +260,37 @@ public class MeetingService {
 
 	    return meetingResponses;
 	}
+	
+	
+	//查會議室當天預約情況
+	public List<MeetingResponse> findReserve(Integer roomId ,LocalDateTime date){
+		
+		if(roomId == null || date == null) {
+			return new ArrayList<>();
+		}
+		
+		LocalDateTime startOfDay = date.withHour(8).withMinute(0).withSecond(0);
+		LocalDateTime endOfDay = date.withHour(18).withMinute(0).withSecond(0);
+		
+		
+		
+		List<Meeting> meetings = meetingRepository.findByRoomIdAndStartTimeBetween(roomId, startOfDay, endOfDay);
+		
+		if(meetings.isEmpty()) {
+			return new ArrayList<>();
+		}
+		
+		
+		List<MeetingResponse> meetingResponses = new ArrayList<>();
 
+		for (Meeting meeting : meetings) {
+			meetingResponses.add(new MeetingResponse(meeting));
+		}
+		return meetingResponses;
+		
+	
+		
+	}
 	
 	
 	
