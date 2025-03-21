@@ -3,6 +3,7 @@ package com.example.fluxeip.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
@@ -10,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.fluxeip.dto.LeaveRequestRequest;
 import com.example.fluxeip.dto.LeaveRequestResponseDTO;
 import com.example.fluxeip.model.LeaveRequest;
+import com.example.fluxeip.service.ApprovalFlowService;
 import com.example.fluxeip.service.FileService;
 import com.example.fluxeip.service.LeaveRequestService;
 
@@ -45,6 +46,9 @@ public class LeaveRequestController {
     
     @Autowired
     private FileService fileService;
+    
+    @Autowired
+    private ApprovalFlowService approvalFlowService;  // 注入簽核流程 Service
     
     private static final String ATTACHMENT_BASE_PATH = "/uploads/attachments/";
 
@@ -81,7 +85,7 @@ public class LeaveRequestController {
             @RequestParam("leaveTypeId") Integer leaveTypeId,
             @RequestParam("startDatetime") String startDatetime,
             @RequestParam("endDatetime") String endDatetime,
-            @RequestParam("leaveHours") Integer leaveHours,
+            @RequestParam("leaveHours") BigDecimal leaveHours,
             @RequestParam("statusId") Integer statusId,
             @RequestParam("reason") String reason,
             @RequestParam(value = "attachments", required = false) MultipartFile attachments) {
@@ -108,6 +112,17 @@ public class LeaveRequestController {
         if (leaveRequest instanceof String) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(leaveRequest);
         }
+        
+        
+        // 啟動請假單的簽核流程
+        try {
+            LeaveRequest request = (LeaveRequest) leaveRequest;
+            approvalFlowService.startApprovalProcess(request);  // 呼叫簽核服務啟動流程
+        } catch (Exception e) {
+        	System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("啟動簽核流程時發生錯誤: " + e.getMessage());
+        }
+        
         return ResponseEntity.ok(leaveRequest);
     }
 

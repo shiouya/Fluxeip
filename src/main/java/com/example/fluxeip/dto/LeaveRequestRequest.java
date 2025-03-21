@@ -1,5 +1,6 @@
 package com.example.fluxeip.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
@@ -17,7 +18,7 @@ public class LeaveRequestRequest {
 	private Integer leaveTypeId;
 	private LocalDateTime startDatetime;
 	private LocalDateTime endDatetime;
-	private Integer leaveHours;
+	private BigDecimal leaveHours;
 	private String reason;
 	private Integer statusId;
 	private String attachments;

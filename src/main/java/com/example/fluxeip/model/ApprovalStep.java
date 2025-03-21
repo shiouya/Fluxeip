@@ -17,8 +17,9 @@ public class ApprovalStep {
     @JoinColumn(name = "flow_id", nullable = false)
     private ApprovalFlow flow;
 
-    @Column(name = "request_id", nullable = false)
-    private Integer requestId;
+    @ManyToOne
+    @JoinColumn(name = "request_id", nullable = false)
+    private LeaveRequest leaveRequest;
 
     @Column(name = "current_step", nullable = false)
     private Integer currentStep;
@@ -36,4 +37,5 @@ public class ApprovalStep {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
 }
