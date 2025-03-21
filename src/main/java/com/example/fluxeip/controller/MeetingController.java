@@ -131,7 +131,19 @@ public class MeetingController {
         return ResponseEntity.ok(meetings);
     }
     
- 
+    @PutMapping("/{meetingId}/approve")
+    public ResponseEntity<MeetingResponse> approveMeeting(
+        @PathVariable Integer meetingId,
+        @RequestParam Integer employeeId, 
+        @RequestParam boolean isApproved
+    ) {
+        Optional<MeetingResponse> optMeeting = meetingService.approveMeeting(meetingId, employeeId, isApproved);
+        return optMeeting.map(ResponseEntity::ok)
+                         .orElseGet(() -> ResponseEntity.badRequest().body(new MeetingResponse("審核失敗")));
+    }
 
+    
+    
+    
 
 }
