@@ -1,6 +1,7 @@
 package com.example.fluxeip.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,8 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Inte
            "AND a.status.statusName = :status")
     List<ApprovalStep> findPendingApprovalSteps(@Param("approverId") Integer approverId, @Param("status") String status);
     
-//    @Query("SELECT s FROM ApprovalStep s WHERE s.requestId = :requestId AND s.stepOrder > :currentStepOrder ORDER BY s.stepOrder ASC")
-//    ApprovalStep findNextApprovalStep(@Param("requestId") Integer requestId, @Param("currentStepOrder") Integer currentStepOrder);
+    
+    
+    @Query("SELECT a FROM ApprovalStep a WHERE a.leaveRequest.id = :requestId ORDER BY a.currentStep ASC")
+    List<ApprovalStep> findApprovalStepByLeaveRequestId(@Param("requestId") Integer requestId);
 }

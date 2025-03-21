@@ -1,11 +1,16 @@
 package com.example.fluxeip.service;
 
+import com.example.fluxeip.dto.ApprovalStepDTO;
+import com.example.fluxeip.dto.ApprovalStepResponseDTO;
 import com.example.fluxeip.model.*;
 import com.example.fluxeip.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ApprovalService {
@@ -39,11 +44,27 @@ public class ApprovalService {
         return approvalStepRepository.save(step);
     }
 
-    // 取得申請單目前的簽核步驟
-    public List<ApprovalStep> getApprovalStepsByRequestId(Integer requestId) {
-        return approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
-    }
 
+    
+    // 查詢員工的請假單審核步驟
+    public List<ApprovalStepResponseDTO> getApprovalStepsByRequestId(Integer requestId) {
+        // 查詢正在審核的 ApprovalStep
+        List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+        // 將 ApprovalStep 轉換為 ApprovalStepDTO
+        return steps.stream().map(step -> new ApprovalStepResponseDTO(
+        		step.getId(),
+        		step.getLeaveRequest().getId(),
+                step.getLeaveRequest().getEmployee().getEmployeeId(),
+                step.getLeaveRequest().getEmployee().getEmployeeName(),
+                step.getApprover().getEmployeeId(),
+                step.getApprover().getEmployeeName(),
+                step.getStatus().getStatusName(),
+                step.getCurrentStep(),
+                step.getComment(),
+                step.getUpdatedAt()
+        )).collect(Collectors.toList());
+    }
 //    // 更新簽核狀態
 //    public ApprovalStep updateApprovalStep(Integer stepId, Integer statusId, String comment) {
 //        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);

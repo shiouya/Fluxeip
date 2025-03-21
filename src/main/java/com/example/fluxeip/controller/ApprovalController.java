@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ApprovalStepDTO;
+import com.example.fluxeip.dto.ApprovalStepResponseDTO;
 import com.example.fluxeip.model.ApprovalStep;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.service.ApprovalFlowService;
@@ -40,8 +41,8 @@ public class ApprovalController {
     // 取得某請求的所有簽核步驟
     @GetMapping("/steps/{requestId}")
     public ResponseEntity<?> getApprovalSteps(@PathVariable Integer requestId) {
-        List<ApprovalStep> steps = approvalService.getApprovalStepsByRequestId(requestId);
-        return ResponseEntity.ok(steps);
+        List<ApprovalStepResponseDTO> approvalStepsByRequestId = approvalService.getApprovalStepsByRequestId(requestId);
+        return ResponseEntity.ok(approvalStepsByRequestId);
     }
 
     @PutMapping("/step/{stepId}/review")
@@ -74,5 +75,15 @@ public class ApprovalController {
             return ResponseEntity.ok(pendingApprovals);
         }
     }
+//    // 查詢當前申請人被簽核的單步驟
+//    @GetMapping("/pending/{requestId}")
+//    public ResponseEntity<List<ApprovalStepDTO>> getApprovalSteps(@PathVariable Integer requestId) {
+//    	List<ApprovalStepDTO> approvalsteps = approvalFlowService.getApprovalStepsByRequestId(requestId);
+//    	if (approvalsteps.isEmpty()) {
+//    		return ResponseEntity.noContent().build();
+//    	} else {
+//    		return ResponseEntity.ok(approvalsteps);
+//    	}
+//    }
 }
 
