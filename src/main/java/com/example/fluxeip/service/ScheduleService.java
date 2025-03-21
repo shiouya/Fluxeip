@@ -17,6 +17,7 @@ import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Schedule;
 import com.example.fluxeip.model.ShiftType;
+import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.ScheduleRepository;
 
 @Service
@@ -30,6 +31,8 @@ public class ScheduleService {
 	private EmployeeService employeeService;
 	@Autowired
 	private ShiftTypeService shiftTypeService;
+	@Autowired
+	private EmployeeRepository employeeRepository;
 
 	public Schedule findScheduleById(Integer schedulId) {
 		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
@@ -49,6 +52,20 @@ public class ScheduleService {
 
 			return scheduleResponse;
 		}
+	}
+
+	public List<ScheduleResponse> findScheduleResponseByEmpId(Integer empId) {
+		List<Schedule> schedules = scheduleRepository.findByEmployeeEmployeeId(empId);
+
+		ArrayList<ScheduleResponse> responses = new ArrayList<ScheduleResponse>();
+
+		for (Schedule schedule : schedules) {
+
+			ScheduleResponse scheduleResponse = changeScheduleIntoResponse(schedule);
+			responses.add(scheduleResponse);
+
+		}
+		return responses;
 	}
 
 	public List<ScheduleResponse> findSchedulesByEmployeeAndDate(Integer empId, LocalDate date) {
@@ -123,35 +140,21 @@ public class ScheduleService {
 	}
 
 	@Transactional
-	public void updateScheduleById(Integer scheduleId, ScheduleRequest scheduleRequest) {
+	public void updateScheduleById(Integer scheduleId, Integer shiftTypeId) {
 
 		if (!scheduleRepository.existsById(scheduleId)) {
 			throw new RuntimeException("schedule 不存在，無法更新");
 		}
+		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftTypeId);
 
-		String depName = scheduleRequest.getDepartmentName();
-		Department dep = departmentService.findByName(depName);
+		Schedule existingSchedule = findScheduleById(scheduleId);
 
-		Integer empId = scheduleRequest.getEmployeeId();
-		Employee employee = employeeService.find(empId);
+		Integer empId = existingSchedule.getEmployee().getEmployeeId();
+		LocalDate date = existingSchedule.getScheduleDate();
+		existingSchedule.setShiftType(shiftType);
 
-		Integer shiftId = scheduleRequest.getShiftTypeId();
-		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftId);
+		scheduleRepository.save(existingSchedule);
 
-		LocalDate date = scheduleRequest.getDate();
-
-		if (isRightDepartment(employee, depName, shiftType)) {
-			Schedule existingSchedule = findScheduleById(scheduleId);
-
-			existingSchedule.setDepartment(dep);
-			existingSchedule.setEmployee(employee);
-			existingSchedule.setShiftType(shiftType);
-			existingSchedule.setScheduleDate(scheduleRequest.getDate());
-
-			scheduleRepository.save(existingSchedule);
-		} else {
-			throw new RuntimeException("部門錯誤");
-		}
 		if (isViolatingLaborLawDays(date, empId)) {
 			throw new RuntimeException("違反勞基法，不符合一例一休");
 		} else if (isViolatingLaborLawHours(date, empId)) {
@@ -183,6 +186,7 @@ public class ScheduleService {
 	private ScheduleResponse changeScheduleIntoResponse(Schedule schedule) {
 		ScheduleResponse scheduleResponse = new ScheduleResponse();
 
+		scheduleResponse.setScheduleId(schedule.getScheduleId());
 		scheduleResponse.setDate(schedule.getScheduleDate());
 		scheduleResponse.setDepartmentName(schedule.getDepartment().getDepartmentName());
 		scheduleResponse.setEmployeeName(schedule.getEmployee().getEmployeeName());
@@ -193,15 +197,15 @@ public class ScheduleService {
 	}
 
 	private boolean isViolatingLaborLawDays(LocalDate date, int empId) {
-		
-		for(int i=0;i<7;i++) {
-			List<Schedule> sevenDays=schedulesInInterval(empId, date.minusDays(6-i), date.plusDays(i));
-			
-			if(sevenDays.size()>6) {
+
+		for (int i = 0; i < 7; i++) {
+			List<Schedule> sevenDays = schedulesInInterval(empId, date.minusDays(6 - i), date.plusDays(i));
+
+			if (sevenDays.size() > 6) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -224,6 +228,10 @@ public class ScheduleService {
 
 	private List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
 		return scheduleRepository.findByEmployeeEmployeeIdAndScheduleDateBetween(employeeId, startDate, endDate);
+	}
+
+	public List<Employee> findAllEmpByDepartmentId(Integer departmentId) {
+		return employeeRepository.findByDepartmentDepartmentId(departmentId);
 	}
 
 }

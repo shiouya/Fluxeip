@@ -8,6 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ScheduleResponse {
+	private int scheduleId;
 	private String employeeName;
 	private String departmentName;
 	private String shiftTypeName;

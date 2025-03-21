@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ScheduleRequest;
 import com.example.fluxeip.dto.ScheduleResponse;
+import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.service.ScheduleService;
 
 @RestController
@@ -51,6 +52,16 @@ public class ScheduleController {
 		}
 		return ResponseEntity.ok(scheduleResponse);
 	}
+	
+	@GetMapping("/emp/{id}")
+	public ResponseEntity<List<ScheduleResponse>> findScheduleByEmpId(@PathVariable("id") Integer empId) {
+		List<ScheduleResponse> scheduleResponse = scheduleService.findScheduleResponseByEmpId(empId);
+
+		if (scheduleResponse == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(scheduleResponse);
+	}
 
 	@PostMapping
 	public ResponseEntity<String> createSchedule(@RequestBody ScheduleRequest request) {
@@ -60,21 +71,21 @@ public class ScheduleController {
 			return ResponseEntity.status(HttpStatus.CREATED).body("Schedule created successfully");
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Error creating schedule: " + e.getMessage());
+					.body(e.getMessage());
 		}
 
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<String> updateSchedule(@RequestBody ScheduleRequest request,
+	public ResponseEntity<String> updateSchedule(@RequestParam Integer shiftTypeId,
 			@PathVariable("id") Integer scheduleId) {
 		try {
-			scheduleService.updateScheduleById(scheduleId, request);
+			scheduleService.updateScheduleById(scheduleId, shiftTypeId);
 
 			return ResponseEntity.status(HttpStatus.OK).body("Schedule updated successfully");
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Error creating schedule: " + e.getMessage());
+					.body(e.getMessage());
 		}
 	}
 
@@ -93,6 +104,14 @@ public class ScheduleController {
 			response.put("success", "false");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 404 Not Found
 		}
+	}
+	
+	@GetMapping("/dep/{id}")
+	public ResponseEntity<?> findAllEmp(@PathVariable("id") Integer departmentId){
+		
+		List<Employee> allEmp = scheduleService.findAllEmpByDepartmentId(departmentId);
+		
+		return ResponseEntity.ok(allEmp);
 	}
 	
 	
