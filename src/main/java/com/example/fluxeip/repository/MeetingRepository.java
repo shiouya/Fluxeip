@@ -17,5 +17,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Integer> {
     List<Meeting> findByEmployeeEmployeeId(Integer employeeId);
 
     List<Meeting> findAllByOrderByCreatedAtDesc();
+    
+    List<Meeting> findByRoomIdAndStartTimeBetween(Integer roomId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+    
+   
 
 }

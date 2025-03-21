@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,6 +116,20 @@ public class MeetingController {
         }
     }
 
+    
+    @GetMapping("/room/{roomId}/date/{date}")
+    public ResponseEntity<List<MeetingResponse>> getMeetingsByDate(
+            @PathVariable Integer roomId,
+            @PathVariable String date) {
+
+        LocalDateTime queryDate = LocalDate.parse(date).atStartOfDay();
+        List<MeetingResponse> meetings = meetingService.findReserve(roomId, queryDate);
+
+        if (meetings.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(meetings);
+    }
     
  
 
