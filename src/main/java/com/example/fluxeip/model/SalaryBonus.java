@@ -1,11 +1,15 @@
 package com.example.fluxeip.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -22,9 +26,8 @@ public class SalaryBonus {
 	@Column(name = "salary_bonus_id",nullable = false)
 	private Integer salaryBonusId;
 	
-	@ManyToOne
-    @JoinColumn(name = "salary_detail_id", nullable = false)
-	private SalaryDetail salaryDetail;
+	@ManyToMany(mappedBy = "bonuses")
+	private List<SalaryDetail> salaryDetails = new ArrayList<>();
 	
 	@Column(name = "bonus_type", nullable = false)
     private String bonusType;
