@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.EmployeeCreateRequest;
 import com.example.fluxeip.dto.EmployeeCreateResponse;
+import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.jwt.JsonWebTokenUtility;
 import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
@@ -24,6 +25,7 @@ import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
+import com.example.fluxeip.service.SalaryService;
 import com.example.fluxeip.service.StatusService;
 
 
@@ -53,6 +55,9 @@ public class UserController {
 
 	@Autowired
 	private EmployeeRepository empRep;
+	
+	@Autowired
+	private SalaryService salaryService;
 
 	@PostMapping("/employee/create")
 	public EmployeeCreateResponse employeeCreate(@RequestBody EmployeeCreateRequest entity) {
@@ -120,9 +125,27 @@ public class UserController {
 			empDet.setGender(entity.getGender());
 			empDet.setIdentityCard(entity.getIdentityCard());
 			empDet.setPhone(entity.getPhone());
-			empDetSer.empDetCreate(empDet);
-			empCreRes.setSuccess(true);
-			empCreRes.setMessage("員工新增成功");
+			EmployeeDetail empDetCreate = empDetSer.empDetCreate(empDet);
+
+			
+			if(empbean!=null&&empDetCreate!=null) {
+				
+				try {
+					SalaryDefaultSetting salarySetting = new SalaryDefaultSetting();
+					salarySetting.setEmployeeID(id);
+					salarySetting.setMonthlySalary(0);
+					salarySetting.setHourlyWage(190);
+					salaryService.settingDefaultSalary(salarySetting);
+					empCreRes.setSuccess(true);
+					empCreRes.setMessage("員工新增成功");
+
+				}catch (Exception e) {
+					e.getMessage();
+					empCreRes.setSuccess(false);
+					empCreRes.setMessage("員工新增成功，薪資設定失敗");
+				}
+
+			}
 		}
 		return empCreRes;
 	}

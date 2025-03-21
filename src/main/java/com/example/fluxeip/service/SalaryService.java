@@ -31,6 +31,8 @@ public class SalaryService {
 
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
 
+	//薪資設定
+	
 	public SalaryDefaultSetting findSalarySettingByEmpid(Integer empId) {
 		
 		Employee employee = employeeService.find(empId);
@@ -127,4 +129,7 @@ public class SalaryService {
 		
 		return setting;
 	}
+	
+	
+	//薪資結算
 }
