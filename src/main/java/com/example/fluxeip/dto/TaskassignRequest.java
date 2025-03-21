@@ -14,7 +14,8 @@ public class TaskassignRequest {
 	private Date createDate;
 	private Date expectedFinishDate;
 	private Date finishDate;
-	private String employee;
+	private String employee;// 交付的對象
+	private String reveiew;// 審核對象
 	private String status;
 	
 

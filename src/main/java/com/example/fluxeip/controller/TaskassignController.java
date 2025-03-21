@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.TaskassignRequest;
@@ -18,11 +21,8 @@ import com.example.fluxeip.model.WorkProgess;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.TaskassignRepository;
 import com.example.fluxeip.repository.WorkProgessRepository;
-import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.StatusService;
 
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 @CrossOrigin
@@ -66,7 +66,7 @@ public class TaskassignController {
 	}
 	
 	@PutMapping("/taskassign/{id}")
-	public boolean putMethodName(@PathVariable String id, @RequestBody TaskassignRequest entity) {
+	public boolean updateTaskassign(@PathVariable String id, @RequestBody TaskassignRequest entity) {
 		Optional<Taskassign> existingTaskassign = taskRep.findById(Integer.valueOf(id));
 	    
 	    if (existingTaskassign.isPresent()) {
@@ -86,6 +86,32 @@ public class TaskassignController {
 	        return true; // 返回成功
 	    }
 	    return false;
+	}
+
+	@PostMapping("/taskassign/create/{workid}")
+	public boolean createTaskassign(@PathVariable String workid, @RequestBody TaskassignRequest entity) {
+		Optional<WorkProgess> work = workRep.findById(Integer.valueOf(workid));
+		WorkProgess workProgess = new WorkProgess();
+		if (work != null) {
+			workProgess = work.get();
+		}
+		Taskassign taskassign = new Taskassign();
+		taskassign.setWorkprogess(workProgess);
+		taskassign.setTaskName(entity.getTaskName());
+		taskassign.setTaskContent(entity.getTaskContent());
+		Employee assign = empRep.findByEmployeeName(entity.getEmployee());
+		Employee review = empRep.findByEmployeeName(entity.getReveiew());
+		taskassign.setAssign(assign);
+		taskassign.setReveiew(review);
+		taskassign.setCreateDate(entity.getCreateDate());
+		taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
+		if (entity.getFinishDate() != null) {
+			taskassign.setFinishDate(entity.getFinishDate());
+		}
+		Status status = staSer.findByName(entity.getStatus());
+		taskassign.setStatus(status);
+		taskRep.save(taskassign); // 儲存更新後的資料
+		return true;
 	}
 
 }

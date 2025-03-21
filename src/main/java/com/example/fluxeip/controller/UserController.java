@@ -1,5 +1,7 @@
 package com.example.fluxeip.controller;
 
+import java.util.LinkedList;
+
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,8 +21,10 @@ import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.EmployeeDetail;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Roles;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.repository.RolesRepository;
 import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
@@ -58,6 +62,9 @@ public class UserController {
 	
 	@Autowired
 	private SalaryService salaryService;
+
+	@Autowired
+	private RolesRepository rolesRep;
 
 	@PostMapping("/employee/create")
 	public EmployeeCreateResponse employeeCreate(@RequestBody EmployeeCreateRequest entity) {
@@ -108,6 +115,29 @@ public class UserController {
 				empCreRes.setSuccess(false);
 				empCreRes.setMessage("請輸入正確部門");
 			}
+			LinkedList<Roles> rloes = new LinkedList<Roles>();
+			Roles roles1 = rolesRep.findByRoleName("最高管理員");
+			Roles roles2 = rolesRep.findByRoleName("次等管理員");
+			Roles roles3 = rolesRep.findByRoleName("行政主管");
+			Roles roles4 = rolesRep.findByRoleName("人資主管");
+			Roles roles5 = rolesRep.findByRoleName("業務主管");
+			Roles roles6 = rolesRep.findByRoleName("技術主管");
+			Roles roles7 = rolesRep.findByRoleName("員工");
+			if (entity.getDepartmentName().equals("行政部") && entity.getPositionName().equals("經理")) {
+				employee.getRoles().add(roles3);
+			} else if (entity.getDepartmentName().equals("人資部") && entity.getPositionName().equals("經理")) {
+				employee.getRoles().add(roles4);
+			} else if (entity.getDepartmentName().equals("業務部") && entity.getPositionName().equals("經理")) {
+				employee.getRoles().add(roles5);
+			} else if (entity.getDepartmentName().equals("技術部") && entity.getPositionName().equals("經理")) {
+				employee.getRoles().add(roles6);
+			} else if (entity.getPositionName().equals("組長") || entity.getPositionName().equals("員工")) {
+				employee.getRoles().add(roles7);
+			} else if (entity.getDepartmentName().equals("總經理部") && entity.getPositionName().equals("老闆")) {
+				employee.getRoles().add(roles1);
+			} else if (entity.getDepartmentName().equals("總經理部") && entity.getPositionName().equals("總經理")) {
+				employee.getRoles().add(roles2);
+			}
 			Status status = staSer.findById(1);
 			String password = "1234";
 			String encode = pwdEncoder.encode(password);
@@ -117,6 +147,7 @@ public class UserController {
 			employee.setPosition(position);
 			employee.setHireDate(entity.getHireDate());
 			employee.setStatus(status);
+
 			Employee empbean = empService.employeeCreate(employee);
 			Integer id = empbean.getEmployeeId();
 			System.out.println(id);
@@ -137,7 +168,7 @@ public class UserController {
 					salarySetting.setHourlyWage(190);
 					salaryService.settingDefaultSalary(salarySetting);
 					empCreRes.setSuccess(true);
-					empCreRes.setMessage("員工新增成功");
+					empCreRes.setMessage("ID :" + id + " 姓名 :" + entity.getEmployeeName() + " 新增成功");
 
 				}catch (Exception e) {
 					e.getMessage();

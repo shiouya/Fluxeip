@@ -25,9 +25,11 @@ import com.example.fluxeip.model.Department;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.EmployeeDetail;
 import com.example.fluxeip.model.Position;
+import com.example.fluxeip.model.Roles;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.repository.EmployeeDetailRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.repository.RolesRepository;
 import com.example.fluxeip.service.DepartmentService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
@@ -58,6 +60,9 @@ public class EmployeeController {
 
 	@Autowired
 	private StatusService staSer;
+
+	@Autowired
+	private RolesRepository rolesRep;
 
 	@PostMapping("/employee/find")
 	public EmployeePageResponse getEmployeesPage(@RequestBody EmployeePageRequest page) {
@@ -179,10 +184,33 @@ public class EmployeeController {
 	@PostMapping("/employee/update")
 	public boolean employeeUpdate(@RequestBody EmployeeUpdateRequest entity) {
 		Integer employeeId = entity.getEmployeeId();
+		Employee employee = employeeService.find(employeeId);
 		String employeeName = entity.getEmployeeName();
 		String departmentName = entity.getDepartment();
 		String positionName = entity.getPosition();
-		Employee employee = employeeService.find(employeeId);
+		Roles roles1 = rolesRep.findByRoleName("最高管理員");
+		Roles roles2 = rolesRep.findByRoleName("次等管理員");
+		Roles roles3 = rolesRep.findByRoleName("行政主管");
+		Roles roles4 = rolesRep.findByRoleName("人資主管");
+		Roles roles5 = rolesRep.findByRoleName("業務主管");
+		Roles roles6 = rolesRep.findByRoleName("技術主管");
+		Roles roles7 = rolesRep.findByRoleName("員工");
+		employee.getRoles().removeFirst();
+		if (departmentName.equals("行政部") && positionName.equals("經理")) {
+			employee.getRoles().add(roles3);
+		} else if (departmentName.equals("人資部") && positionName.equals("經理")) {
+			employee.getRoles().add(roles4);
+		} else if (departmentName.equals("業務部") && positionName.equals("經理")) {
+			employee.getRoles().add(roles5);
+		} else if (departmentName.equals("技術部") && positionName.equals("經理")) {
+			employee.getRoles().add(roles6);
+		} else if (positionName.equals("組長") || positionName.equals("員工")) {
+			employee.getRoles().add(roles7);
+		} else if (departmentName.equals("總經理部") && positionName.equals("老闆")) {
+			employee.getRoles().add(roles1);
+		} else if (departmentName.equals("總經理部") && positionName.equals("總經理")) {
+			employee.getRoles().add(roles2);
+		}
 		Department department = depSer.findByName(departmentName);
 		Position position = posSer.findByName(positionName);
 		Status status = staSer.findByName(entity.getStatus());
@@ -190,6 +218,7 @@ public class EmployeeController {
 		employee.setEmployeeName(employeeName);
 		employee.setPosition(position);
 		employee.setStatus(status);
+		System.out.println(employee.getRoles() + "11111111111111111111111111111111111111");
 		empRep.save(employee);
 
 		return true;

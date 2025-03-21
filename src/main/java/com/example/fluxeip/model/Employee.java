@@ -13,9 +13,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -60,7 +60,11 @@ public class Employee {
 	@OneToOne(mappedBy = "employee")
 	private EmployeeDetail employeeDetail;
 
-	@ManyToMany(mappedBy = "employee")
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "employee_roles", joinColumns = {
+			@JoinColumn(name = "employee_id", referencedColumnName = "employee_id") }, inverseJoinColumns = {
+					@JoinColumn(name = "role_id", referencedColumnName = "role_id") })
 	private List<Roles> roles = new LinkedList<Roles>();
 //	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL)
 //	private List<WorkProgess> workprogess = new LinkedList<WorkProgess>();
