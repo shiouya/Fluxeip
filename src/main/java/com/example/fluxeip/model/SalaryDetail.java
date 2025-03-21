@@ -53,12 +53,6 @@ public class SalaryDetail {
 	@Column(name = "leave_days", nullable = false)
 	private int leaveDays;
 
-	@Column(name = "labor_insurance", nullable = false)
-	private int laborInsurance;
-
-	@Column(name = "health_insurance", nullable = false)
-	private int healthInsurance;
-
 	@Column(name = "earned_salary", nullable = false)
 	private int earnedSalary;
 

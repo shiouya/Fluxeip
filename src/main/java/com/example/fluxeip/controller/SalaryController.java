@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.SalaryDefaultSetting;
+import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.service.SalaryService;
 
 @RestController
@@ -29,6 +30,7 @@ public class SalaryController {
 	@Autowired
 	private SalaryService salaryService;
 	
+	//薪資設定相關
 	@GetMapping("/{id}")
 	public ResponseEntity<?> findSalarySettingByEmpId(@PathVariable("id") Integer empId) {
 		SalaryDefaultSetting salary = salaryService.findSalarySettingByEmpid(empId);
@@ -98,6 +100,25 @@ public class SalaryController {
 			response.put("success", "false");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 404 Not Found
 		}
+	}
+	
+	//薪資結算相關
+	
+	@PostMapping("/detail")
+	public ResponseEntity<?> createSalaryDetail(@RequestBody SalaryDetailRequest detailRequest){
 		
+		try {
+			salaryService.monthlySalaryCaculate(detailRequest);
+			return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	@GetMapping("/insurance")
+	public Map<String, Integer> insurance(@RequestParam Integer salary){
+		return salaryService.laborInsuranceAndHealthInsurance(salary);
 	}
 }

@@ -1,14 +1,21 @@
 package com.example.fluxeip.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fluxeip.dto.SalaryDefaultSetting;
+import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.SalaryBonus;
+import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
@@ -30,7 +37,8 @@ public class SalaryService {
 	private EmployeeService employeeService;
 
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
-
+	private static final double LABOR_INSURANCE_RATE = 0.125; //勞保 政府公告可更新
+	private static final double HEALTH_INSURANCE_RATE = 0.0517;//健保
 	//薪資設定
 	
 	public SalaryDefaultSetting findSalarySettingByEmpid(Integer empId) {
@@ -132,4 +140,112 @@ public class SalaryService {
 	
 	
 	//薪資結算
+	@Transactional
+	public boolean monthlySalaryCaculate(SalaryDetailRequest request) {
+	    try {
+	        SalaryDetail salaryDetail = salaryRequestToDetail(request);
+	        int empId = request.getEmployeeId();
+			Employee employee = employeeService.find(empId);
+
+			if(employee!=null) {
+				detailRepository.save(salaryDetail);
+				return true; 				
+			}else {
+				throw new RuntimeException("ID錯誤");
+			}
+	    } catch (Exception e) {
+	        System.out.println("Error: " + e.getMessage());
+	        return false;  
+	    }
+	}
+	
+	//request轉物件
+	private SalaryDetail salaryRequestToDetail(SalaryDetailRequest request) {
+		
+		SalaryDetail salaryDetail = new SalaryDetail();
+		
+		List<SalaryBonus> bonuses = bonusRepository.findAllById(request.getBonuses());
+		salaryDetail.setBonuses(bonuses);
+		salaryDetail.setEarlyLeaveHours(request.getEarlyLeaveHours());
+		
+		Employee employee = employeeService.find(request.getEmployeeId());
+		salaryDetail.setEmployee(employee);
+		
+		salaryDetail.setLateHours(request.getLateHours());
+		salaryDetail.setLeaveDays(request.getLeaveDays());
+		salaryDetail.setMonthlyRegularHours(request.getMonthlyRegularHours());
+		salaryDetail.setOvertimeHours(request.getOvertimeHours());
+		salaryDetail.setYearMonth(request.getYearMonth());
+		
+		
+		salaryDetail.setEarnedSalary(caculateEarnedSalary(request));
+		return salaryDetail;
+	}
+	
+	//勞健保
+	public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary){
+		
+		Integer healthInsurance = Math.round(Math.round(HEALTH_INSURANCE_RATE*salary)*0.3f);
+		Integer laborInsurance = Math.round(Math.round(LABOR_INSURANCE_RATE*salary)*0.2f);
+		
+		HashMap<String, Integer> insurance = new HashMap<String, Integer>();
+		insurance.put("healthInsurance", healthInsurance);
+		insurance.put("laborInsurance", laborInsurance);
+		
+		return insurance;
+		
+	}
+	
+	//加班費
+	private Integer overtimeSalary(BigDecimal overtimeHours,Integer hourlyWage) {
+		if(overtimeHours.compareTo(new BigDecimal(2))==1) {
+			float floatValue = overtimeHours.subtract(new BigDecimal(2)).floatValue();
+			return Math.round(hourlyWage*floatValue*5/3)+Math.round(2*hourlyWage*4/3);
+		}else {
+			float floatValue = overtimeHours.floatValue();
+			return Math.round(hourlyWage*floatValue*4/3);
+		}
+	}
+	
+	//總月薪
+	private Integer caculateEarnedSalary(SalaryDetailRequest request) {
+		
+		Integer earnedSalary=0;
+		//總獎金
+		List<SalaryBonus> bonuses =bonusRepository.findAllById(request.getBonuses());
+		Integer totalBonus=0;
+
+		for(SalaryBonus bonus:bonuses) {
+			totalBonus += bonus.getAmount();
+		}
+		
+		//月薪
+		Integer monthlySalary = findSalarySettingByEmpid(request.getEmployeeId()).getMonthlySalary();
+		Integer hourlyWage = findSalarySettingByEmpid(request.getEmployeeId()).getHourlyWage();
+		Integer salary=0;
+		if(monthlySalary.equals(0)) {
+			BigDecimal roundedValue = request.getMonthlyRegularHours().multiply(new BigDecimal(hourlyWage))
+			.setScale(2, RoundingMode.HALF_UP);
+			salary=roundedValue.intValue();
+		}else {
+			salary=monthlySalary;
+		}
+		
+		//加班費
+		BigDecimal overtimeHours = request.getOvertimeHours();
+		Integer overtimeSalary = overtimeSalary(overtimeHours, hourlyWage);
+		
+		//遲到早退請假
+		Integer earlyLeaveHours = request.getEarlyLeaveHours();
+		Integer lateHours = request.getLateHours();
+		Integer leaveDays = request.getLeaveDays();
+		Integer earlyLateLeave=(earlyLeaveHours+lateHours+leaveDays)*hourlyWage;
+		
+		//月薪(時薪*工時)+bonus-勞保-健保-(遲到+早退)*時薪-請假*時薪+加班費
+		earnedSalary=salary+totalBonus-request.getLaborInsurance()-request.getHealthInsurance()
+				+overtimeSalary-earlyLateLeave;
+
+		return earnedSalary;
+	}
+	
 }
