@@ -287,43 +287,62 @@ public class MeetingService {
 			meetingResponses.add(new MeetingResponse(meeting));
 		}
 		return meetingResponses;
-		
-	
+			
 		
 	}
 	
-	
+	//審核
 	public Optional<MeetingResponse> approveMeeting(Integer meetingId, Integer employeeId, boolean isApproved) {
+	  
+	    if (meetingId == null || employeeId == null) {
+	        return Optional.empty();
+	    }
+
+	    
 	    Optional<Meeting> optMeeting = meetingRepository.findById(meetingId);
-	    Optional<Employee> optApprover = employeeRepository.findById(employeeId);
+	    Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
 
-	    if (optMeeting.isEmpty() || optApprover.isEmpty()) {
+	   
+	    if (optMeeting.isEmpty()) {
+	        return Optional.empty();
+	    }
+	    if (optEmployee.isEmpty()) {
 	        return Optional.empty();
 	    }
 
-	    Employee approver = optApprover.get();
+	    
 	    Meeting meeting = optMeeting.get();
+	    Employee employee = optEmployee.get();
 
-	    // **檢查審核人是否為「次等管理員」**
-	    if (approver.getPosition().getPositionId() != 2) {
+	    
+	    if (employee.getPosition().getPositionId() != 2) {
 	        return Optional.empty();
 	    }
 
-	    // **允許 `status_id = 5` 也可以進行審核**
+	    
 	    if (meeting.getStatus().getStatusId() != 5) {
 	        return Optional.empty();
 	    }
 
-	    // **通過 -> 設為 "已審核" (6)，拒絕 -> 設為 "未核准" (8)**
-	    Integer newStatusId = isApproved ? 6 : 8;
+	    
+	    Integer newStatusId;
+	    if (isApproved) {
+	        newStatusId = 6; //"已審核"
+	    } else {
+	        newStatusId = 8; //"未核准"
+	    }
+
+	
 	    Optional<Status> optStatus = statusRepository.findById(newStatusId);
 	    if (optStatus.isEmpty()) {
 	        return Optional.empty();
 	    }
 
+	  
 	    meeting.setStatus(optStatus.get());
 	    meetingRepository.save(meeting);
 
+	   
 	    return Optional.of(new MeetingResponse(meeting));
 	}
 
