@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.example.fluxeip.dto.ApprovalFlowDTO;
+import com.example.fluxeip.dto.ApprovalFlowResponseDTO;
 import com.example.fluxeip.dto.ApprovalStepDTO;
 import com.example.fluxeip.model.ApprovalFlow;
 import com.example.fluxeip.model.ApprovalStep;
@@ -80,14 +81,23 @@ public class ApprovalFlowService {
 		// 取得員工的職位
 		Integer positionId = leaveRequest.getEmployee().getPosition().getPositionId();
 		Integer requestTypeId = leaveRequest.getLeaveType().getId();
-		// 查詢對應的第一步驟簽核流程
-		Optional<ApprovalFlow> firstStepFlowOpt = approvalFlowRepository.findApprovalFlow(positionId, requestTypeId, 1);
+		
+	    // 查詢對應的第一步驟簽核流程
+	 	Optional<ApprovalFlow> firstStepFlowOpt = approvalFlowRepository.findApprovalFlow(positionId, requestTypeId, 1).stream().findFirst();
+	 	System.out.println(firstStepFlowOpt.get().getFlowName());
+	 	// 先查詢員工專屬的簽核流程
+	 	Optional<ApprovalFlow> employeeFlow = approvalFlowRepository.findFirstStepByEmployee(leaveRequest.getEmployee().getEmployeeId(), requestTypeId);
+	 	
+	    if (employeeFlow.isPresent()) {
+	    	firstStepFlowOpt=employeeFlow;
+	    }	    
+		
 
 		if (!firstStepFlowOpt.isPresent()) {
 			throw new RuntimeException("未找到對應的簽核流程");
 		}
 		ApprovalFlow firstStepFlow = firstStepFlowOpt.get();
-
+ 
 		// 找到該部門中符合該職位的第一位簽核人
 		Optional<Employee> approverOpt = employeeRepository
 				.findTopByPositionAndDepartmentAndStatus(firstStepFlow.getApproverPosition(),
@@ -151,10 +161,24 @@ public class ApprovalFlowService {
 
 		// ** 否則進入「核准」流程**
 		ApprovalFlow currentFlow = step.getFlow();
-		Optional<ApprovalFlow> nextFlowOpt = approvalFlowRepository.findApprovalFlow(
-				currentFlow.getPosition().getPositionId(), currentFlow.getRequestType().getId(),
-				currentFlow.getStepOrder() + 1);
+		
+//		Optional<ApprovalFlow> nextFlowOpt = approvalFlowRepository.findApprovalFlow(
+//				currentFlow.getPosition().getPositionId(), currentFlow.getRequestType().getId(),
+//				currentFlow.getStepOrder() + 1);
+		ApprovalFlow nextStepFlow = currentFlow.getNextStep();
+		if (nextStepFlow == null) {
+	        // 如果沒有下一步，直接完成簽核流程
+	        LeaveRequest leaveRequest = step.getLeaveRequest();
+	        leaveRequest.setStatus(
+	            statusRepository.findByStatusNameAndStatusType("已核決", "表單狀態")
+	                .orElseThrow(() -> new RuntimeException("狀態不存在"))
+	        );
+	        leaveRequestRepository.save(leaveRequest);
+	        return "簽核成功";
+	    }
 
+		Optional<ApprovalFlow> nextFlowOpt = approvalFlowRepository.findById(
+				currentFlow.getNextStep().getId());
 		if (nextFlowOpt.isPresent()) {
 			// 若有下一步驟，新增下一個 `ApprovalStep`
 			LeaveRequest leaveRequest = step.getLeaveRequest();
@@ -200,7 +224,34 @@ public class ApprovalFlowService {
 
 	
 	
-
+	
+	//查找全部簽核步驟1的簽核流程
+	public List<ApprovalFlowResponseDTO> getAllStepOneApprovalFlow(){
+		List<ApprovalFlow> byFirstStepOrder = approvalFlowRepository.findByStepOrder(1);
+		return byFirstStepOrder.stream()
+				.map(flow -> new ApprovalFlowResponseDTO(flow.getId(), flow.getFlowName(),
+						flow.getRequestType().getTypeName(),
+						flow.getStepOrder(),
+						flow.getPosition().getPositionName(),
+						flow.getApproverPosition().getPositionName()))
+				.collect(Collectors.toList());
+	}
+	
+	//查找全部的簽核流程
+	public List<ApprovalFlowResponseDTO> getAllApprovalFlow(){
+		List<ApprovalFlow> byFirstStepOrder = approvalFlowRepository.findAll();
+		return byFirstStepOrder.stream() 
+				.map(flow -> new ApprovalFlowResponseDTO(flow.getId(), flow.getFlowName(),
+						flow.getRequestType().getTypeName(),
+						flow.getStepOrder(),
+						flow.getPosition().getPositionName(),
+						flow.getApproverPosition().getPositionName()))
+				.collect(Collectors.toList());
+	}
+	
+	
+	
+	
     // 建立自訂簽核流程
     public ResponseEntity<?> createApprovalFlow(List<ApprovalFlowDTO> flowSteps) {
         try {

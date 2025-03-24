@@ -1,11 +1,8 @@
 package com.example.fluxeip.controller;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.fluxeip.dto.ApprovalFlowDTO;
 import com.example.fluxeip.dto.ApprovalStepDTO;
 import com.example.fluxeip.dto.ApprovalStepResponseDTO;
-import com.example.fluxeip.model.ApprovalFlow;
-import com.example.fluxeip.repository.ApprovalFlowRepository;
-import com.example.fluxeip.repository.ApprovalStepRepository;
-import com.example.fluxeip.repository.PositionRepository;
-import com.example.fluxeip.repository.TypeRepository;
 import com.example.fluxeip.service.ApprovalFlowService;
 import com.example.fluxeip.service.ApprovalService;
 
@@ -38,11 +30,11 @@ public class ApprovalController {
     private ApprovalFlowService approvalFlowService;
     
     
-    // 取得特定請求的簽核流程
-    @GetMapping("/flow/{typeId}")
-    public ResponseEntity<?> getApprovalFlow(@PathVariable Integer typeId) {
-        return ResponseEntity.ok(approvalService.getApprovalFlowForType(typeId));
-    }
+//    // 取得特定請求的簽核流程
+//    @GetMapping("/flow/{typeId}")
+//    public ResponseEntity<?> getApprovalFlow(@PathVariable Integer typeId) {
+//        return ResponseEntity.ok(approvalService.getApprovalFlowForType(typeId));
+//    }
     
 
     // 取得某請求的所有簽核步驟
@@ -66,7 +58,7 @@ public class ApprovalController {
         }else if("已否決請假單".equals(result)){
         	return ResponseEntity.ok(result);
         } else {
-            return ResponseEntity.badRequest().body(result);
+            return ResponseEntity.badRequest().body(result); 
         }
     }
 
@@ -82,17 +74,17 @@ public class ApprovalController {
     }
     
 
-    // 建立自訂簽核步驟
-    @PostMapping("/create/approval-flows")
-    public ResponseEntity<?> createApprovalFlow(@RequestBody List<ApprovalFlowDTO> flowSteps) {
-        return approvalFlowService.createApprovalFlow(flowSteps);
-    }
-
-    // 刪除簽核流程（包含所有後續步驟）
-    @DeleteMapping("/delete/approval-flows/{flowId}")
-    public ResponseEntity<?> deleteApprovalFlowAndNextSteps(@PathVariable Integer flowId) {
-        return approvalFlowService.deleteApprovalFlowAndNextSteps(flowId);
-    }
+//    // 建立自訂簽核步驟
+//    @PostMapping("/create/approval-flows")
+//    public ResponseEntity<?> createApprovalFlow(@RequestBody List<ApprovalFlowDTO> flowSteps) {
+//        return approvalFlowService.createApprovalFlow(flowSteps);
+//    }
+//
+//    // 刪除簽核流程（包含所有後續步驟）
+//    @DeleteMapping("/delete/approval-flows/{flowId}")
+//    public ResponseEntity<?> deleteApprovalFlowAndNextSteps(@PathVariable Integer flowId) {
+//        return approvalFlowService.deleteApprovalFlowAndNextSteps(flowId);
+//    }
  
 }
 

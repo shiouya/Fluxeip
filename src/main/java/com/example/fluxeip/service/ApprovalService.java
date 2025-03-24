@@ -34,15 +34,15 @@ public class ApprovalService {
         return approvalFlowRepository.findByRequestTypeId(requestTypeId);
     }
 
-    // 建立新的簽核步驟
-    public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
-        ApprovalStep step = new ApprovalStep();
-        step.setLeaveRequest(leaveRequestRepository.findById(requestId).get());
-        step.setFlow(approvalFlowRepository.findById(flowId).orElseThrow());
-        step.setApprover(approver);
-        step.setStatus(new Status(1, "Pending","all_approval"));
-        return approvalStepRepository.save(step);
-    }
+//    // 建立新的簽核步驟
+//    public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
+//        ApprovalStep step = new ApprovalStep();
+//        step.setLeaveRequest(leaveRequestRepository.findById(requestId).get());
+//        step.setFlow(approvalFlowRepository.findById(flowId).orElseThrow());
+//        step.setApprover(approver);
+//        step.setStatus(new Status(1, "Pending","all_approval"));
+//        return approvalStepRepository.save(step);
+//    }
 
 
     
