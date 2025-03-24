@@ -1,5 +1,6 @@
 package com.example.fluxeip.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
+import com.example.fluxeip.dto.SalaryDetailResponse;
+import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.service.SalaryService;
 
 @RestController
@@ -117,8 +120,48 @@ public class SalaryController {
 		}
 	}
 	
+	@GetMapping("/detail/{id}")
+	public ResponseEntity<?> findSalaryDetail(@PathVariable("id") Integer empId){
+		try {
+			List<SalaryDetail> detailByEmpId = salaryService.findSalaryDetailByEmpId(empId);
+			
+			ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
+			
+			for(SalaryDetail detail:detailByEmpId) {
+				SalaryDetailResponse detailResponse = salaryService.detailResponse(detail);
+				response.add(detailResponse);
+			}
+			
+			return ResponseEntity.ok(response);
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//勞健保
 	@GetMapping("/insurance")
 	public Map<String, Integer> insurance(@RequestParam Integer salary){
 		return salaryService.laborInsuranceAndHealthInsurance(salary);
+	}
+	
+	//年終
+	@GetMapping("/yearEnd/{id}")
+	public Integer yearEnd(@PathVariable("id") Integer empId, @RequestParam Integer month){
+		SalaryDefaultSetting salarySetting = salaryService.findSalarySettingByEmpid(empId);
+		Integer monthlySalary = salarySetting.getMonthlySalary();
+		Integer hourlyWage = salarySetting.getHourlyWage();
+		
+		Integer yearEnd=0;
+		
+
+		if(monthlySalary.equals(0)) {
+			yearEnd+=month*hourlyWage*200;
+		}else {
+			yearEnd+=month*monthlySalary;
+		}
+		
+
+		return yearEnd;
 	}
 }

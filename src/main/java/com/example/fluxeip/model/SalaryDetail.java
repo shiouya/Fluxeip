@@ -45,16 +45,25 @@ public class SalaryDetail {
 	private BigDecimal overtimeHours;
 
 	@Column(name = "late_hours", nullable = false)
-	private int lateHours;
+	private Integer lateHours;
 
 	@Column(name = "early_leave_hours", nullable = false)
-	private int earlyLeaveHours;
+	private Integer earlyLeaveHours;
 
 	@Column(name = "leave_days", nullable = false)
-	private int leaveDays;
+	private Integer leaveDays;
 
 	@Column(name = "earned_salary", nullable = false)
-	private int earnedSalary;
+	private Integer earnedSalary;
+	
+	@Column(name = "total_bonus", nullable = false)
+	private Integer totalBonus;
+	
+	@Column(name = "health_insurance", nullable = false)
+	private Integer healthInsurance;
+	
+	@Column(name = "labor_insurance", nullable = false)
+	private Integer laborInsurance;
 
 	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinTable(name = "salary_detail_bonus", joinColumns = @JoinColumn(name = "salary_detail_id"), inverseJoinColumns = @JoinColumn(name = "salary_bonus_id"))

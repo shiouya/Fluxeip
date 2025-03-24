@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
+import com.example.fluxeip.dto.SalaryDetailResponse;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
@@ -140,23 +141,37 @@ public class SalaryService {
 	
 	
 	//薪資結算
+	public List<SalaryDetail> findSalaryDetailByEmpId(int empId) {
+		
+		Employee employee = employeeService.find(empId);
+
+		List<SalaryDetail> detail = detailRepository.findByEmployee(employee);
+		
+		if(detail==null||detail.size()==0) {
+			throw new RuntimeException("找不到薪資明細");
+		}
+		return detail;
+	}
+	
+	
 	@Transactional
-	public boolean monthlySalaryCaculate(SalaryDetailRequest request) {
-	    try {
+	public void monthlySalaryCaculate(SalaryDetailRequest request) {
+	    
 	        SalaryDetail salaryDetail = salaryRequestToDetail(request);
 	        int empId = request.getEmployeeId();
 			Employee employee = employeeService.find(empId);
+			
+			List<SalaryDetail> existDetail = detailRepository.findByYearMonthAndEmployee(request.getYearMonth(), employee);
 
 			if(employee!=null) {
-				detailRepository.save(salaryDetail);
-				return true; 				
+				if(existDetail.size()==0||existDetail==null) {
+					detailRepository.save(salaryDetail);			
+				}else {
+					throw new RuntimeException("該月份已結算");
+				}
 			}else {
 				throw new RuntimeException("ID錯誤");
 			}
-	    } catch (Exception e) {
-	        System.out.println("Error: " + e.getMessage());
-	        return false;  
-	    }
 	}
 	
 	//request轉物件
@@ -173,10 +188,12 @@ public class SalaryService {
 		
 		salaryDetail.setLateHours(request.getLateHours());
 		salaryDetail.setLeaveDays(request.getLeaveDays());
+		salaryDetail.setLaborInsurance(request.getLaborInsurance());
+		salaryDetail.setHealthInsurance(request.getHealthInsurance());
 		salaryDetail.setMonthlyRegularHours(request.getMonthlyRegularHours());
 		salaryDetail.setOvertimeHours(request.getOvertimeHours());
 		salaryDetail.setYearMonth(request.getYearMonth());
-		
+		salaryDetail.setTotalBonus(countTotalBonus(request));
 		
 		salaryDetail.setEarnedSalary(caculateEarnedSalary(request));
 		return salaryDetail;
@@ -185,8 +202,8 @@ public class SalaryService {
 	//勞健保
 	public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary){
 		
-		Integer healthInsurance = Math.round(Math.round(HEALTH_INSURANCE_RATE*salary)*0.3f);
-		Integer laborInsurance = Math.round(Math.round(LABOR_INSURANCE_RATE*salary)*0.2f);
+		Integer healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*salary*0.3f);
+		Integer laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*salary*0.2f);
 		
 		HashMap<String, Integer> insurance = new HashMap<String, Integer>();
 		insurance.put("healthInsurance", healthInsurance);
@@ -198,13 +215,11 @@ public class SalaryService {
 	
 	//加班費
 	private Integer overtimeSalary(BigDecimal overtimeHours,Integer hourlyWage) {
-		if(overtimeHours.compareTo(new BigDecimal(2))==1) {
-			float floatValue = overtimeHours.subtract(new BigDecimal(2)).floatValue();
-			return Math.round(hourlyWage*floatValue*5/3)+Math.round(2*hourlyWage*4/3);
-		}else {
-			float floatValue = overtimeHours.floatValue();
-			return Math.round(hourlyWage*floatValue*4/3);
-		}
+		Integer overtimeSalary=0;
+		
+		overtimeSalary=overtimeHours.multiply(new BigDecimal(hourlyWage).multiply(new BigDecimal(1.5))).intValue();
+		
+		return overtimeSalary;
 	}
 	
 	//總月薪
@@ -212,12 +227,9 @@ public class SalaryService {
 		
 		Integer earnedSalary=0;
 		//總獎金
-		List<SalaryBonus> bonuses =bonusRepository.findAllById(request.getBonuses());
 		Integer totalBonus=0;
 
-		for(SalaryBonus bonus:bonuses) {
-			totalBonus += bonus.getAmount();
-		}
+		totalBonus=countTotalBonus(request);
 		
 		//月薪
 		Integer monthlySalary = findSalarySettingByEmpid(request.getEmployeeId()).getMonthlySalary();
@@ -241,11 +253,64 @@ public class SalaryService {
 		Integer leaveDays = request.getLeaveDays();
 		Integer earlyLateLeave=(earlyLeaveHours+lateHours+leaveDays)*hourlyWage;
 		
-		//月薪(時薪*工時)+bonus-勞保-健保-(遲到+早退)*時薪-請假*時薪+加班費
+		//年終
+		int yearEnd = request.getYearEnd();
+		//月薪(時薪*工時)+bonus-勞保-健保-(遲到+早退)*時薪-請假*時薪+加班費+年終
 		earnedSalary=salary+totalBonus-request.getLaborInsurance()-request.getHealthInsurance()
-				+overtimeSalary-earlyLateLeave;
+				+overtimeSalary-earlyLateLeave+yearEnd;
 
 		return earnedSalary;
+	}
+	
+	//計算bonus
+	private Integer countTotalBonus(SalaryDetailRequest request) {
+		
+		List<SalaryBonus> bonuses =bonusRepository.findAllById(request.getBonuses());
+		Integer totalBonus=0;
+		
+		for(SalaryBonus bonus:bonuses) {
+			totalBonus += bonus.getAmount();
+		}
+		
+		int yearEnd = request.getYearEnd();
+		totalBonus+=yearEnd;
+		
+		return totalBonus;
+	}
+	
+	//產生response
+	public SalaryDetailResponse detailResponse(SalaryDetail salaryDetail) {
+		SalaryDetailResponse response = new SalaryDetailResponse();
+		
+		List<SalaryBonus> bonuses =salaryDetail.getBonuses();
+
+		response.setBonuses(bonuses);
+		response.setEarlyLeaveHours(salaryDetail.getEarlyLeaveHours());
+		
+		Integer employeeId = salaryDetail.getEmployee().getEmployeeId();
+		response.setEmployeeId(employeeId);
+		
+		response.setHealthInsurance(salaryDetail.getHealthInsurance());
+		response.setLaborInsurance(salaryDetail.getLaborInsurance());
+		
+		response.setLateHours(salaryDetail.getLateHours());
+		response.setLeaveDays(salaryDetail.getLeaveDays());
+		response.setMonthlyRegularHours(salaryDetail.getMonthlyRegularHours());
+		response.setOvertimeHours(salaryDetail.getOvertimeHours());
+		response.setSalaryDetailId(salaryDetail.getSalaryDetailId());
+		
+		Integer bonusWithoutYearEnd=0;
+		
+		for(SalaryBonus bonus:bonuses) {
+			bonusWithoutYearEnd += bonus.getAmount();
+		}
+		Integer totalBonus = salaryDetail.getTotalBonus();
+		response.setYearEnd(totalBonus-bonusWithoutYearEnd);
+		
+		response.setYearMonth(salaryDetail.getYearMonth());
+		
+		
+		return response;
 	}
 	
 }

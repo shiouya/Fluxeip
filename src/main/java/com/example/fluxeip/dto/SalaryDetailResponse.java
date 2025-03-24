@@ -1,6 +1,5 @@
 package com.example.fluxeip.dto;
 
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -11,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SalaryDetailRequest {
+public class SalaryDetailResponse {
 
 	private Integer salaryDetailId;
 	private Integer employeeId;
@@ -23,7 +22,6 @@ public class SalaryDetailRequest {
 	private Integer leaveDays;
 	private Integer healthInsurance;
 	private Integer laborInsurance;
-	private List<Integer> bonuses;
+	private List<SalaryBonus> bonuses;
 	private Integer yearEnd;
-
 }
