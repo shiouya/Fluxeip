@@ -48,6 +48,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 	Optional<Employee> findByPositionAndDepartment(Position position, Department department); 
 	
 	Optional<Employee> findTopByPositionAndDepartmentAndStatus(Position position, Department department,Status status);
+	
+	Optional<Employee> findTopByPosition(Position position);
 
 	
 
