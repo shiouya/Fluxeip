@@ -1,9 +1,21 @@
 package com.example.fluxeip.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.WorkProgess;
 
 public interface WorkProgessRepository extends JpaRepository<WorkProgess, Integer> {
+	
+	@Query("SELECT w FROM WorkProgess w WHERE w.workName LIKE %:name%")
+    List<WorkProgess> findByName(String name);
+	
+	List<WorkProgess> findByStatus(Status status);
+	
+	@Query("SELECT w FROM WorkProgess w WHERE w.workName LIKE %:name% and w.status= :status")
+    List<WorkProgess> findByNameAndStatus(String name,Status status);
 
 }
