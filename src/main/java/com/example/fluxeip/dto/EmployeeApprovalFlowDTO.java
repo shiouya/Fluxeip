@@ -11,7 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class EmployeeApprovalFlowDTO {
     private Integer employeeId;   // 員工ID
-    private Integer typeId;       // 申請表單類型ID
     private Integer flowId;       // 簽核流程ID
 
 }

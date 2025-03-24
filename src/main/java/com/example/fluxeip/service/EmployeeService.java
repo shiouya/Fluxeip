@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,5 +83,11 @@ public class EmployeeService {
 	public List<Employee> employeeFindByDepartment(Department dep) {
 		return employeeRepository.findByDepartment(dep);
 	}
+	
+	
+	// 用criteriaquery找
+	public Page<Employee> getEmployeesByDepartmentAndPosition(Department department, Position position, Status status, Pageable pageable) {
+        return employeeRepository.findEmployeesByDepartmentAndPosition(department, position, status, pageable);
+    }
 
 }

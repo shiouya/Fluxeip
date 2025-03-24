@@ -7,6 +7,10 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -203,4 +207,21 @@ public class EmployeeController {
 		return employeeFindByDepartment;
 	}
 
+	
+	//利用部門和職位雙重查詢員工
+	@PostMapping("/employee/search")
+	public ResponseEntity<Page<Employee>> searchEmployees(
+	        @RequestBody EmployeePageRequest request,
+	        @RequestParam(defaultValue = "0") int page,  // 設定預設值，避免未傳入
+	        @RequestParam(defaultValue = "10") int size) { // 預設一頁10筆
+	    Department department = request.getDepartment() != null ? depSer.findByName(request.getDepartment()) : null;
+	    Position position = request.getPosition() != null ? posSer.findByName(request.getPosition()) : null;
+	    Status status = staSer.findByStatusNameAndStatusType("在職", "員工狀態");
+
+	    // 手動建立 Pageable
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("employeeId").ascending());
+
+	    Page<Employee> employees = employeeService.getEmployeesByDepartmentAndPosition(department, position, status, pageable);
+	    return ResponseEntity.ok(employees);
+	}
 }

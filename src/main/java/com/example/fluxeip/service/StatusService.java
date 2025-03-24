@@ -31,5 +31,10 @@ public class StatusService {
 			return null;
 		}
 	}
+	
+	public Status findByStatusNameAndStatusType(String statusName,String statusType) {
+		return staRep.findByStatusNameAndStatusType(statusName, statusType).get();
+		
+	}
 
 } 
