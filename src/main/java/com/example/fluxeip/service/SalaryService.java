@@ -141,16 +141,23 @@ public class SalaryService {
 	
 	
 	//薪資結算
-	public List<SalaryDetail> findSalaryDetailByEmpId(int empId) {
+	public List<SalaryDetailResponse> findSalaryDetailByEmpId(int empId) {
 		
 		Employee employee = employeeService.find(empId);
 
-		List<SalaryDetail> detail = detailRepository.findByEmployee(employee);
+		List<SalaryDetail> details = detailRepository.findByEmployee(employee);
 		
-		if(detail==null||detail.size()==0) {
+		if(details==null||details.size()==0) {
 			throw new RuntimeException("找不到薪資明細");
 		}
-		return detail;
+		
+		ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
+		
+		for(SalaryDetail detail:details) {
+			SalaryDetailResponse detailResponse = detailResponse(detail);
+			response.add(detailResponse);
+		}
+		return response;
 	}
 	
 	

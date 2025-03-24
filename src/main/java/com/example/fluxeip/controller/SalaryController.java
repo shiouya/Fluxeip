@@ -123,14 +123,7 @@ public class SalaryController {
 	@GetMapping("/detail/{id}")
 	public ResponseEntity<?> findSalaryDetail(@PathVariable("id") Integer empId){
 		try {
-			List<SalaryDetail> detailByEmpId = salaryService.findSalaryDetailByEmpId(empId);
-			
-			ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
-			
-			for(SalaryDetail detail:detailByEmpId) {
-				SalaryDetailResponse detailResponse = salaryService.detailResponse(detail);
-				response.add(detailResponse);
-			}
+			List<SalaryDetailResponse> response = salaryService.findSalaryDetailByEmpId(empId);
 			
 			return ResponseEntity.ok(response);
 		}catch (Exception e) {
