@@ -40,12 +40,12 @@ public class Taskassign {
 //	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "assign_id")
-	private Employee assign;
+	private Employee assign;// 分派下去給員工
 
 //	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "reveiew_id")
-	private Employee reveiew;
+	private Employee reveiew;// 審核主管
 
 	@Column(name = "create_date")
 	private Date createDate;

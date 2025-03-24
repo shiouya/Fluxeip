@@ -75,10 +75,10 @@ public class TaskassignController {
 	        taskassign.setTaskContent(entity.getTaskContent()); 
 	        taskassign.setCreateDate(entity.getCreateDate());
 	        taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-	        taskassign.setFinishDate(entity.getFinishDate());
+			taskassign.setFinishDate(entity.getFinishDate());
 	        Employee employee = empRep.findByEmployeeName(entity.getEmployee());
 	        taskassign.setAssign(employee);
-	        Status status = staSer.findByName(entity.getStatus());
+			Status status = staSer.findByName(entity.getStatus());
 	        taskassign.setStatus(status);
 	        // 更新資料庫中的 taskassign
 	        taskRep.save(taskassign); // 儲存更新後的資料

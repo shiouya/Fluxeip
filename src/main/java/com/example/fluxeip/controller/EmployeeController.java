@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -227,6 +228,16 @@ public class EmployeeController {
 	@GetMapping("/employee/find/department/{dep}")
 	public List<Employee> employeeFindDepartment(@PathVariable String dep) {
 		Department department = depSer.findByName(dep);
+		List<Employee> employeeFindByDepartment = employeeService.employeeFindByDepartment(department);
+
+		return employeeFindByDepartment;
+	}
+
+	@GetMapping("/employee/find/department/emp/{id}")
+	public List<Employee> employeeFindDepartmentByEmp(@PathVariable Integer id) {
+		Optional<Employee> emp = empRep.findById(id);
+		Employee employee = emp.get();
+		Department department = depSer.findByName(employee.getDepartment().getDepartmentName());
 		List<Employee> employeeFindByDepartment = employeeService.employeeFindByDepartment(department);
 
 		return employeeFindByDepartment;

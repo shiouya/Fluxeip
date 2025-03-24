@@ -11,21 +11,35 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fluxeip.dto.WorkTaskCreateRequest;
+import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Status;
+import com.example.fluxeip.model.Taskassign;
 import com.example.fluxeip.model.WorkProgess;
+import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.StatusRepository;
+import com.example.fluxeip.repository.TaskassignRepository;
 import com.example.fluxeip.repository.WorkProgessRepository;
+import com.example.fluxeip.service.StatusService;
 
 @CrossOrigin
 @RestController
 public class WorkProgressController {
 	
 	@Autowired
+	private StatusService statusSer;
+
+	@Autowired
+	private EmployeeRepository empRep;
+
+	@Autowired
 	private StatusRepository statusRep;
 
 	@Autowired
 	private WorkProgessRepository workProRep;
 
+	@Autowired
+	private TaskassignRepository taskRep;
 
 	@GetMapping("/workProgress/all")
 	public List<WorkProgess> getWorkProgressAll() {
@@ -65,10 +79,37 @@ public class WorkProgressController {
 	
 
 	@PostMapping("/workProgress/create")
-	public String createWorkProgress(@RequestBody String entity) {
-		// TODO: process POST request
+	public boolean createWorkProgress(@RequestBody WorkTaskCreateRequest entity) {
+		WorkProgess workProgess = new WorkProgess();
+		workProgess.setWorkName(entity.getWorkName());
+		workProgess.setCreateDate(entity.getCreateDate());
+		workProgess.setExpectedFinishDate(entity.getExpectedFinishdate());
+		Status status = statusSer.findByName("未完成");
+		workProgess.setStatus(status);
+		Optional<Employee> emp = empRep.findById(entity.getSupervisorId());
+		if (emp.isPresent()) {
+			Employee employee = emp.get();
+			workProgess.setSupervisor(employee);
+		}
+		WorkProgess work = workProRep.save(workProgess);
+		entity.getTaskassigns().forEach(task -> {
+			Taskassign taskassign = new Taskassign();
+			taskassign.setWorkprogess(work);
+			taskassign.setTaskName(task.getTaskName());
+			taskassign.setTaskContent(task.getTaskContent());
+			Employee employee = null;
+			taskassign.setAssign(empRep.findByEmployeeName(task.getEmployee()));
+			if (emp.isPresent()) {
+				employee = emp.get();
+				taskassign.setReveiew(employee);
+			}
+			taskassign.setCreateDate(task.getCreateDate());
+			taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
+			taskassign.setStatus(status);
+			taskRep.save(taskassign);
+		});
 
-		return entity;
+		return true;
 	}
 
 }
