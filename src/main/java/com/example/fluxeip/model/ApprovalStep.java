@@ -1,13 +1,20 @@
 package com.example.fluxeip.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "approval_steps")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ApprovalStep {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,9 +24,10 @@ public class ApprovalStep {
     @JoinColumn(name = "flow_id", nullable = false)
     private ApprovalFlow flow;
 
-    @ManyToOne
-    @JoinColumn(name = "request_id", nullable = false)
-    private BaseRequest baseRequest;  // 使用 BaseRequest 類型來處理不同類型的請求
+    
+    @Column(name = "request_id", nullable = false)  // 用 ID 來關聯，而不是關聯 BaseRequest
+    private Integer requestId;
+
 
     @Column(name = "current_step", nullable = false)
     private Integer currentStep;

@@ -18,7 +18,7 @@ import java.util.Date;
 @Table(name = "work_adjustment_requests")
 public class WorkAdjustmentRequest {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JoinColumn(name = "id", nullable = false)
     private Integer id;
 
     @ManyToOne

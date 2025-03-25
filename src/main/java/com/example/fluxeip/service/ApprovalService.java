@@ -1,6 +1,5 @@
 package com.example.fluxeip.service;
 
-import com.example.fluxeip.dto.ApprovalStepDTO;
 import com.example.fluxeip.dto.ApprovalStepResponseDTO;
 import com.example.fluxeip.model.*;
 import com.example.fluxeip.repository.*;
@@ -28,6 +27,9 @@ public class ApprovalService {
     
     @Autowired
     private StatusRepository statusRepository;
+    
+    @Autowired
+    private WorkAdjustmentRequestRepository adjustmentRequestRepository;
 
     // 取得某類請求的簽核流程
     public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
@@ -47,22 +49,21 @@ public class ApprovalService {
 
     
  // 查詢員工的請假單審核步驟
-    public List<ApprovalStepResponseDTO> getApprovalStepsByRequestId(Integer requestId) {
+    public List<ApprovalStepResponseDTO> getLeaveApprovalStepsByRequestId(Integer requestId) {
         // 查詢正在審核的 ApprovalStep
         List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
 
         // 將 ApprovalStep 轉換為 ApprovalStepDTO
         return steps.stream().map(step -> {
-        	BaseRequest baseRequest = step.getBaseRequest(); // 獲取父類型的 BaseRequest
-
+	    	Optional<LeaveRequest> leaveRequestOpt = leaveRequestRepository.findById(requestId);
+	    	LeaveRequest leaveRequest = leaveRequestOpt.get();
             // 如果 BaseRequest 實際上是 LeaveRequest，進行類型轉換
-            LeaveRequest leaveRequest = (baseRequest instanceof LeaveRequest) ? (LeaveRequest) baseRequest : null;
 
             return new ApprovalStepResponseDTO(
                     step.getId(),
-                    leaveRequest != null ? leaveRequest.getId() : null, // 如果是 LeaveRequest，取其 ID
-                    leaveRequest != null ? leaveRequest.getEmployee().getEmployeeId() : null, // 同上
-                    leaveRequest != null ? leaveRequest.getEmployee().getEmployeeName() : null, // 同上
+                    leaveRequest.getId(), // 如果是 LeaveRequest，取其 ID
+                    leaveRequest.getEmployee().getEmployeeId(), // 同上
+                    leaveRequest.getEmployee().getEmployeeName() , // 同上
                     step.getApprover().getEmployeeId(),
                     step.getApprover().getEmployeeName(),
                     step.getStatus().getStatusName(),
@@ -71,6 +72,31 @@ public class ApprovalService {
                     step.getUpdatedAt()
             );
         }).collect(Collectors.toList());
+    }
+    
+    // 查詢員工的加減班單審核步驟
+    public List<ApprovalStepResponseDTO> getWorkadjustApprovalStepsByRequestId(Integer requestId) {
+    	// 查詢正在審核的 ApprovalStep
+    	List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+    	
+    	// 將 ApprovalStep 轉換為 ApprovalStepDTO
+    	return steps.stream().map(step -> {
+    		Optional<WorkAdjustmentRequest> workAdjustRequestOpt =adjustmentRequestRepository.findById(requestId);
+			WorkAdjustmentRequest request = workAdjustRequestOpt.get();
+    		
+    		return new ApprovalStepResponseDTO(
+                    step.getId(),
+                    request.getId(), // 如果是 LeaveRequest，取其 ID
+                    request.getEmployee().getEmployeeId(), // 同上
+                    request.getEmployee().getEmployeeName() , // 同上
+                    step.getApprover().getEmployeeId(),
+                    step.getApprover().getEmployeeName(),
+                    step.getStatus().getStatusName(),
+                    step.getCurrentStep(),
+                    step.getComment(),
+                    step.getUpdatedAt()
+    				);
+    	}).collect(Collectors.toList());
     }
 
 //    // 更新簽核狀態

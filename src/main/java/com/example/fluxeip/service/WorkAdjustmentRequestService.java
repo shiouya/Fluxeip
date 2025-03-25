@@ -6,11 +6,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.example.fluxeip.dto.WorkAdjustmentRequestDTO;
 import com.example.fluxeip.dto.WorkAdjustmentResponseDTO;
 import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Type;
 import com.example.fluxeip.model.WorkAdjustmentRequest;
@@ -33,6 +36,12 @@ public class WorkAdjustmentRequestService {
     
     @Autowired
     private StatusRepository statusRepository;
+    
+    @Autowired 
+    private RequestIdGenerator requestIdGenerator;
+    
+    @Autowired
+    private ApprovalFlowService approvalFlowService;  // 注入簽核流程 Service
 
     public List<WorkAdjustmentRequest> getAllRequests() {
         return workAdjustmentRequestRepository.findAll();
@@ -61,7 +70,7 @@ public class WorkAdjustmentRequestService {
         return dto;
     }
 
-    public WorkAdjustmentRequest createRequest(WorkAdjustmentRequestDTO requestDTO) {
+    public String createRequest(WorkAdjustmentRequestDTO requestDTO) {
         WorkAdjustmentRequest request = new WorkAdjustmentRequest();
         
         // 設置 Employee 物件
@@ -80,13 +89,25 @@ public class WorkAdjustmentRequestService {
         request.setStatus(status);
 
         // 設置其他欄位
+        request.setId(requestIdGenerator.getNextRequestId());
         request.setAdjustmentDate(requestDTO.getAdjustmentDate());
         request.setHours(requestDTO.getHours());
         request.setReason(requestDTO.getReason());
         request.setSubmittedAt(LocalDateTime.now());
 
         // 儲存請求
-        return workAdjustmentRequestRepository.save(request);
+        Object workAdjustmentRequest = workAdjustmentRequestRepository.save(request);
+        if (workAdjustmentRequest instanceof String) {
+            return "申請失敗";
+        }
+        // 啟動請假單的簽核流程
+        try {
+            approvalFlowService.startWorkAdjustApprovalProcess(request);  // 呼叫簽核服務啟動流程
+        } catch (Exception e) {
+        	System.out.println(e.getMessage());
+            return "啟動簽核流程時發生錯誤";
+        }
+        return "申請成功";
     }
 
 

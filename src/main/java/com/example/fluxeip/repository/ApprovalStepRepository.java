@@ -14,7 +14,7 @@ import com.example.fluxeip.model.ApprovalStep;
 public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Integer> {
 
     // 查詢 ApprovalStep 並過濾請求 ID，使用具體類型的字段
-    @Query("SELECT a FROM ApprovalStep a WHERE a.baseRequest.id = :requestId ORDER BY a.currentStep ASC")
+    @Query("SELECT a FROM ApprovalStep a WHERE a.requestId = :requestId ORDER BY a.currentStep ASC")
     List<ApprovalStep> findByRequestIdOrderByCurrentStepAsc(@Param("requestId") Integer requestId);
 
     // 根據審核人 ID 和狀態查詢待審核的請假單
@@ -24,7 +24,7 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Inte
     List<ApprovalStep> findPendingApprovalSteps(@Param("approverId") Integer approverId, @Param("status") String status);
 
     // 查詢 ApprovalStep 並過濾為 LeaveRequest 的請求
-    @Query("SELECT a FROM ApprovalStep a WHERE a.baseRequest.id = :requestId ORDER BY a.currentStep ASC")
+    @Query("SELECT a FROM ApprovalStep a WHERE a.requestId = :requestId ORDER BY a.currentStep ASC")
     List<ApprovalStep> findApprovalStepByLeaveRequestId(@Param("requestId") Integer requestId);
 
     boolean existsByFlowIdIn(List<Integer> flowIdsToDelete); 

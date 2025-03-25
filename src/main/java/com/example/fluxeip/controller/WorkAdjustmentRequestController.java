@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,8 +51,15 @@ public class WorkAdjustmentRequestController {
     }
 
     @PostMapping
-    public ResponseEntity<WorkAdjustmentRequest> createRequest(@RequestBody WorkAdjustmentRequestDTO request) {
-        return ResponseEntity.ok(workAdjustmentRequestService.createRequest(request));
+    public ResponseEntity<?> createRequest(@RequestBody WorkAdjustmentRequestDTO request) {
+    	String workAdjustmentRequest = workAdjustmentRequestService.createRequest(request);
+    	if(workAdjustmentRequest=="申請失敗") {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(workAdjustmentRequest);
+    	}
+    	if(workAdjustmentRequest=="啟動簽核流程時發生錯誤") {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(workAdjustmentRequest);
+    	}
+        return ResponseEntity.ok(workAdjustmentRequest);
     }
 
     @DeleteMapping("/{id}")
