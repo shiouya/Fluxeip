@@ -1,5 +1,6 @@
 package com.example.fluxeip.controller;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.dto.SalaryDetailResponse;
+import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.service.SalaryService;
 
@@ -168,5 +170,20 @@ public class SalaryController {
 	@GetMapping("/leaveDays")
 	public Double testLeave(@RequestParam String yearMonth,@RequestParam Integer empId) {
 		return salaryService.leaveDaysHours(empId, yearMonth);
+	}
+	
+	//月總工時
+	@GetMapping("/monthlyWorkHours")
+	public BigDecimal testMonthlyWorkHours(@RequestParam String yearMonth,@RequestParam Integer empId) {
+		return salaryService.countMonthlyWorkHours(empId, yearMonth);
+	}
+	
+	
+	//全部獎金 津貼
+	@GetMapping("/bonus")
+	public ResponseEntity<?> allBonus(){
+		List<SalaryBonus> allBonus = salaryService.findAllBonus();
+		
+		return ResponseEntity.ok(allBonus);
 	}
 }

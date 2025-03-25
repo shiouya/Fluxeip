@@ -2,6 +2,7 @@ package com.example.fluxeip.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
@@ -23,6 +24,7 @@ import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
+import com.example.fluxeip.model.Schedule;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
@@ -46,6 +48,9 @@ public class SalaryService {
 	
 	@Autowired
 	private LeaveRequestRepository leaveRequestRepository;
+	
+	@Autowired
+	private ScheduleService scheduleService;
 
 	@Autowired
 	private EmployeeService employeeService;
@@ -316,8 +321,27 @@ public class SalaryService {
 		return response;
 	}
 
+	//月總工時
+	public BigDecimal countMonthlyWorkHours(Integer empId, String yearMonthStr) {
+		Double workHpurs=0.0;
+		
+		YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+	    LocalDate startOfMonth = yearMonth.atDay(1).atStartOfDay().toLocalDate();
+	    LocalDate endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX).toLocalDate();
+	    
+	    List<Schedule> schedules = scheduleService.schedulesInInterval(empId, startOfMonth, endOfMonth);
+	    
+	    for(Schedule schedule:schedules) {
+	    	workHpurs+=schedule.getShiftType().getEstimatedHours().doubleValue();
+	    }
+	    
+	    BigDecimal monthlyWorkHours = new BigDecimal(workHpurs);
+	    
+	    return monthlyWorkHours;
+	}
+	
 	// 遲到及早退時數(半小時)
-	public Map<String, Integer> countMonthlyLateAndEarlyLeaveByEmpId(Integer EmpId, String yearMonthStr){
+	public Map<String, Integer> countMonthlyLateAndEarlyLeaveByEmpId(Integer empId, String yearMonthStr){
 		
 		Integer lateHour=0;
 		Integer earlyLeaveHour=0;
@@ -325,8 +349,8 @@ public class SalaryService {
 	    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
 	    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
 	    
-	    List<AttendanceViolations> lates = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(EmpId, "遲到", startOfMonth, endOfMonth);
-	    List<AttendanceViolations> earlyLeaves = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(EmpId, "早退", startOfMonth, endOfMonth);
+	    List<AttendanceViolations> lates = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(empId, "遲到", startOfMonth, endOfMonth);
+	    List<AttendanceViolations> earlyLeaves = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(empId, "早退", startOfMonth, endOfMonth);
 		
 	    for(AttendanceViolations late:lates) {
 	    	lateHour+=(int) Math.ceil((double) late.getViolationMinutes() / 30);
@@ -402,4 +426,9 @@ public class SalaryService {
 
 	}
 
+	
+	//獎金津貼
+	public List<SalaryBonus> findAllBonus(){
+		return bonusRepository.findAll();
+	}
 }

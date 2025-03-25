@@ -226,7 +226,7 @@ public class ScheduleService {
 		return false;
 	}
 
-	private List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
+	public List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
 		return scheduleRepository.findByEmployeeEmployeeIdAndScheduleDateBetween(employeeId, startDate, endDate);
 	}
 
