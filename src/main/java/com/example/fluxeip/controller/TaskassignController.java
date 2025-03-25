@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,6 +112,45 @@ public class TaskassignController {
 		Status status = staSer.findByName(entity.getStatus());
 		taskassign.setStatus(status);
 		taskRep.save(taskassign); // 儲存更新後的資料
+		return true;
+	}
+	
+	@GetMapping("/taskassign/emp/{id}")
+	public ResponseEntity<List<Taskassign>> getTaskassignByEmp(@PathVariable Integer id) {
+		Optional<Employee> emp = empRep.findById(id);
+		Employee employee=null;
+		if(emp.isPresent()) {
+			employee = emp.get();
+		}
+		List<Taskassign> taskassign = taskRep.findByAssign(employee);
+		
+		return ResponseEntity.ok(taskassign);
+	}
+	
+	@GetMapping("/taskassign/emp/{id}/{status}")
+	public ResponseEntity<List<Taskassign>> getTaskassignByEmpAndStatus(@PathVariable Integer id,@PathVariable String status) {
+		Optional<Employee> emp = empRep.findById(id);
+		Employee employee=null;
+		if(emp.isPresent()) {
+			employee = emp.get();
+		}
+		Status statu = staSer.findByName(status);
+		List<Taskassign> taskassign = taskRep.findByAssignAndStatus(employee,statu);
+		
+		return ResponseEntity.ok(taskassign);
+	}
+	
+	@PutMapping("/taskassign/update/{id}/{status}")
+	public boolean reviewTaskassign(@PathVariable Integer id,@PathVariable String status) {
+		Optional<Taskassign> task = taskRep.findById(id);
+		Taskassign taskassign=null;
+		if(task.isPresent()) {
+			taskassign = task.get();
+		}
+		Status statu = staSer.findByName(status);
+		taskassign.setStatus(statu);
+		taskRep.save(taskassign);
+		
 		return true;
 	}
 
