@@ -2,6 +2,9 @@ package com.example.fluxeip.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.dto.SalaryDetailResponse;
+import com.example.fluxeip.model.AttendanceViolations;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
+import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
 import com.example.fluxeip.repository.SalarySettingRepository;
@@ -35,70 +40,73 @@ public class SalaryService {
 	private SalarySettingRepository settingRepository;
 
 	@Autowired
+	private AttendanceViolationsRepository violationsRepository;
+
+	@Autowired
 	private EmployeeService employeeService;
 
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
-	private static final double LABOR_INSURANCE_RATE = 0.125; //勞保 政府公告可更新
-	private static final double HEALTH_INSURANCE_RATE = 0.0517;//健保
-	//薪資設定
-	
+	private static final double LABOR_INSURANCE_RATE = 0.125; // 勞保 政府公告可更新
+	private static final double HEALTH_INSURANCE_RATE = 0.0517;// 健保
+	// 薪資設定
+
 	public SalaryDefaultSetting findSalarySettingByEmpid(Integer empId) {
-		
+
 		Employee employee = employeeService.find(empId);
 		return changeToResponse(settingRepository.findByEmployee(employee));
 	}
-	
-	public List<SalaryDefaultSetting> findAllSalarySetting(){
+
+	public List<SalaryDefaultSetting> findAllSalarySetting() {
 		List<SalarySetting> all = settingRepository.findAll();
 		ArrayList<SalaryDefaultSetting> list = new ArrayList<SalaryDefaultSetting>();
-		
-		for(SalarySetting salary:all) {
+
+		for (SalarySetting salary : all) {
 			list.add(changeToResponse(salary));
 		}
-		
+
 		return list;
 	}
-	
+
 	@Transactional
 	public void settingDefaultSalary(SalaryDefaultSetting setting) {
 
 		SalarySetting salary = salaryDefaultSettingRequsetToObject(setting);
 
 		boolean exist = settingRepository.existsByEmployeeEmployeeId(setting.getEmployeeID());
-		
-		if(exist) {
+
+		if (exist) {
 			throw new RuntimeException("該員工已設定薪資");
-		}else {			
+		} else {
 			settingRepository.save(salary);
 		}
 	}
-	
+
 	@Transactional
-	public void updateSalarySetting(Integer empId,SalaryDefaultSetting setting) {
-		
+	public void updateSalarySetting(Integer empId, SalaryDefaultSetting setting) {
+
 		Employee employee = employeeService.find(empId);
 		SalarySetting existSalary = settingRepository.findByEmployee(employee);
-		
-		if(existSalary!=null) {
-			if(existSalary.getSalaryId()==setting.getSalaryId()) {
+
+		if (existSalary != null) {
+			if (existSalary.getSalaryId() == setting.getSalaryId()) {
 				SalarySetting salary = salaryDefaultSettingRequsetToObject(setting);
-				
+
 				settingRepository.save(salary);
-			}else {
+			} else {
 				throw new RuntimeException("ID錯誤");
 			}
-		}else {
+		} else {
 			throw new RuntimeException("員工沒有設定薪資");
 		}
 
 	}
-	
+
 	@Transactional
-	public boolean deleteSalarySettingByEmpId(Integer empId){
+	public boolean deleteSalarySettingByEmpId(Integer empId) {
 		Employee employee = employeeService.find(empId);
-		
+
 		SalarySetting setting = settingRepository.findByEmployee(employee);
-		
+
 		setting.setEmployee(null);
 		settingRepository.delete(setting);
 		return true;
@@ -127,72 +135,70 @@ public class SalaryService {
 
 		return salarySetting;
 	}
-	
+
 	private SalaryDefaultSetting changeToResponse(SalarySetting salarySetting) {
 		SalaryDefaultSetting setting = new SalaryDefaultSetting();
-		
+
 		setting.setEmployeeID(salarySetting.getEmployee().getEmployeeId());
 		setting.setHourlyWage(salarySetting.getHourlyWage());
 		setting.setMonthlySalary(salarySetting.getMonthlySalary());
 		setting.setSalaryId(salarySetting.getSalaryId());
-		
+
 		return setting;
 	}
-	
-	
-	//薪資結算
+
+	// 薪資結算
 	public List<SalaryDetailResponse> findSalaryDetailByEmpId(int empId) {
-		
+
 		Employee employee = employeeService.find(empId);
 
 		List<SalaryDetail> details = detailRepository.findByEmployee(employee);
-		
-		if(details==null||details.size()==0) {
+
+		if (details == null || details.size() == 0) {
 			throw new RuntimeException("找不到薪資明細");
 		}
-		
+
 		ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
-		
-		for(SalaryDetail detail:details) {
+
+		for (SalaryDetail detail : details) {
 			SalaryDetailResponse detailResponse = detailResponse(detail);
 			response.add(detailResponse);
 		}
 		return response;
 	}
-	
-	
+
 	@Transactional
 	public void monthlySalaryCaculate(SalaryDetailRequest request) {
-	    
-	        SalaryDetail salaryDetail = salaryRequestToDetail(request);
-	        int empId = request.getEmployeeId();
-			Employee employee = employeeService.find(empId);
-			
-			List<SalaryDetail> existDetail = detailRepository.findByYearMonthAndEmployee(request.getYearMonth(), employee);
 
-			if(employee!=null) {
-				if(existDetail.size()==0||existDetail==null) {
-					detailRepository.save(salaryDetail);			
-				}else {
-					throw new RuntimeException("該月份已結算");
-				}
-			}else {
-				throw new RuntimeException("ID錯誤");
+		SalaryDetail salaryDetail = salaryRequestToDetail(request);
+		int empId = request.getEmployeeId();
+		Employee employee = employeeService.find(empId);
+
+		List<SalaryDetail> existDetail = detailRepository.findByYearMonthAndEmployee(request.getYearMonth(), employee);
+
+		if (employee != null) {
+			if (existDetail.size() == 0 || existDetail == null) {
+				detailRepository.save(salaryDetail);
+			} else {
+				throw new RuntimeException("該月份已結算");
 			}
+		} else {
+			throw new RuntimeException("ID錯誤");
+		}
 	}
-	
-	//request轉物件
+
+	// request轉物件
 	private SalaryDetail salaryRequestToDetail(SalaryDetailRequest request) {
-		
+
 		SalaryDetail salaryDetail = new SalaryDetail();
-		
+
 		List<SalaryBonus> bonuses = bonusRepository.findAllById(request.getBonuses());
 		salaryDetail.setBonuses(bonuses);
 		salaryDetail.setEarlyLeaveHours(request.getEarlyLeaveHours());
-		
+
 		Employee employee = employeeService.find(request.getEmployeeId());
 		salaryDetail.setEmployee(employee);
-		
+
 		salaryDetail.setLateHours(request.getLateHours());
 		salaryDetail.setLeaveDays(request.getLeaveDays());
 		salaryDetail.setLaborInsurance(request.getLaborInsurance());
@@ -201,161 +207,176 @@ public class SalaryService {
 		salaryDetail.setOvertimeHours(request.getOvertimeHours());
 		salaryDetail.setYearMonth(request.getYearMonth());
 		salaryDetail.setTotalBonus(countTotalBonus(request));
-		
+
 		salaryDetail.setEarnedSalary(caculateEarnedSalary(request));
 		return salaryDetail;
 	}
-	
-	
-	//加班費
-	private Integer overtimeSalary(BigDecimal overtimeHours,Integer hourlyWage) {
-		Integer overtimeSalary=0;
-		
-		overtimeSalary=overtimeHours.multiply(new BigDecimal(hourlyWage).multiply(new BigDecimal(1.5))).intValue();
-		
+
+	// 加班費
+	private Integer overtimeSalary(BigDecimal overtimeHours, Integer hourlyWage) {
+		Integer overtimeSalary = 0;
+
+		overtimeSalary = overtimeHours.multiply(new BigDecimal(hourlyWage).multiply(new BigDecimal(1.5))).intValue();
+
 		return overtimeSalary;
 	}
-	
-	//總月薪
-	private Integer caculateEarnedSalary(SalaryDetailRequest request) {
-		
-		Integer earnedSalary=0;
-		//總獎金
-		Integer totalBonus=0;
 
-		totalBonus=countTotalBonus(request);
-		
-		//月薪
+	// 總月薪
+	private Integer caculateEarnedSalary(SalaryDetailRequest request) {
+
+		Integer earnedSalary = 0;
+		// 總獎金
+		Integer totalBonus = 0;
+
+		totalBonus = countTotalBonus(request);
+
+		// 月薪
 		Integer monthlySalary = findSalarySettingByEmpid(request.getEmployeeId()).getMonthlySalary();
 		Integer hourlyWage = findSalarySettingByEmpid(request.getEmployeeId()).getHourlyWage();
-		Integer salary=0;
-		if(monthlySalary.equals(0)) {
-			BigDecimal roundedValue = request.getMonthlyRegularHours().multiply(new BigDecimal(hourlyWage))
-			.setScale(2, RoundingMode.HALF_UP);
-			salary=roundedValue.intValue();
-		}else {
-			salary=monthlySalary;
+		Integer salary = 0;
+		if (monthlySalary.equals(0)) {
+			BigDecimal roundedValue = request.getMonthlyRegularHours().multiply(new BigDecimal(hourlyWage)).setScale(2,
+					RoundingMode.HALF_UP);
+			salary = roundedValue.intValue();
+		} else {
+			salary = monthlySalary;
 		}
-		
-		//加班費
+
+		// 加班費
 		BigDecimal overtimeHours = request.getOvertimeHours();
 		Integer overtimeSalary = overtimeSalary(overtimeHours, hourlyWage);
-		
-		//遲到早退請假
+
+		// 遲到早退請假
 		Integer earlyLeaveHours = request.getEarlyLeaveHours();
 		Integer lateHours = request.getLateHours();
 		Integer leaveDays = request.getLeaveDays();
-		Integer earlyLateLeave=(earlyLeaveHours+lateHours+leaveDays)*hourlyWage;
-		
-		//年終
+		Integer earlyLateLeave = (int) Math.round(((double)earlyLeaveHours/2 + (double)lateHours/2 + leaveDays) * hourlyWage);
+
+		// 年終
 		int yearEnd = request.getYearEnd();
-		//月薪(時薪*工時)+bonus-勞保-健保-(遲到+早退)*時薪-請假*時薪+加班費+年終
-		earnedSalary=salary+totalBonus-request.getLaborInsurance()-request.getHealthInsurance()
-				+overtimeSalary-earlyLateLeave+yearEnd;
+		// 月薪(時薪*工時)+bonus-勞保-健保-(遲到+早退)*時薪-請假*時薪+加班費+年終
+		earnedSalary = salary + totalBonus - request.getLaborInsurance() - request.getHealthInsurance() + overtimeSalary
+				- earlyLateLeave + yearEnd;
 
 		return earnedSalary;
 	}
-	
-	//計算bonus
+
+	// 計算bonus
 	private Integer countTotalBonus(SalaryDetailRequest request) {
-		
-		List<SalaryBonus> bonuses =bonusRepository.findAllById(request.getBonuses());
-		Integer totalBonus=0;
-		
-		for(SalaryBonus bonus:bonuses) {
+
+		List<SalaryBonus> bonuses = bonusRepository.findAllById(request.getBonuses());
+		Integer totalBonus = 0;
+
+		for (SalaryBonus bonus : bonuses) {
 			totalBonus += bonus.getAmount();
 		}
-		
+
 		int yearEnd = request.getYearEnd();
-		totalBonus+=yearEnd;
-		
+		totalBonus += yearEnd;
+
 		return totalBonus;
 	}
-	
-	//產生response
+
+	// 產生response
 	public SalaryDetailResponse detailResponse(SalaryDetail salaryDetail) {
 		SalaryDetailResponse response = new SalaryDetailResponse();
-		
-		List<SalaryBonus> bonuses =salaryDetail.getBonuses();
+
+		List<SalaryBonus> bonuses = salaryDetail.getBonuses();
 
 		response.setBonuses(bonuses);
 		response.setEarlyLeaveHours(salaryDetail.getEarlyLeaveHours());
-		
+
 		Integer employeeId = salaryDetail.getEmployee().getEmployeeId();
 		response.setEmployeeId(employeeId);
-		
+
 		response.setHealthInsurance(salaryDetail.getHealthInsurance());
 		response.setLaborInsurance(salaryDetail.getLaborInsurance());
-		
+
 		response.setLateHours(salaryDetail.getLateHours());
 		response.setLeaveDays(salaryDetail.getLeaveDays());
 		response.setMonthlyRegularHours(salaryDetail.getMonthlyRegularHours());
 		response.setOvertimeHours(salaryDetail.getOvertimeHours());
 		response.setSalaryDetailId(salaryDetail.getSalaryDetailId());
-		
-		Integer bonusWithoutYearEnd=0;
-		
-		for(SalaryBonus bonus:bonuses) {
+
+		Integer bonusWithoutYearEnd = 0;
+
+		for (SalaryBonus bonus : bonuses) {
 			bonusWithoutYearEnd += bonus.getAmount();
 		}
 		Integer totalBonus = salaryDetail.getTotalBonus();
-		response.setYearEnd(totalBonus-bonusWithoutYearEnd);
-		
+		response.setYearEnd(totalBonus - bonusWithoutYearEnd);
+
 		response.setYearMonth(salaryDetail.getYearMonth());
-		
-		
+
 		return response;
 	}
-	
-	
-	//勞健保
-		public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary){
-			
-			
-			Integer healthInsurance = 0;
-			Integer laborInsurance = 0;
-			int[] grade= {28590/*勞建保最低0*/,28800,30300,
-						  31800,33300,34800,36300,38200,
-						  40100,42000,43900,45800/*勞保最高11*/,48200,
-						  50600,53000,55400,57800,60800,
-						  63800,66800,69800,72800,76500,
-						  80200,83900,87600,92100,96600,
-						  101100,105600,110100,115500,120900,
-						  126300,131700,137100,142500,147900,
-						  150000,156400,162800,169200,175600,
-						  182000,189500,197000,204500,212000,
-						  219500,228200,236900,245600,254300,
-						  263000,273000,283000,293000,303000,313000/*建保最高58*/};
-			if(salary<=grade[0]) {
-				healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[0]*0.3f);
-				laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[0]*0.2f);
-			}else if(salary>grade[0]&&salary<=grade[11]) {
-				for(int i=1;i<=11;i++) {
-					if(salary<=grade[i]) {
-						healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[i]*0.3f);
-						laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[i]*0.2f);
-						break;
-					}
-				}
-			}else if(salary>grade[11]&&salary<=grade[58]) {
-				for(int i=12;i<grade.length;i++) {
-					if(salary<=grade[i]) {
-						healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[i]*0.3f);
-						laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[11]*0.2f);
-						break;
-					}
-				}
-			}else {
-				healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[58]*0.3f);
-				laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[11]*0.2f);
-			}
-			
-			HashMap<String, Integer> insurance = new HashMap<String, Integer>();
-			insurance.put("healthInsurance", healthInsurance);
-			insurance.put("laborInsurance", laborInsurance);
-			
-			return insurance;
-			
-		}
+
+	// 遲到及早退時數(半小時)
+	public Map<String, Integer> countMonthlyLateAndEarlyLeaveByEmpId(Integer EmpId, String yearMonthStr){
 		
+		Integer lateHour=0;
+		Integer earlyLeaveHour=0;
+		YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+	    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+	    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+	    
+	    List<AttendanceViolations> lates = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(EmpId, "遲到", startOfMonth, endOfMonth);
+	    List<AttendanceViolations> earlyLeaves = violationsRepository.findViolationsByEmployeeAndTypeAndMonth(EmpId, "早退", startOfMonth, endOfMonth);
+		
+	    for(AttendanceViolations late:lates) {
+	    	lateHour+=(int) Math.ceil((double) late.getViolationMinutes() / 30);
+	    }
+	    for(AttendanceViolations early:earlyLeaves) {
+	    	earlyLeaveHour+=(int) Math.ceil((double) early.getViolationMinutes() / 30);
+	    }
+	    
+		HashMap<String, Integer> hours = new HashMap<String, Integer>();
+		hours.put("lateHour", lateHour);
+		hours.put("earlyLeaveHour", earlyLeaveHour);
+
+		return hours;
+	}
+
+	// 勞健保
+	public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary) {
+
+		Integer healthInsurance = 0;
+		Integer laborInsurance = 0;
+		int[] grade = { 28590/* 勞建保最低0 */, 28800, 30300, 31800, 33300, 34800, 36300, 38200, 40100, 42000, 43900,
+				45800/* 勞保最高11 */, 48200, 50600, 53000, 55400, 57800, 60800, 63800, 66800, 69800, 72800, 76500, 80200,
+				83900, 87600, 92100, 96600, 101100, 105600, 110100, 115500, 120900, 126300, 131700, 137100, 142500,
+				147900, 150000, 156400, 162800, 169200, 175600, 182000, 189500, 197000, 204500, 212000, 219500, 228200,
+				236900, 245600, 254300, 263000, 273000, 283000, 293000, 303000, 313000/* 建保最高58 */ };
+		if (salary <= grade[0]) {
+			healthInsurance = (int) Math.round(HEALTH_INSURANCE_RATE * grade[0] * 0.3f);
+			laborInsurance = (int) Math.round(LABOR_INSURANCE_RATE * grade[0] * 0.2f);
+		} else if (salary > grade[0] && salary <= grade[11]) {
+			for (int i = 1; i <= 11; i++) {
+				if (salary <= grade[i]) {
+					healthInsurance = (int) Math.round(HEALTH_INSURANCE_RATE * grade[i] * 0.3f);
+					laborInsurance = (int) Math.round(LABOR_INSURANCE_RATE * grade[i] * 0.2f);
+					break;
+				}
+			}
+		} else if (salary > grade[11] && salary <= grade[58]) {
+			for (int i = 12; i < grade.length; i++) {
+				if (salary <= grade[i]) {
+					healthInsurance = (int) Math.round(HEALTH_INSURANCE_RATE * grade[i] * 0.3f);
+					laborInsurance = (int) Math.round(LABOR_INSURANCE_RATE * grade[11] * 0.2f);
+					break;
+				}
+			}
+		} else {
+			healthInsurance = (int) Math.round(HEALTH_INSURANCE_RATE * grade[58] * 0.3f);
+			laborInsurance = (int) Math.round(LABOR_INSURANCE_RATE * grade[11] * 0.2f);
+		}
+
+		HashMap<String, Integer> insurance = new HashMap<String, Integer>();
+		insurance.put("healthInsurance", healthInsurance);
+		insurance.put("laborInsurance", laborInsurance);
+
+		return insurance;
+
+	}
+
 }

@@ -1,5 +1,6 @@
 package com.example.fluxeip.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,14 @@ public interface AttendanceViolationsRepository extends JpaRepository<Attendance
 	@Query("SELECT COUNT(av) > 0 FROM AttendanceViolations av WHERE av.attendance = :attendance")
 	boolean existsByAttendance(@Param("attendance") Attendance attendance);
 
+	
+	@Query("SELECT a FROM AttendanceViolations a " +
+		       "WHERE a.employee.employeeId = :employeeId " +
+		       "AND a.violationType.typeName = :violationTypeName " +
+		       "AND a.createdAt BETWEEN :startDate AND :endDate")
+		List<AttendanceViolations> findViolationsByEmployeeAndTypeAndMonth(
+		        @Param("employeeId") Integer employeeId,
+		        @Param("violationTypeName") String violationTypeName,
+		        @Param("startDate") LocalDateTime startDate,
+		        @Param("endDate") LocalDateTime endDate);
 }

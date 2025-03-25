@@ -157,4 +157,11 @@ public class SalaryController {
 
 		return yearEnd;
 	}
+	
+	//測試遲到早退
+	@GetMapping("/test/lateEarly")
+	public Map<String, Integer> testLateEarly(@RequestParam String yearMonth,@RequestParam Integer empId) {
+		return salaryService.countMonthlyLateAndEarlyLeaveByEmpId(empId, yearMonth);
+	}
+	
 }
