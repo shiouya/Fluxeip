@@ -46,25 +46,33 @@ public class ApprovalService {
 
 
     
-    // 查詢員工的請假單審核步驟
+ // 查詢員工的請假單審核步驟
     public List<ApprovalStepResponseDTO> getApprovalStepsByRequestId(Integer requestId) {
         // 查詢正在審核的 ApprovalStep
         List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
 
         // 將 ApprovalStep 轉換為 ApprovalStepDTO
-        return steps.stream().map(step -> new ApprovalStepResponseDTO(
-        		step.getId(),
-        		step.getLeaveRequest().getId(),
-                step.getLeaveRequest().getEmployee().getEmployeeId(),
-                step.getLeaveRequest().getEmployee().getEmployeeName(),
-                step.getApprover().getEmployeeId(),
-                step.getApprover().getEmployeeName(),
-                step.getStatus().getStatusName(),
-                step.getCurrentStep(),
-                step.getComment(),
-                step.getUpdatedAt()
-        )).collect(Collectors.toList());
+        return steps.stream().map(step -> {
+        	BaseRequest baseRequest = step.getBaseRequest(); // 獲取父類型的 BaseRequest
+
+            // 如果 BaseRequest 實際上是 LeaveRequest，進行類型轉換
+            LeaveRequest leaveRequest = (baseRequest instanceof LeaveRequest) ? (LeaveRequest) baseRequest : null;
+
+            return new ApprovalStepResponseDTO(
+                    step.getId(),
+                    leaveRequest != null ? leaveRequest.getId() : null, // 如果是 LeaveRequest，取其 ID
+                    leaveRequest != null ? leaveRequest.getEmployee().getEmployeeId() : null, // 同上
+                    leaveRequest != null ? leaveRequest.getEmployee().getEmployeeName() : null, // 同上
+                    step.getApprover().getEmployeeId(),
+                    step.getApprover().getEmployeeName(),
+                    step.getStatus().getStatusName(),
+                    step.getCurrentStep(),
+                    step.getComment(),
+                    step.getUpdatedAt()
+            );
+        }).collect(Collectors.toList());
     }
+
 //    // 更新簽核狀態
 //    public ApprovalStep updateApprovalStep(Integer stepId, Integer statusId, String comment) {
 //        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);

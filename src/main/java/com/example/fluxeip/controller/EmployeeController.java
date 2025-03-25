@@ -222,6 +222,10 @@ public class EmployeeController {
 	    Pageable pageable = PageRequest.of(page, size, Sort.by("employeeId").ascending());
 
 	    Page<Employee> employees = employeeService.getEmployeesByDepartmentAndPosition(department, position, status, pageable);
-	    return ResponseEntity.ok(employees);
+	    if (employees.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(employees);
+        }
 	}
 }

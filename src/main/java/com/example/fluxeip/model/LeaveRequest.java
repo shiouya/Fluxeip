@@ -10,22 +10,33 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "leave_requests")
-@Data
-public class LeaveRequest {
+@Table(name = "leave_requests")  // 指定資料表名稱
+//@SequenceGenerator(name = "LeaveRequest_SEQ", sequenceName = "LeaveRequest_SEQ", allocationSize = 1)
+public class LeaveRequest extends BaseRequest{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "employee_id", nullable = false)
-    private Employee employee; 
-
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)  // 使用 IDENTITY 以便資料庫自動生成 ID
+	private Integer id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "LeaveRequest_SEQ")
+//    private Integer id;
+//
+//    @ManyToOne 
+//    @JoinColumn(name = "employee_id", nullable = false)
+//    private Employee employee; 
+ 
     @ManyToOne
     @JoinColumn(name = "leave_type_id", nullable = false)
     private Type leaveType; 
@@ -42,13 +53,13 @@ public class LeaveRequest {
     @Column(name = "reason")
     private String reason;
 
-    @ManyToOne
-    @JoinColumn(name = "status_id", nullable = false)
-    private Status status;
-
-    @Column(name = "submitted_at", nullable = false, updatable = false)
-    private LocalDateTime submittedAt = LocalDateTime.now();
+//    @ManyToOne
+//    @JoinColumn(name = "status_id", nullable = false)
+//    private Status status;
+//
+//    @Column(name = "submitted_at", nullable = false, updatable = false)
+//    private LocalDateTime submittedAt = LocalDateTime.now();
 
     @Column(name = "attachments")
-    private String attachments;
+    private String attachments; 
 }

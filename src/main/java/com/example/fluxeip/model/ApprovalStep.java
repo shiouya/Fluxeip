@@ -19,7 +19,7 @@ public class ApprovalStep {
 
     @ManyToOne
     @JoinColumn(name = "request_id", nullable = false)
-    private LeaveRequest leaveRequest;
+    private BaseRequest baseRequest;  // 使用 BaseRequest 類型來處理不同類型的請求
 
     @Column(name = "current_step", nullable = false)
     private Integer currentStep;
