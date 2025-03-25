@@ -19,10 +19,12 @@ import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.dto.SalaryDetailResponse;
 import com.example.fluxeip.model.AttendanceViolations;
 import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
+import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
 import com.example.fluxeip.repository.SalarySettingRepository;
@@ -41,6 +43,9 @@ public class SalaryService {
 
 	@Autowired
 	private AttendanceViolationsRepository violationsRepository;
+	
+	@Autowired
+	private LeaveRequestRepository leaveRequestRepository;
 
 	@Autowired
 	private EmployeeService employeeService;
@@ -334,6 +339,24 @@ public class SalaryService {
 		hours.put("lateHour", lateHour);
 		hours.put("earlyLeaveHour", earlyLeaveHour);
 
+		return hours;
+	}
+	
+	//請假時數
+	public Double leaveDaysHours(Integer empId, String yearMonthStr) {
+		Double hours=0.0;
+		YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+	    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+	    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+		List<LeaveRequest> days = leaveRequestRepository.findByEmpidAndStatusAndDateRange(empId, "已核決", startOfMonth, endOfMonth);
+		
+		for(LeaveRequest day:days) {
+			if("事假".equals(day.getLeaveType().getTypeName())||"家庭照顧假".equals(day.getLeaveType().getTypeName())) {
+				hours+=day.getLeaveHours().intValue();
+			}else if("生理假".equals(day.getLeaveType().getTypeName())||"病假".equals(day.getLeaveType().getTypeName())) {
+				hours+=day.getLeaveHours().divide(new BigDecimal(2)).doubleValue();
+			}
+		}
 		return hours;
 	}
 
