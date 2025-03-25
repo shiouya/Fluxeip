@@ -206,19 +206,6 @@ public class SalaryService {
 		return salaryDetail;
 	}
 	
-	//勞健保
-	public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary){
-		
-		Integer healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*salary*0.3f);
-		Integer laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*salary*0.2f);
-		
-		HashMap<String, Integer> insurance = new HashMap<String, Integer>();
-		insurance.put("healthInsurance", healthInsurance);
-		insurance.put("laborInsurance", laborInsurance);
-		
-		return insurance;
-		
-	}
 	
 	//加班費
 	private Integer overtimeSalary(BigDecimal overtimeHours,Integer hourlyWage) {
@@ -320,4 +307,55 @@ public class SalaryService {
 		return response;
 	}
 	
+	
+	//勞健保
+		public Map<String, Integer> laborInsuranceAndHealthInsurance(Integer salary){
+			
+			
+			Integer healthInsurance = 0;
+			Integer laborInsurance = 0;
+			int[] grade= {28590/*勞建保最低0*/,28800,30300,
+						  31800,33300,34800,36300,38200,
+						  40100,42000,43900,45800/*勞保最高11*/,48200,
+						  50600,53000,55400,57800,60800,
+						  63800,66800,69800,72800,76500,
+						  80200,83900,87600,92100,96600,
+						  101100,105600,110100,115500,120900,
+						  126300,131700,137100,142500,147900,
+						  150000,156400,162800,169200,175600,
+						  182000,189500,197000,204500,212000,
+						  219500,228200,236900,245600,254300,
+						  263000,273000,283000,293000,303000,313000/*建保最高58*/};
+			if(salary<=grade[0]) {
+				healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[0]*0.3f);
+				laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[0]*0.2f);
+			}else if(salary>grade[0]&&salary<=grade[11]) {
+				for(int i=1;i<=11;i++) {
+					if(salary<=grade[i]) {
+						healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[i]*0.3f);
+						laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[i]*0.2f);
+						break;
+					}
+				}
+			}else if(salary>grade[11]&&salary<=grade[58]) {
+				for(int i=12;i<grade.length;i++) {
+					if(salary<=grade[i]) {
+						healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[i]*0.3f);
+						laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[11]*0.2f);
+						break;
+					}
+				}
+			}else {
+				healthInsurance = (int)Math.round(HEALTH_INSURANCE_RATE*grade[58]*0.3f);
+				laborInsurance = (int)Math.round(LABOR_INSURANCE_RATE*grade[11]*0.2f);
+			}
+			
+			HashMap<String, Integer> insurance = new HashMap<String, Integer>();
+			insurance.put("healthInsurance", healthInsurance);
+			insurance.put("laborInsurance", laborInsurance);
+			
+			return insurance;
+			
+		}
+		
 }
