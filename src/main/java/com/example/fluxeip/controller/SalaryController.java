@@ -107,6 +107,7 @@ public class SalaryController {
 		}
 	}
 	
+	
 	//薪資結算相關
 	
 	@PostMapping("/detail")
@@ -122,7 +123,7 @@ public class SalaryController {
 		}
 	}
 	
-	//
+	// 用員工搜尋明細
 	@GetMapping("/detail/{id}")
 	public ResponseEntity<?> findSalaryDetail(@PathVariable("id") Integer empId){
 		try {
@@ -133,6 +134,38 @@ public class SalaryController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(e.getMessage());
 		}
+	}
+	
+	// 搜尋全部明細
+	@GetMapping("/detail")
+	public ResponseEntity<?> findAllSalaryDetail(){
+		try {
+			List<SalaryDetailResponse> response = salaryService.findAllSalaryDetail();
+			
+			return ResponseEntity.ok(response);
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//刪除明細
+	@DeleteMapping("/detail/{id}")
+	public ResponseEntity<?> deleteDetail(@PathVariable Integer id){
+
+		boolean delete=salaryService.deleteDetailById(id);
+
+			Map<String, String> response = new HashMap<>();
+			if (delete) {
+				response.put("message", "success");
+				response.put("success", "true");
+
+				return ResponseEntity.ok(response); // 200 OK，帶回訊息
+			} else {
+				response.put("message", "false");
+				response.put("success", "false");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 404 Not Found
+			}
 	}
 	
 	//勞健保

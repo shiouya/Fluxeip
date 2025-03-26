@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,12 +26,14 @@ import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
 import com.example.fluxeip.model.Schedule;
+import com.example.fluxeip.model.Type;
 import com.example.fluxeip.model.WorkAdjustmentRequest;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
 import com.example.fluxeip.repository.SalarySettingRepository;
+import com.example.fluxeip.repository.TypeRepository;
 import com.example.fluxeip.repository.WorkAdjustmentRequestRepository;
 
 @Service
@@ -53,6 +56,9 @@ public class SalaryService {
 	
 	@Autowired
 	private WorkAdjustmentRequestRepository workAdjustmentRequestRepository;
+	
+	@Autowired
+	private TypeRepository typeRepository;
 	
 	@Autowired
 	private ScheduleService scheduleService;
@@ -189,6 +195,23 @@ public class SalaryService {
 		}
 		return response;
 	}
+	
+	//找全部明細
+	public List<SalaryDetailResponse> findAllSalaryDetail() {
+		List<SalaryDetail> details = detailRepository.findAll();
+		
+		if (details == null || details.size() == 0) {
+			throw new RuntimeException("找不到薪資明細");
+		}
+
+		ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
+
+		for (SalaryDetail detail : details) {
+			SalaryDetailResponse detailResponse = detailResponse(detail);
+			response.add(detailResponse);
+		}
+		return response;
+	}
 
 	//結算月薪並且存入資料庫
 	@Transactional
@@ -208,6 +231,20 @@ public class SalaryService {
 			}
 		} else {
 			throw new RuntimeException("ID錯誤");
+		}
+	}
+	
+	//刪除明細
+	@Transactional
+	public boolean deleteDetailById(Integer id) {
+		Optional<SalaryDetail> detail = detailRepository.findById(id);
+		SalaryDetail existDetail = detail.orElse(null);
+		if(existDetail!=null) {
+			detailRepository.delete(existDetail);
+			return true;
+		}else {
+			new RuntimeException("找不到明細");
+			return false;
 		}
 	}
 
@@ -303,8 +340,12 @@ public class SalaryService {
 		SalaryDetailResponse response = new SalaryDetailResponse();
 
 		List<SalaryBonus> bonuses = salaryDetail.getBonuses();
-
-		response.setBonuses(bonuses);
+		
+		if(bonuses==null||bonuses.size()==0) {
+			response.setBonuses(null);
+		}else {
+			response.setBonuses(bonuses);
+		}
 		response.setEarlyLeaveHours(salaryDetail.getEarlyLeaveHours());
 
 		Integer employeeId = salaryDetail.getEmployee().getEmployeeId();
@@ -313,6 +354,7 @@ public class SalaryService {
 		response.setHealthInsurance(salaryDetail.getHealthInsurance());
 		response.setLaborInsurance(salaryDetail.getLaborInsurance());
 
+		response.setLeaveDaysHoursByType(leaveDaysHoursByType(employeeId,salaryDetail.getYearMonth()));
 		response.setLateHours(salaryDetail.getLateHours());
 		response.setLeaveDays(salaryDetail.getLeaveDays());
 		response.setMonthlyRegularHours(salaryDetail.getMonthlyRegularHours());
@@ -398,6 +440,35 @@ public class SalaryService {
 		}
 		return hours;
 	}
+	
+	//請假時數(種類別)
+		public Map<String,Double> leaveDaysHoursByType(Integer empId, String yearMonthStr) {
+
+			YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+		    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+		    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+			
+		    List<LeaveRequest> days = leaveRequestRepository.findByEmpidAndStatusAndDateRange(empId, "已核決", startOfMonth, endOfMonth);
+			List<Type> types = typeRepository.findByCategory("leave_type");
+		    
+			HashMap<String, Double> hoursByType = new HashMap<String,Double>();
+			
+			for(Type type:types) {
+				Double hours=0.0;
+				for(LeaveRequest day:days) {
+					if(type.getTypeName().equals(day.getLeaveType().getTypeName())) {
+						hours+=day.getLeaveHours().intValue();
+					}
+				}
+				if(hours!=0.0) {
+					hoursByType.put(type.getTypeName(), hours);				
+				}
+			}
+			if(hoursByType.size()==0||hoursByType==null) {
+				return null;
+			}
+			return hoursByType;
+		}
 	
 	//加班減班
 	public Map<String, Integer> overtimeAndMinus(Integer empId, String yearMonthStr){
