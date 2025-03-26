@@ -35,6 +35,15 @@ public class ApprovalFlowController {
     public ResponseEntity<?> getAllStepOneApprovalFlow() {
     	return ResponseEntity.ok(approvalFlowService.getAllStepOneApprovalFlow());
     }
+    
+    
+    // 從簽核1取得後續的簽核流程
+    @GetMapping("/flow/stepone/{flowId}")
+    public ResponseEntity<?> getApprovalFlowByStepOne(@PathVariable Integer flowId) {
+    	System.out.println("有喔");
+        return ResponseEntity.ok(approvalFlowService.getApprovalFlowAndNextSteps(flowId));
+    }
+    
     // 取得全部的簽核流程
     @GetMapping("/flow/all")
     public ResponseEntity<?> getAllApprovalFlow() {

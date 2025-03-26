@@ -844,6 +844,21 @@ public class ApprovalFlowService {
 						flow.getApproverPosition().getPositionName()))
 				.collect(Collectors.toList());
 	}
+	// 查找簽核流程及所有後續步驟
+	@Transactional
+	public List<ApprovalFlowResponseDTO> getApprovalFlowAndNextSteps(Integer flowId) {
+		List<Integer> flowIdsToGet = new ArrayList<>();
+		collectNextSteps(flowId, flowIdsToGet);
+		List<ApprovalFlow> flowsToGet = approvalFlowRepository.findAllById(flowIdsToGet);
+		return flowsToGet.stream()
+				.map(flow -> new ApprovalFlowResponseDTO(flow.getId(), flow.getFlowName(),
+						flow.getRequestType().getTypeName(), flow.getStepOrder(), flow.getPosition().getPositionName(),
+						flow.getApproverPosition().getPositionName()))
+				.collect(Collectors.toList());
+	}
+	
+	
+	
 
 	// 查找全部的簽核流程
 	@Transactional
