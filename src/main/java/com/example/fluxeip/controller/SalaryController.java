@@ -178,7 +178,11 @@ public class SalaryController {
 		return salaryService.countMonthlyWorkHours(empId, yearMonth);
 	}
 	
-	
+	//加班減班
+	@GetMapping("/overtimeMinus")
+	public Map<String, Integer> testOvertimeMinus(@RequestParam String yearMonth,@RequestParam Integer empId){
+		return salaryService.overtimeAndMinus(empId, yearMonth);
+	}
 	//全部獎金 津貼
 	@GetMapping("/bonus")
 	public ResponseEntity<?> allBonus(){

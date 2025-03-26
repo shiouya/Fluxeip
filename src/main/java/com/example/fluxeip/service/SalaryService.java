@@ -25,11 +25,13 @@ import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
 import com.example.fluxeip.model.Schedule;
+import com.example.fluxeip.model.WorkAdjustmentRequest;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
 import com.example.fluxeip.repository.SalarySettingRepository;
+import com.example.fluxeip.repository.WorkAdjustmentRequestRepository;
 
 @Service
 public class SalaryService {
@@ -48,6 +50,9 @@ public class SalaryService {
 	
 	@Autowired
 	private LeaveRequestRepository leaveRequestRepository;
+	
+	@Autowired
+	private WorkAdjustmentRequestRepository workAdjustmentRequestRepository;
 	
 	@Autowired
 	private ScheduleService scheduleService;
@@ -335,9 +340,12 @@ public class SalaryService {
 	    	workHpurs+=schedule.getShiftType().getEstimatedHours().doubleValue();
 	    }
 	    
+	    Map<String, Integer> overtimeAndMinus = overtimeAndMinus(empId, yearMonthStr);
+	    Integer minus = overtimeAndMinus.get("minusHours");
+	    
 	    BigDecimal monthlyWorkHours = new BigDecimal(workHpurs);
 	    
-	    return monthlyWorkHours;
+	    return monthlyWorkHours.subtract(new BigDecimal(minus));
 	}
 	
 	// 遲到及早退時數(半小時)
@@ -381,6 +389,32 @@ public class SalaryService {
 				hours+=day.getLeaveHours().divide(new BigDecimal(2)).doubleValue();
 			}
 		}
+		return hours;
+	}
+	
+	//加班減班
+	public Map<String, Integer> overtimeAndMinus(Integer empId, String yearMonthStr){
+		YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+	    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+	    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+		
+	    Integer overtimeHours=0;
+	    Integer minusHours=0;
+	    
+	    List<WorkAdjustmentRequest> overtimes = workAdjustmentRequestRepository.findWorkAdjustmentRequestByEmployeeAndTypeAndMonth(empId, "加班", startOfMonth, endOfMonth);
+	    List<WorkAdjustmentRequest> minuses = workAdjustmentRequestRepository.findWorkAdjustmentRequestByEmployeeAndTypeAndMonth(empId, "減班", startOfMonth, endOfMonth);
+	    
+	    for(WorkAdjustmentRequest requset:overtimes) {
+	    	overtimeHours+=requset.getHours().intValue();
+	    }
+	    for(WorkAdjustmentRequest requset:minuses) {
+	    	minusHours+=requset.getHours().intValue();
+	    }
+	    
+		HashMap<String, Integer> hours = new HashMap<String, Integer>();
+		hours.put("overtimeHours", overtimeHours);
+		hours.put("minusHours", minusHours);
+
 		return hours;
 	}
 
