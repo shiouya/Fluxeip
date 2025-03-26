@@ -80,7 +80,7 @@ public class ApprovalController {
     		@RequestParam String status,
     		@RequestParam(required = false) String comment) {
     	
-    	String result = approvalFlowService.approveworkAdjustmentRequest(stepId, approverId, status, comment);
+    	String result = approvalFlowService.approveWorkAdjustmentRequest(stepId, approverId, status, comment);
     	
     	if ("簽核成功".equals(result)) {
     		return ResponseEntity.ok(result);
