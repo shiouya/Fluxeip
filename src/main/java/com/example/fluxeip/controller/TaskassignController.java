@@ -56,6 +56,19 @@ public class TaskassignController {
 		return workTaskassignResponse;
 	}
 
+	@GetMapping("/work/taskassign/{id}/{status}")
+	public List<Taskassign> getWorkTaskassignByStatus(@PathVariable Integer id, @PathVariable String status) {
+		Optional<WorkProgess> work = workRep.findById(id);
+		WorkProgess workProgess = new WorkProgess();
+		if (work != null) {
+			workProgess = work.get();
+		}
+		Status statu = staSer.findByName(status);
+		System.out.println(status);
+		List<Taskassign> Taskassigns = taskRep.findByWorkprogessAndStatus(workProgess, statu);
+		return Taskassigns;
+	}
+
 	@GetMapping("/taskassign/{id}")
 	public Taskassign getTaskassign(@PathVariable Integer id) {
 		Taskassign taskassign = new Taskassign();
@@ -76,11 +89,8 @@ public class TaskassignController {
 	        taskassign.setTaskContent(entity.getTaskContent()); 
 	        taskassign.setCreateDate(entity.getCreateDate());
 	        taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-			taskassign.setFinishDate(entity.getFinishDate());
 	        Employee employee = empRep.findByEmployeeName(entity.getEmployee());
 	        taskassign.setAssign(employee);
-			Status status = staSer.findByName(entity.getStatus());
-	        taskassign.setStatus(status);
 	        // 更新資料庫中的 taskassign
 	        taskRep.save(taskassign); // 儲存更新後的資料
 	        
@@ -106,10 +116,7 @@ public class TaskassignController {
 		taskassign.setReveiew(review);
 		taskassign.setCreateDate(entity.getCreateDate());
 		taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-		if (entity.getFinishDate() != null) {
-			taskassign.setFinishDate(entity.getFinishDate());
-		}
-		Status status = staSer.findByName(entity.getStatus());
+		Status status = staSer.findByName("未完成");
 		taskassign.setStatus(status);
 		taskRep.save(taskassign); // 儲存更新後的資料
 		return true;

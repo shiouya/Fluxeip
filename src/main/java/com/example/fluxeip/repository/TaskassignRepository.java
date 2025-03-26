@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Taskassign;
 import com.example.fluxeip.model.WorkProgess;
-import com.example.fluxeip.model.Status;
 
 
 public interface TaskassignRepository extends JpaRepository<Taskassign, Integer> {
@@ -17,5 +17,7 @@ public interface TaskassignRepository extends JpaRepository<Taskassign, Integer>
 	List<Taskassign> findByAssign(Employee assign);
 	
 	List<Taskassign> findByAssignAndStatus(Employee assign, Status status);
+
+	List<Taskassign> findByWorkprogessAndStatus(WorkProgess workprogess, Status status);
 
 }

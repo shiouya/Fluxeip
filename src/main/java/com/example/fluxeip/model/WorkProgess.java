@@ -55,6 +55,8 @@ public class WorkProgess {
 	@OneToMany(mappedBy = "workprogess", cascade = CascadeType.ALL)
 	private List<Taskassign> taskassign = new LinkedList<Taskassign>();
 
+	private Double progress;
+
 	public WorkProgess() {
 	}
 
