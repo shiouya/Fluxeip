@@ -65,6 +65,7 @@ public class WorkAdjustmentRequestService {
         dto.setAdjustmentDate(request.getAdjustmentDate());
         dto.setHours(request.getHours());
         dto.setReason(request.getReason());
+        dto.setSubmittedAt(request.getSubmittedAt());
         dto.setStatus(request.getStatus().getStatusName()); // 假設 Status 有 id 欄位
 
         return dto;

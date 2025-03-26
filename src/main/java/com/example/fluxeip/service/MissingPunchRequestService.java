@@ -72,6 +72,7 @@ public class MissingPunchRequestService {
         dto.setClockType(request.getClockType().getTypeName()); // 假設 Type 有 typeName 欄位
         dto.setMissingDate(request.getMissingDate());
         dto.setReason(request.getReason());
+        dto.setSubmittedAt(request.getSubmittedAt());
         dto.setStatus(request.getStatus().getStatusName()); // 假設 Status 有 id 欄位
 
         return dto;

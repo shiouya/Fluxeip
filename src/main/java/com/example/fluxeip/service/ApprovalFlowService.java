@@ -647,7 +647,7 @@ public class ApprovalFlowService {
 
 	// 查詢員工待審核的費用單
 	@Transactional
-	public List<ExpenseApprovalStepDTO> getPendingExpenseMissingPunchApprovalSteps(Integer approverId) {
+	public List<ExpenseApprovalStepDTO> getPendingExpenseApprovalSteps(Integer approverId) {
 		// 查詢待審核的 ApprovalStep
 		List<ApprovalStep> pendingSteps = approvalStepRepository.findPendingApprovalSteps(approverId, "待審核");
 

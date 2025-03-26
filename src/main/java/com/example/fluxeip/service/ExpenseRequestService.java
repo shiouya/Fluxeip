@@ -70,6 +70,7 @@ public class ExpenseRequestService {
         dto.setExpenseType(request.getExpenseType().getTypeName()); // 假設 Type 有 typeName 欄位
         dto.setAmount(request.getAmount());
         dto.setDescription(request.getDescription());
+        dto.setSubmittedAt(request.getSubmittedAt());
         String attachmentPath = request.getAttachments();
         dto.setAttachmentPath(attachmentPath);
         dto.setAttachmentName(fileService.extractOriginalFileName(attachmentPath));

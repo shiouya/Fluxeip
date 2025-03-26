@@ -1,6 +1,7 @@
 package com.example.fluxeip.dto;
 
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -20,7 +21,9 @@ public class MissingPunchResponseDTO {
 	private Date missingDate;
 	private String clockType;
 	private String reason;
+	private LocalDateTime submittedAt;
 	private String status;
+	
 	
 
 }

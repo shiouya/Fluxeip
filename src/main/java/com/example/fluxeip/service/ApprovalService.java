@@ -13,31 +13,34 @@ import java.util.stream.Collectors;
 
 @Service
 public class ApprovalService {
-    @Autowired
-    private ApprovalFlowRepository approvalFlowRepository;
+	@Autowired
+	private ApprovalFlowRepository approvalFlowRepository;
 
-    @Autowired
-    private ApprovalStepRepository approvalStepRepository;
+	@Autowired
+	private ApprovalStepRepository approvalStepRepository;
 
-    @Autowired
-    private EmployeeApprovalFlowRepository employeeApprovalFlowRepository; 
-    
-    @Autowired
-    private LeaveRequestRepository leaveRequestRepository;
-    
-    @Autowired
-    private StatusRepository statusRepository;
-    
-    @Autowired
-    private WorkAdjustmentRequestRepository adjustmentRequestRepository;
-    
-    @Autowired
-    private MissingPunchRequestRepository missingPunchRequestRepository;
+	@Autowired
+	private EmployeeApprovalFlowRepository employeeApprovalFlowRepository;
 
-    // 取得某類請求的簽核流程
-    public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
-        return approvalFlowRepository.findByRequestTypeId(requestTypeId);
-    }
+	@Autowired
+	private LeaveRequestRepository leaveRequestRepository;
+
+	@Autowired
+	private StatusRepository statusRepository;
+
+	@Autowired
+	private WorkAdjustmentRequestRepository adjustmentRequestRepository;
+
+	@Autowired
+	private MissingPunchRequestRepository missingPunchRequestRepository;
+
+	@Autowired
+	private ExpenseRequestRepository expenseRequestRepository;
+
+	// 取得某類請求的簽核流程
+	public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
+		return approvalFlowRepository.findByRequestTypeId(requestTypeId);
+	}
 
 //    // 建立新的簽核步驟
 //    public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
@@ -49,83 +52,78 @@ public class ApprovalService {
 //        return approvalStepRepository.save(step);
 //    }
 
+	// 查詢員工的請假單審核步驟
+	public List<ApprovalStepResponseDTO> getLeaveApprovalStepsByRequestId(Integer requestId) {
+		// 查詢正在審核的 ApprovalStep
+		List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
 
-    
- // 查詢員工的請假單審核步驟
-    public List<ApprovalStepResponseDTO> getLeaveApprovalStepsByRequestId(Integer requestId) {
-        // 查詢正在審核的 ApprovalStep
-        List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+		// 將 ApprovalStep 轉換為 ApprovalStepDTO
+		return steps.stream().map(step -> {
+			Optional<LeaveRequest> leaveRequestOpt = leaveRequestRepository.findById(requestId);
+			LeaveRequest leaveRequest = leaveRequestOpt.get();
+			// 如果 BaseRequest 實際上是 LeaveRequest，進行類型轉換
 
-        // 將 ApprovalStep 轉換為 ApprovalStepDTO
-        return steps.stream().map(step -> {
-	    	Optional<LeaveRequest> leaveRequestOpt = leaveRequestRepository.findById(requestId);
-	    	LeaveRequest leaveRequest = leaveRequestOpt.get();
-            // 如果 BaseRequest 實際上是 LeaveRequest，進行類型轉換
+			return new ApprovalStepResponseDTO(step.getId(), leaveRequest.getId(), // 如果是 LeaveRequest，取其 ID
+					leaveRequest.getEmployee().getEmployeeId(), // 同上
+					leaveRequest.getEmployee().getEmployeeName(), // 同上
+					step.getApprover().getEmployeeId(), step.getApprover().getEmployeeName(),
+					step.getStatus().getStatusName(), step.getCurrentStep(), step.getComment(), step.getUpdatedAt());
+		}).collect(Collectors.toList());
+	}
 
-            return new ApprovalStepResponseDTO(
-                    step.getId(),
-                    leaveRequest.getId(), // 如果是 LeaveRequest，取其 ID
-                    leaveRequest.getEmployee().getEmployeeId(), // 同上
-                    leaveRequest.getEmployee().getEmployeeName() , // 同上
-                    step.getApprover().getEmployeeId(),
-                    step.getApprover().getEmployeeName(),
-                    step.getStatus().getStatusName(),
-                    step.getCurrentStep(),
-                    step.getComment(),
-                    step.getUpdatedAt()
-            );
-        }).collect(Collectors.toList());
-    }
-    
-    // 查詢員工的加減班單審核步驟
-    public List<ApprovalStepResponseDTO> getWorkadjustApprovalStepsByRequestId(Integer requestId) {
-    	// 查詢正在審核的 ApprovalStep
-    	List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
-    	
-    	// 將 ApprovalStep 轉換為 ApprovalStepDTO
-    	return steps.stream().map(step -> {
-    		Optional<WorkAdjustmentRequest> workAdjustRequestOpt =adjustmentRequestRepository.findById(requestId);
+	// 查詢員工的加減班單審核步驟
+	public List<ApprovalStepResponseDTO> getWorkadjustApprovalStepsByRequestId(Integer requestId) {
+		// 查詢正在審核的 ApprovalStep
+		List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+		// 將 ApprovalStep 轉換為 ApprovalStepDTO
+		return steps.stream().map(step -> {
+			Optional<WorkAdjustmentRequest> workAdjustRequestOpt = adjustmentRequestRepository.findById(requestId);
 			WorkAdjustmentRequest request = workAdjustRequestOpt.get();
-    		
-    		return new ApprovalStepResponseDTO(
-                    step.getId(),
-                    request.getId(), // 如果是 LeaveRequest，取其 ID
-                    request.getEmployee().getEmployeeId(), // 同上
-                    request.getEmployee().getEmployeeName() , // 同上
-                    step.getApprover().getEmployeeId(),
-                    step.getApprover().getEmployeeName(),
-                    step.getStatus().getStatusName(),
-                    step.getCurrentStep(),
-                    step.getComment(),
-                    step.getUpdatedAt()
-    				);
-    	}).collect(Collectors.toList());
-    }
-    
-    // 查詢員工的補卡單審核步驟
-    public List<ApprovalStepResponseDTO> getMissingPunchApprovalStepsByRequestId(Integer requestId) {
-    	// 查詢正在審核的 ApprovalStep
-    	List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
-    	
-    	// 將 ApprovalStep 轉換為 ApprovalStepDTO
-    	return steps.stream().map(step -> {
-    		Optional<MissingPunchRequest> missingPunchRequestOpt =missingPunchRequestRepository.findById(requestId);
-    		MissingPunchRequest request = missingPunchRequestOpt.get();
-    		
-    		return new ApprovalStepResponseDTO(
-    				step.getId(),
-    				request.getId(), //，取其 ID
-    				request.getEmployee().getEmployeeId(), // 同上
-    				request.getEmployee().getEmployeeName() , // 同上
-    				step.getApprover().getEmployeeId(),
-    				step.getApprover().getEmployeeName(),
-    				step.getStatus().getStatusName(),
-    				step.getCurrentStep(),
-    				step.getComment(),
-    				step.getUpdatedAt()
-    				);
-    	}).collect(Collectors.toList());
-    }
+
+			return new ApprovalStepResponseDTO(step.getId(), request.getId(), // 如果是 LeaveRequest，取其 ID
+					request.getEmployee().getEmployeeId(), // 同上
+					request.getEmployee().getEmployeeName(), // 同上
+					step.getApprover().getEmployeeId(), step.getApprover().getEmployeeName(),
+					step.getStatus().getStatusName(), step.getCurrentStep(), step.getComment(), step.getUpdatedAt());
+		}).collect(Collectors.toList());
+	}
+
+	// 查詢員工的補卡單審核步驟
+	public List<ApprovalStepResponseDTO> getMissingPunchApprovalStepsByRequestId(Integer requestId) {
+		// 查詢正在審核的 ApprovalStep
+		List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+		// 將 ApprovalStep 轉換為 ApprovalStepDTO
+		return steps.stream().map(step -> {
+			Optional<MissingPunchRequest> missingPunchRequestOpt = missingPunchRequestRepository.findById(requestId);
+			MissingPunchRequest request = missingPunchRequestOpt.get();
+
+			return new ApprovalStepResponseDTO(step.getId(), request.getId(), // ，取其 ID
+					request.getEmployee().getEmployeeId(), // 同上
+					request.getEmployee().getEmployeeName(), // 同上
+					step.getApprover().getEmployeeId(), step.getApprover().getEmployeeName(),
+					step.getStatus().getStatusName(), step.getCurrentStep(), step.getComment(), step.getUpdatedAt());
+		}).collect(Collectors.toList());
+	}
+
+	// 查詢員工的費用單審核步驟
+	public List<ApprovalStepResponseDTO> getExpenseApprovalStepsByRequestId(Integer requestId) {
+		// 查詢正在審核的 ApprovalStep
+		List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+		// 將 ApprovalStep 轉換為 ApprovalStepDTO
+		return steps.stream().map(step -> {
+			Optional<ExpenseRequest> expenseRequestOpt = expenseRequestRepository.findById(requestId);
+			ExpenseRequest request = expenseRequestOpt.get();
+
+			return new ApprovalStepResponseDTO(step.getId(), request.getId(), // ，取其 ID
+					request.getEmployee().getEmployeeId(), // 同上
+					request.getEmployee().getEmployeeName(), // 同上
+					step.getApprover().getEmployeeId(), step.getApprover().getEmployeeName(),
+					step.getStatus().getStatusName(), step.getCurrentStep(), step.getComment(), step.getUpdatedAt());
+		}).collect(Collectors.toList());
+	}
 
 //    // 更新簽核狀態
 //    public ApprovalStep updateApprovalStep(Integer stepId, Integer statusId, String comment) {
@@ -138,7 +136,7 @@ public class ApprovalService {
 //        } 
 //        return null;  
 //    }
-    
+
 //    public boolean approveStep(Integer stepId, String comment) {
 //        Optional<ApprovalStep> optionalStep = approvalStepRepository.findById(stepId);
 //        if (optionalStep.isPresent()) {
@@ -191,4 +189,3 @@ public class ApprovalService {
 //        return false;
 //    }
 }
-
