@@ -287,10 +287,66 @@ public class MeetingService {
 			meetingResponses.add(new MeetingResponse(meeting));
 		}
 		return meetingResponses;
-		
-	
+			
 		
 	}
+	
+	//審核
+	public Optional<MeetingResponse> approveMeeting(Integer meetingId, Integer employeeId, boolean isApproved) {
+	  
+	    if (meetingId == null || employeeId == null) {
+	        return Optional.empty();
+	    }
+
+	    
+	    Optional<Meeting> optMeeting = meetingRepository.findById(meetingId);
+	    Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
+
+	   
+	    if (optMeeting.isEmpty()) {
+	        return Optional.empty();
+	    }
+	    if (optEmployee.isEmpty()) {
+	        return Optional.empty();
+	    }
+
+	    
+	    Meeting meeting = optMeeting.get();
+	    Employee employee = optEmployee.get();
+
+	    
+	    if (employee.getPosition().getPositionId() != 2) {
+	        return Optional.empty();
+	    }
+
+	    
+	    if (meeting.getStatus().getStatusId() != 5) {
+	        return Optional.empty();
+	    }
+
+	    
+	    Integer newStatusId;
+	    if (isApproved) {
+	        newStatusId = 6; //"已審核"
+	    } else {
+	        newStatusId = 8; //"未核准"
+	    }
+
+	
+	    Optional<Status> optStatus = statusRepository.findById(newStatusId);
+	    if (optStatus.isEmpty()) {
+	        return Optional.empty();
+	    }
+
+	  
+	    meeting.setStatus(optStatus.get());
+	    meetingRepository.save(meeting);
+
+	   
+	    return Optional.of(new MeetingResponse(meeting));
+	}
+
+
 	
 	
 	

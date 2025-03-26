@@ -104,14 +104,12 @@ public class MeetingController {
     
     @GetMapping("/user/{employeeId}")
     public ResponseEntity<List<MeetingResponse>> getMeetingsByUser(@PathVariable Integer employeeId) {
-        // 取得該員工的會議列表
+        
         List<MeetingResponse> meetings = meetingService.findByUser(employeeId);
 
-        // 如果會議列表為空，回傳 204 No Content
         if (meetings.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
-            // 否則，回傳 200 OK，並附帶會議列表
             return ResponseEntity.ok(meetings);
         }
     }
@@ -131,7 +129,26 @@ public class MeetingController {
         return ResponseEntity.ok(meetings);
     }
     
- 
+    
+    @PutMapping("/{meetingId}/approve")
+    public ResponseEntity<MeetingResponse> approveMeeting(
+            @PathVariable Integer meetingId,
+            @RequestParam Integer employeeId,
+            @RequestParam boolean isApproved) {
 
+        Optional<MeetingResponse> optMeeting = meetingService.approveMeeting(meetingId, employeeId, isApproved);
+
+       
+        if (optMeeting.isPresent()) {
+            return ResponseEntity.ok(optMeeting.get());
+        } else {
+            return ResponseEntity.badRequest().body(new MeetingResponse("審核失敗"));
+        }
+    }
+
+
+    
+    
+    
 
 }
