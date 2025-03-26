@@ -1,7 +1,6 @@
 package com.example.fluxeip.model;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,27 +18,27 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "personal_calendar")
+@Table(name = "personal_calendar") // 表名可以根據實際需求修改
 public class PersonalCalendar {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@Column(name = "employee_id", nullable = false)
-	private Integer employeeId;
-	
-	@Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
-	
-	@Column(name = "finish_date")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;  // 事件ID
+
+    @Column(name = "content", nullable = false)  // content 代替 title
+    private String content;  // 事件內容
+
+    @Column(name = "start_date", nullable = false)  // 開始時間
+    private LocalDateTime startDate;
+
+    @Column(name = "finish_date", nullable = false)  // 結束時間
     private LocalDateTime finishDate;
-    
-	@Column(name = "title", nullable = false)
-    private String content;
+
+    @Column(name = "created_at", nullable = false, updatable = false)  // 創建時間
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();  // 當事件創建時，設置創建時間
+    }
 }
