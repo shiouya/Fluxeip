@@ -30,6 +30,9 @@ public class ApprovalService {
     
     @Autowired
     private WorkAdjustmentRequestRepository adjustmentRequestRepository;
+    
+    @Autowired
+    private MissingPunchRequestRepository missingPunchRequestRepository;
 
     // 取得某類請求的簽核流程
     public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
@@ -95,6 +98,31 @@ public class ApprovalService {
                     step.getCurrentStep(),
                     step.getComment(),
                     step.getUpdatedAt()
+    				);
+    	}).collect(Collectors.toList());
+    }
+    
+    // 查詢員工的補卡單審核步驟
+    public List<ApprovalStepResponseDTO> getMissingPunchApprovalStepsByRequestId(Integer requestId) {
+    	// 查詢正在審核的 ApprovalStep
+    	List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+    	
+    	// 將 ApprovalStep 轉換為 ApprovalStepDTO
+    	return steps.stream().map(step -> {
+    		Optional<MissingPunchRequest> missingPunchRequestOpt =missingPunchRequestRepository.findById(requestId);
+    		MissingPunchRequest request = missingPunchRequestOpt.get();
+    		
+    		return new ApprovalStepResponseDTO(
+    				step.getId(),
+    				request.getId(), //，取其 ID
+    				request.getEmployee().getEmployeeId(), // 同上
+    				request.getEmployee().getEmployeeName() , // 同上
+    				step.getApprover().getEmployeeId(),
+    				step.getApprover().getEmployeeName(),
+    				step.getStatus().getStatusName(),
+    				step.getCurrentStep(),
+    				step.getComment(),
+    				step.getUpdatedAt()
     				);
     	}).collect(Collectors.toList());
     }
