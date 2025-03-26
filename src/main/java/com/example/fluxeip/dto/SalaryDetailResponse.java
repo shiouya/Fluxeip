@@ -24,4 +24,6 @@ public class SalaryDetailResponse {
 	private Integer laborInsurance;
 	private List<SalaryBonus> bonuses;
 	private Integer yearEnd;
+	private Integer earnedSalary;
+
 }

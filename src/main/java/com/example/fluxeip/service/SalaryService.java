@@ -63,14 +63,15 @@ public class SalaryService {
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
 	private static final double LABOR_INSURANCE_RATE = 0.125; // 勞保 政府公告可更新
 	private static final double HEALTH_INSURANCE_RATE = 0.0517;// 健保
-	// 薪資設定
-
+	
+	//薪資設定
+	//用員工搜尋基礎薪資
 	public SalaryDefaultSetting findSalarySettingByEmpid(Integer empId) {
 
 		Employee employee = employeeService.find(empId);
 		return changeToResponse(settingRepository.findByEmployee(employee));
 	}
-
+	//搜尋全部基礎薪資
 	public List<SalaryDefaultSetting> findAllSalarySetting() {
 		List<SalarySetting> all = settingRepository.findAll();
 		ArrayList<SalaryDefaultSetting> list = new ArrayList<SalaryDefaultSetting>();
@@ -82,6 +83,7 @@ public class SalaryService {
 		return list;
 	}
 
+	//設定基礎薪資
 	@Transactional
 	public void settingDefaultSalary(SalaryDefaultSetting setting) {
 
@@ -96,6 +98,7 @@ public class SalaryService {
 		}
 	}
 
+	//更新基礎薪資
 	@Transactional
 	public void updateSalarySetting(Integer empId, SalaryDefaultSetting setting) {
 
@@ -116,6 +119,7 @@ public class SalaryService {
 
 	}
 
+	//刪除基礎薪資
 	@Transactional
 	public boolean deleteSalarySettingByEmpId(Integer empId) {
 		Employee employee = employeeService.find(empId);
@@ -127,6 +131,7 @@ public class SalaryService {
 		return true;
 	}
 
+	//計算時薪
 	public Integer caculateHourlyWage(Integer monthlySalary) {
 
 		int hourlyWage = Math.round(Math.round(monthlySalary / 30.0f) / 8.0f);
@@ -137,6 +142,7 @@ public class SalaryService {
 		return hourlyWage;
 	}
 
+	//把request轉成物件
 	private SalarySetting salaryDefaultSettingRequsetToObject(SalaryDefaultSetting setting) {
 
 		SalarySetting salarySetting = new SalarySetting();
@@ -151,6 +157,7 @@ public class SalaryService {
 		return salarySetting;
 	}
 
+	//把物件轉成response
 	private SalaryDefaultSetting changeToResponse(SalarySetting salarySetting) {
 		SalaryDefaultSetting setting = new SalaryDefaultSetting();
 
@@ -163,7 +170,8 @@ public class SalaryService {
 	}
 
 	// 薪資結算
-	public List<SalaryDetailResponse> findSalaryDetailByEmpId(int empId) {
+	//用員工找薪資明細
+	public List<SalaryDetailResponse> findAllSalaryDetailByEmpId(int empId) {
 
 		Employee employee = employeeService.find(empId);
 
@@ -182,6 +190,7 @@ public class SalaryService {
 		return response;
 	}
 
+	//結算月薪並且存入資料庫
 	@Transactional
 	public void monthlySalaryCaculate(SalaryDetailRequest request) {
 
@@ -221,7 +230,7 @@ public class SalaryService {
 		salaryDetail.setMonthlyRegularHours(request.getMonthlyRegularHours());
 		salaryDetail.setOvertimeHours(request.getOvertimeHours());
 		salaryDetail.setYearMonth(request.getYearMonth());
-		salaryDetail.setTotalBonus(countTotalBonus(request));
+		salaryDetail.setTotalBonus(countTotalBonus(request)+request.getYearEnd());
 
 		salaryDetail.setEarnedSalary(caculateEarnedSalary(request));
 		return salaryDetail;
@@ -286,9 +295,6 @@ public class SalaryService {
 			totalBonus += bonus.getAmount();
 		}
 
-		int yearEnd = request.getYearEnd();
-		totalBonus += yearEnd;
-
 		return totalBonus;
 	}
 
@@ -312,6 +318,7 @@ public class SalaryService {
 		response.setMonthlyRegularHours(salaryDetail.getMonthlyRegularHours());
 		response.setOvertimeHours(salaryDetail.getOvertimeHours());
 		response.setSalaryDetailId(salaryDetail.getSalaryDetailId());
+		response.setEarnedSalary(salaryDetail.getEarnedSalary());
 
 		Integer bonusWithoutYearEnd = 0;
 

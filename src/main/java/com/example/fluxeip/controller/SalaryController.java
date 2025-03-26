@@ -122,10 +122,11 @@ public class SalaryController {
 		}
 	}
 	
+	//
 	@GetMapping("/detail/{id}")
 	public ResponseEntity<?> findSalaryDetail(@PathVariable("id") Integer empId){
 		try {
-			List<SalaryDetailResponse> response = salaryService.findSalaryDetailByEmpId(empId);
+			List<SalaryDetailResponse> response = salaryService.findAllSalaryDetailByEmpId(empId);
 			
 			return ResponseEntity.ok(response);
 		}catch (Exception e) {
@@ -162,25 +163,25 @@ public class SalaryController {
 	
 	//遲到早退
 	@GetMapping("/lateEarly")
-	public Map<String, Integer> testLateEarly(@RequestParam String yearMonth,@RequestParam Integer empId) {
+	public Map<String, Integer> lateEarly(@RequestParam String yearMonth,@RequestParam Integer empId) {
 		return salaryService.countMonthlyLateAndEarlyLeaveByEmpId(empId, yearMonth);
 	}
 	
 	//請假時數
 	@GetMapping("/leaveDays")
-	public Double testLeave(@RequestParam String yearMonth,@RequestParam Integer empId) {
+	public Double leaveDays(@RequestParam String yearMonth,@RequestParam Integer empId) {
 		return salaryService.leaveDaysHours(empId, yearMonth);
 	}
 	
 	//月總工時
 	@GetMapping("/monthlyWorkHours")
-	public BigDecimal testMonthlyWorkHours(@RequestParam String yearMonth,@RequestParam Integer empId) {
+	public BigDecimal monthlyWorkHours(@RequestParam String yearMonth,@RequestParam Integer empId) {
 		return salaryService.countMonthlyWorkHours(empId, yearMonth);
 	}
 	
 	//加班減班
 	@GetMapping("/overtimeMinus")
-	public Map<String, Integer> testOvertimeMinus(@RequestParam String yearMonth,@RequestParam Integer empId){
+	public Map<String, Integer> overtimeMinus(@RequestParam String yearMonth,@RequestParam Integer empId){
 		return salaryService.overtimeAndMinus(empId, yearMonth);
 	}
 	//全部獎金 津貼
