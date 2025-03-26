@@ -14,7 +14,7 @@ import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Position;
 import com.example.fluxeip.model.Status;
 
-public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+public interface EmployeeRepository extends JpaRepository<Employee, Integer>,EmployeeRepositoryCustom{
 
 	Employee findByEmployeeName(String employeeName);
 	
@@ -48,7 +48,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 	Optional<Employee> findByPositionAndDepartment(Position position, Department department); 
 	
 	Optional<Employee> findTopByPositionAndDepartmentAndStatus(Position position, Department department,Status status);
-
 	
+	Optional<Employee> findTopByPosition(Position position);
+
 
 }

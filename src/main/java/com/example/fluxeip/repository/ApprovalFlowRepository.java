@@ -15,14 +15,30 @@ public interface ApprovalFlowRepository extends JpaRepository<ApprovalFlow, Inte
     @Query("SELECT af FROM ApprovalFlow af WHERE af.requestType.id = :requestTypeId ORDER BY af.stepOrder ASC")
     List<ApprovalFlow> findByRequestTypeId(@Param("requestTypeId") Integer requestTypeId);
 
-    // 查詢特定 Position、RequestType 和 StepOrder 的流程
+//    // 查詢特定 Position、RequestType 和 StepOrder 的流程
+//    @Query("SELECT af FROM ApprovalFlow af WHERE af.position.positionId = :positionId AND af.requestType.id = :requestTypeId AND af.stepOrder = :stepOrder")
+//    Optional<ApprovalFlow> findApprovalFlow(
+//        @Param("positionId") Integer positionId, 
+//        @Param("requestTypeId") Integer requestTypeId, 
+//        @Param("stepOrder") Integer stepOrder
+//    );
+//    
     @Query("SELECT af FROM ApprovalFlow af WHERE af.position.positionId = :positionId AND af.requestType.id = :requestTypeId AND af.stepOrder = :stepOrder")
-    Optional<ApprovalFlow> findApprovalFlow(
+    List<ApprovalFlow> findApprovalFlow(
         @Param("positionId") Integer positionId, 
         @Param("requestTypeId") Integer requestTypeId, 
         @Param("stepOrder") Integer stepOrder
     );
     
+    
+    // 先找員工專屬的簽核流程（第一步）
+    @Query("SELECT af FROM ApprovalFlow af JOIN EmployeeApprovalFlow eaf ON af.id = eaf.approvalFlow.id " +
+           "WHERE eaf.employee.employeeId = :employeeId AND eaf.type.id = :requestTypeId " +
+           "AND af.stepOrder = 1")
+    Optional<ApprovalFlow> findFirstStepByEmployee(@Param("employeeId") Integer employeeId, 
+                                                   @Param("requestTypeId") Integer requestTypeId);
+
+	 List<ApprovalFlow> findByStepOrder(Integer stepOrder);
 }
 
 

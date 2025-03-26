@@ -39,6 +39,9 @@ public class LeaveRequestService {
     
     @Autowired
     private ApprovalFlowService approvalFlowService;
+    
+    @Autowired 
+    private RequestIdGenerator requestIdGenerator;
 
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRequestRepository.findAll();
@@ -109,6 +112,7 @@ public class LeaveRequestService {
     	
         // 創建請假申請
         LeaveRequest leaveRequest = new LeaveRequest();
+        leaveRequest.setId(requestIdGenerator.getNextRequestId());
         leaveRequest.setEmployee(employee);
         leaveRequest.setLeaveType(leaveType);
         leaveRequest.setStartDatetime(dto.getStartDatetime());

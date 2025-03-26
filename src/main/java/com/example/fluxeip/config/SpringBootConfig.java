@@ -32,6 +32,7 @@ public class SpringBootConfig implements WebMvcConfigurer {
 		registry.addMapping("/forgot/password");
 		registry.addMapping("/reset/password");
 		registry.addMapping("/employee/create").allowedMethods("POST");
+		registry.addMapping("/employee/search").allowedMethods("GET","POST");
 
 		registry.addMapping("/bulletin/create").allowedMethods("POST");
 		registry.addMapping("/bulletin/delete").allowedMethods("DELETE");
@@ -40,7 +41,12 @@ public class SpringBootConfig implements WebMvcConfigurer {
 		registry.addMapping("/api/clock/**").allowedMethods("POST");
 		registry.addMapping("/api/attendancelogs/**");
 		registry.addMapping("/api/leave-requests/**").allowedMethods("GET", "POST","PUT");
-		registry.addMapping("/api/approval/**").allowedMethods("GET", "POST","PUT");
+		registry.addMapping("/api/approval/**").allowedMethods("GET", "POST","PUT","DELETE");
+		registry.addMapping("/api/employee-approval-flows/**").allowedMethods("GET", "POST");
+		registry.addMapping("/api/work-adjustments/**").allowedMethods("GET", "POST");
+		
+		
+		
 
 	}
 

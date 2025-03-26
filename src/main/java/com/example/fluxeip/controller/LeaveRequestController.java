@@ -50,7 +50,6 @@ public class LeaveRequestController {
     @Autowired
     private ApprovalFlowService approvalFlowService;  // 注入簽核流程 Service
     
-    private static final String ATTACHMENT_BASE_PATH = "/uploads/attachments/";
 
     @GetMapping
     public ResponseEntity<List<LeaveRequest>> getAllLeaveRequests() {
@@ -117,7 +116,7 @@ public class LeaveRequestController {
         // 啟動請假單的簽核流程
         try {
             LeaveRequest request = (LeaveRequest) leaveRequest;
-            approvalFlowService.startApprovalProcess(request);  // 呼叫簽核服務啟動流程
+            approvalFlowService.startLeaveApprovalProcess(request);  // 呼叫簽核服務啟動流程
         } catch (Exception e) {
         	System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("啟動簽核流程時發生錯誤: " + e.getMessage());

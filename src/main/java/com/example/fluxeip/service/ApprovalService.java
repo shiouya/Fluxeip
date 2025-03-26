@@ -1,11 +1,15 @@
 package com.example.fluxeip.service;
 
+import com.example.fluxeip.dto.ApprovalStepResponseDTO;
 import com.example.fluxeip.model.*;
 import com.example.fluxeip.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ApprovalService {
@@ -23,25 +27,76 @@ public class ApprovalService {
     
     @Autowired
     private StatusRepository statusRepository;
+    
+    @Autowired
+    private WorkAdjustmentRequestRepository adjustmentRequestRepository;
 
     // 取得某類請求的簽核流程
     public List<ApprovalFlow> getApprovalFlowForType(Integer requestTypeId) {
         return approvalFlowRepository.findByRequestTypeId(requestTypeId);
     }
 
-    // 建立新的簽核步驟
-    public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
-        ApprovalStep step = new ApprovalStep();
-        step.setLeaveRequest(leaveRequestRepository.findById(requestId).get());
-        step.setFlow(approvalFlowRepository.findById(flowId).orElseThrow());
-        step.setApprover(approver);
-        step.setStatus(new Status(1, "Pending","all_approval"));
-        return approvalStepRepository.save(step);
-    }
+//    // 建立新的簽核步驟
+//    public ApprovalStep createApprovalStep(Integer requestId, Integer flowId, Employee approver) {
+//        ApprovalStep step = new ApprovalStep();
+//        step.setLeaveRequest(leaveRequestRepository.findById(requestId).get());
+//        step.setFlow(approvalFlowRepository.findById(flowId).orElseThrow());
+//        step.setApprover(approver);
+//        step.setStatus(new Status(1, "Pending","all_approval"));
+//        return approvalStepRepository.save(step);
+//    }
 
-    // 取得申請單目前的簽核步驟
-    public List<ApprovalStep> getApprovalStepsByRequestId(Integer requestId) {
-        return approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+    
+ // 查詢員工的請假單審核步驟
+    public List<ApprovalStepResponseDTO> getLeaveApprovalStepsByRequestId(Integer requestId) {
+        // 查詢正在審核的 ApprovalStep
+        List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+
+        // 將 ApprovalStep 轉換為 ApprovalStepDTO
+        return steps.stream().map(step -> {
+	    	Optional<LeaveRequest> leaveRequestOpt = leaveRequestRepository.findById(requestId);
+	    	LeaveRequest leaveRequest = leaveRequestOpt.get();
+            // 如果 BaseRequest 實際上是 LeaveRequest，進行類型轉換
+
+            return new ApprovalStepResponseDTO(
+                    step.getId(),
+                    leaveRequest.getId(), // 如果是 LeaveRequest，取其 ID
+                    leaveRequest.getEmployee().getEmployeeId(), // 同上
+                    leaveRequest.getEmployee().getEmployeeName() , // 同上
+                    step.getApprover().getEmployeeId(),
+                    step.getApprover().getEmployeeName(),
+                    step.getStatus().getStatusName(),
+                    step.getCurrentStep(),
+                    step.getComment(),
+                    step.getUpdatedAt()
+            );
+        }).collect(Collectors.toList());
+    }
+    
+    // 查詢員工的加減班單審核步驟
+    public List<ApprovalStepResponseDTO> getWorkadjustApprovalStepsByRequestId(Integer requestId) {
+    	// 查詢正在審核的 ApprovalStep
+    	List<ApprovalStep> steps = approvalStepRepository.findByRequestIdOrderByCurrentStepAsc(requestId);
+    	
+    	// 將 ApprovalStep 轉換為 ApprovalStepDTO
+    	return steps.stream().map(step -> {
+    		Optional<WorkAdjustmentRequest> workAdjustRequestOpt =adjustmentRequestRepository.findById(requestId);
+			WorkAdjustmentRequest request = workAdjustRequestOpt.get();
+    		
+    		return new ApprovalStepResponseDTO(
+                    step.getId(),
+                    request.getId(), // 如果是 LeaveRequest，取其 ID
+                    request.getEmployee().getEmployeeId(), // 同上
+                    request.getEmployee().getEmployeeName() , // 同上
+                    step.getApprover().getEmployeeId(),
+                    step.getApprover().getEmployeeName(),
+                    step.getStatus().getStatusName(),
+                    step.getCurrentStep(),
+                    step.getComment(),
+                    step.getUpdatedAt()
+    				);
+    	}).collect(Collectors.toList());
     }
 
 //    // 更新簽核狀態
