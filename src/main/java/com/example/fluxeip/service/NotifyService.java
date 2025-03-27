@@ -25,10 +25,6 @@ public class NotifyService {
 
 		List<Notify> notifies = notifyRepository.findByReceiveEmployeeIdOrderByCreateTimeDesc(employeeId);
 
-		if (notifies.isEmpty()) {
-			return new ArrayList<>();
-		}
-
 		List<NotifyResponse> notifyResponse = new ArrayList<>();
 
 		for (Notify notify : notifies) {
@@ -63,17 +59,15 @@ public class NotifyService {
 	
 	
 	//發送通知
-	public Optional<NotifyResponse> sendNotification(Integer receiveEmployeeId, Integer approvalStepId, String message){
+	public Optional<NotifyResponse> sendNotification(Integer receiveEmployeeId,  String message){
 		
-		if(receiveEmployeeId == null|| approvalStepId == null ||message == null || message.isEmpty()) {
+		if(receiveEmployeeId == null||message == null || message.isEmpty()) {
 			return Optional.empty();
 		}
 		
 		Notify notify = new Notify();
 		
 		notify.setReceiveEmployeeId(receiveEmployeeId);
-		
-		notify.setApprovalStepId(approvalStepId);
 		
 		notify.setMessage(message);
 		
@@ -87,8 +81,28 @@ public class NotifyService {
 		
 	}
 		
-		
-		
+	// 審核後的通知
+	public Optional<NotifyResponse> sendMeetingApprovalResult(Integer receiveEmployeeId , String meetingTitle , boolean isApproved){
+	    
+	    if (receiveEmployeeId == null) {
+	        return Optional.empty(); 
+	    }
+	    if (meetingTitle == null || meetingTitle.isEmpty()) {
+	        return Optional.empty(); 
+	    }
+
+	    String resultText;
+	    if (isApproved) {
+	        resultText = "已通過審核";
+	    } else {
+	        resultText = "未通過審核";
+	    }
+
+	    String message = "您預約的會議《" + meetingTitle + "》" + resultText;
+
+	    return sendNotification(receiveEmployeeId, message);
+	}
+
 
 
 }

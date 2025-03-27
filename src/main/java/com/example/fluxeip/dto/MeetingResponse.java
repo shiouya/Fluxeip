@@ -16,7 +16,8 @@ public class MeetingResponse {
 	private String roomName;
 	private String statusName;
 	private String message; 
-	private LocalDateTime createdAt; 
+	private LocalDateTime createdAt;
+	private Integer employeeId; 
 	
 	public MeetingResponse(Meeting meeting) {
 		this.id = meeting.getId();
@@ -28,6 +29,7 @@ public class MeetingResponse {
 		this.roomName = meeting.getRoom().getRoomName();
 		this.statusName = meeting.getStatus().getStatusName();
 		this.createdAt = meeting.getCreatedAt(); 
+		this.employeeId = meeting.getEmployee().getEmployeeId();
 	}
 
 	public MeetingResponse() {
