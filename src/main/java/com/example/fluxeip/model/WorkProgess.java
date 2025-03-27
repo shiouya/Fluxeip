@@ -1,5 +1,6 @@
 package com.example.fluxeip.model;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,14 +41,14 @@ public class WorkProgess {
 	private Date expectedFinishDate;
 
 	@Column(name = "finish_date")
-	private Date finishDate;
+	private LocalDate finishDate;
 
 //	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "supervisor_id")
 	private Employee supervisor;
 
-	@JsonIgnore
+//	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "status_id")
 	private Status status;
