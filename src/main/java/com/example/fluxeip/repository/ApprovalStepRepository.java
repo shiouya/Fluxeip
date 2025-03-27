@@ -27,7 +27,9 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Inte
     @Query("SELECT a FROM ApprovalStep a WHERE a.requestId = :requestId ORDER BY a.currentStep ASC")
     List<ApprovalStep> findApprovalStepByLeaveRequestId(@Param("requestId") Integer requestId);
 
-    boolean existsByFlowIdIn(List<Integer> flowIdsToDelete); 
+    boolean existsByFlowIdIn(List<Integer> flowIdsToDelete);
+
+	List<ApprovalStep> findByFlowIdIn(List<Integer> flowIdsToDelete); 
 }
 
 
