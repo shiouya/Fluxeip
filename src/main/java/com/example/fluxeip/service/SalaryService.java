@@ -283,7 +283,7 @@ public class SalaryService {
 	}
 
 	// 總月薪
-	private Integer caculateEarnedSalary(SalaryDetailRequest request) {
+	public Integer caculateEarnedSalary(SalaryDetailRequest request) {
 
 		Integer earnedSalary = 0;
 		// 總獎金
@@ -350,7 +350,9 @@ public class SalaryService {
 
 		Integer employeeId = salaryDetail.getEmployee().getEmployeeId();
 		response.setEmployeeId(employeeId);
-
+		response.setEmployeeName(salaryDetail.getEmployee().getEmployeeName());
+		response.setDepartment(salaryDetail.getEmployee().getDepartment().getDepartmentName());
+		
 		response.setHealthInsurance(salaryDetail.getHealthInsurance());
 		response.setLaborInsurance(salaryDetail.getLaborInsurance());
 

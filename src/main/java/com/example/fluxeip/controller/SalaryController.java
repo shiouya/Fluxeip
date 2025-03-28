@@ -115,7 +115,7 @@ public class SalaryController {
 		
 		try {
 			salaryService.monthlySalaryCaculate(detailRequest);
-			return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+			return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "成功"));
 
 		}catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -223,5 +223,10 @@ public class SalaryController {
 		List<SalaryBonus> allBonus = salaryService.findAllBonus();
 		
 		return ResponseEntity.ok(allBonus);
+	}
+	//應得薪資
+	@PostMapping("/earnedSalary")
+	public Integer earnedSalary(@RequestBody SalaryDetailRequest detailRequest) {
+		return salaryService.caculateEarnedSalary(detailRequest);
 	}
 }

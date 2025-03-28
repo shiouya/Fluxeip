@@ -15,6 +15,8 @@ public class SalaryDetailResponse {
 
 	private Integer salaryDetailId;
 	private Integer employeeId;
+	private String employeeName;
+	private String department;	
 	private String yearMonth;
 	private BigDecimal monthlyRegularHours;
 	private BigDecimal overtimeHours;
