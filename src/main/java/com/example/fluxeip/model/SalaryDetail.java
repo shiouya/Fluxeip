@@ -65,7 +65,7 @@ public class SalaryDetail {
 	@Column(name = "labor_insurance", nullable = false)
 	private Integer laborInsurance;
 
-	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(name = "salary_detail_bonus", joinColumns = @JoinColumn(name = "salary_detail_id"), inverseJoinColumns = @JoinColumn(name = "salary_bonus_id"))
 	private List<SalaryBonus> bonuses = new ArrayList<>();
 }

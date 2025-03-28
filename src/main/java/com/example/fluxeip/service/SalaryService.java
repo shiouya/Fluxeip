@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,11 +26,15 @@ import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
 import com.example.fluxeip.model.SalarySetting;
 import com.example.fluxeip.model.Schedule;
+import com.example.fluxeip.model.Type;
+import com.example.fluxeip.model.WorkAdjustmentRequest;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.SalaryBonusRepository;
 import com.example.fluxeip.repository.SalaryDetailRepository;
 import com.example.fluxeip.repository.SalarySettingRepository;
+import com.example.fluxeip.repository.TypeRepository;
+import com.example.fluxeip.repository.WorkAdjustmentRequestRepository;
 
 @Service
 public class SalaryService {
@@ -50,6 +55,12 @@ public class SalaryService {
 	private LeaveRequestRepository leaveRequestRepository;
 	
 	@Autowired
+	private WorkAdjustmentRequestRepository workAdjustmentRequestRepository;
+	
+	@Autowired
+	private TypeRepository typeRepository;
+	
+	@Autowired
 	private ScheduleService scheduleService;
 
 	@Autowired
@@ -58,14 +69,15 @@ public class SalaryService {
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
 	private static final double LABOR_INSURANCE_RATE = 0.125; // 勞保 政府公告可更新
 	private static final double HEALTH_INSURANCE_RATE = 0.0517;// 健保
-	// 薪資設定
-
+	
+	//薪資設定
+	//用員工搜尋基礎薪資
 	public SalaryDefaultSetting findSalarySettingByEmpid(Integer empId) {
 
 		Employee employee = employeeService.find(empId);
 		return changeToResponse(settingRepository.findByEmployee(employee));
 	}
-
+	//搜尋全部基礎薪資
 	public List<SalaryDefaultSetting> findAllSalarySetting() {
 		List<SalarySetting> all = settingRepository.findAll();
 		ArrayList<SalaryDefaultSetting> list = new ArrayList<SalaryDefaultSetting>();
@@ -77,6 +89,7 @@ public class SalaryService {
 		return list;
 	}
 
+	//設定基礎薪資
 	@Transactional
 	public void settingDefaultSalary(SalaryDefaultSetting setting) {
 
@@ -91,6 +104,7 @@ public class SalaryService {
 		}
 	}
 
+	//更新基礎薪資
 	@Transactional
 	public void updateSalarySetting(Integer empId, SalaryDefaultSetting setting) {
 
@@ -111,6 +125,7 @@ public class SalaryService {
 
 	}
 
+	//刪除基礎薪資
 	@Transactional
 	public boolean deleteSalarySettingByEmpId(Integer empId) {
 		Employee employee = employeeService.find(empId);
@@ -122,6 +137,7 @@ public class SalaryService {
 		return true;
 	}
 
+	//計算時薪
 	public Integer caculateHourlyWage(Integer monthlySalary) {
 
 		int hourlyWage = Math.round(Math.round(monthlySalary / 30.0f) / 8.0f);
@@ -132,6 +148,7 @@ public class SalaryService {
 		return hourlyWage;
 	}
 
+	//把request轉成物件
 	private SalarySetting salaryDefaultSettingRequsetToObject(SalaryDefaultSetting setting) {
 
 		SalarySetting salarySetting = new SalarySetting();
@@ -146,6 +163,7 @@ public class SalaryService {
 		return salarySetting;
 	}
 
+	//把物件轉成response
 	private SalaryDefaultSetting changeToResponse(SalarySetting salarySetting) {
 		SalaryDefaultSetting setting = new SalaryDefaultSetting();
 
@@ -158,7 +176,8 @@ public class SalaryService {
 	}
 
 	// 薪資結算
-	public List<SalaryDetailResponse> findSalaryDetailByEmpId(int empId) {
+	//用員工找薪資明細
+	public List<SalaryDetailResponse> findAllSalaryDetailByEmpId(int empId) {
 
 		Employee employee = employeeService.find(empId);
 
@@ -176,7 +195,25 @@ public class SalaryService {
 		}
 		return response;
 	}
+	
+	//找全部明細
+	public List<SalaryDetailResponse> findAllSalaryDetail() {
+		List<SalaryDetail> details = detailRepository.findAll();
+		
+		if (details == null || details.size() == 0) {
+			throw new RuntimeException("找不到薪資明細");
+		}
 
+		ArrayList<SalaryDetailResponse> response = new ArrayList<SalaryDetailResponse>();
+
+		for (SalaryDetail detail : details) {
+			SalaryDetailResponse detailResponse = detailResponse(detail);
+			response.add(detailResponse);
+		}
+		return response;
+	}
+
+	//結算月薪並且存入資料庫
 	@Transactional
 	public void monthlySalaryCaculate(SalaryDetailRequest request) {
 
@@ -194,6 +231,20 @@ public class SalaryService {
 			}
 		} else {
 			throw new RuntimeException("ID錯誤");
+		}
+	}
+	
+	//刪除明細
+	@Transactional
+	public boolean deleteDetailById(Integer id) {
+		Optional<SalaryDetail> detail = detailRepository.findById(id);
+		SalaryDetail existDetail = detail.orElse(null);
+		if(existDetail!=null) {
+			detailRepository.delete(existDetail);
+			return true;
+		}else {
+			new RuntimeException("找不到明細");
+			return false;
 		}
 	}
 
@@ -216,7 +267,7 @@ public class SalaryService {
 		salaryDetail.setMonthlyRegularHours(request.getMonthlyRegularHours());
 		salaryDetail.setOvertimeHours(request.getOvertimeHours());
 		salaryDetail.setYearMonth(request.getYearMonth());
-		salaryDetail.setTotalBonus(countTotalBonus(request));
+		salaryDetail.setTotalBonus(countTotalBonus(request)+request.getYearEnd());
 
 		salaryDetail.setEarnedSalary(caculateEarnedSalary(request));
 		return salaryDetail;
@@ -281,9 +332,6 @@ public class SalaryService {
 			totalBonus += bonus.getAmount();
 		}
 
-		int yearEnd = request.getYearEnd();
-		totalBonus += yearEnd;
-
 		return totalBonus;
 	}
 
@@ -292,8 +340,12 @@ public class SalaryService {
 		SalaryDetailResponse response = new SalaryDetailResponse();
 
 		List<SalaryBonus> bonuses = salaryDetail.getBonuses();
-
-		response.setBonuses(bonuses);
+		
+		if(bonuses==null||bonuses.size()==0) {
+			response.setBonuses(null);
+		}else {
+			response.setBonuses(bonuses);
+		}
 		response.setEarlyLeaveHours(salaryDetail.getEarlyLeaveHours());
 
 		Integer employeeId = salaryDetail.getEmployee().getEmployeeId();
@@ -302,11 +354,13 @@ public class SalaryService {
 		response.setHealthInsurance(salaryDetail.getHealthInsurance());
 		response.setLaborInsurance(salaryDetail.getLaborInsurance());
 
+		response.setLeaveDaysHoursByType(leaveDaysHoursByType(employeeId,salaryDetail.getYearMonth()));
 		response.setLateHours(salaryDetail.getLateHours());
 		response.setLeaveDays(salaryDetail.getLeaveDays());
 		response.setMonthlyRegularHours(salaryDetail.getMonthlyRegularHours());
 		response.setOvertimeHours(salaryDetail.getOvertimeHours());
 		response.setSalaryDetailId(salaryDetail.getSalaryDetailId());
+		response.setEarnedSalary(salaryDetail.getEarnedSalary());
 
 		Integer bonusWithoutYearEnd = 0;
 
@@ -335,9 +389,12 @@ public class SalaryService {
 	    	workHpurs+=schedule.getShiftType().getEstimatedHours().doubleValue();
 	    }
 	    
+	    Map<String, Integer> overtimeAndMinus = overtimeAndMinus(empId, yearMonthStr);
+	    Integer minus = overtimeAndMinus.get("minusHours");
+	    
 	    BigDecimal monthlyWorkHours = new BigDecimal(workHpurs);
 	    
-	    return monthlyWorkHours;
+	    return monthlyWorkHours.subtract(new BigDecimal(minus));
 	}
 	
 	// 遲到及早退時數(半小時)
@@ -381,6 +438,61 @@ public class SalaryService {
 				hours+=day.getLeaveHours().divide(new BigDecimal(2)).doubleValue();
 			}
 		}
+		return hours;
+	}
+	
+	//請假時數(種類別)
+		public Map<String,Double> leaveDaysHoursByType(Integer empId, String yearMonthStr) {
+
+			YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+		    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+		    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+			
+		    List<LeaveRequest> days = leaveRequestRepository.findByEmpidAndStatusAndDateRange(empId, "已核決", startOfMonth, endOfMonth);
+			List<Type> types = typeRepository.findByCategory("leave_type");
+		    
+			HashMap<String, Double> hoursByType = new HashMap<String,Double>();
+			
+			for(Type type:types) {
+				Double hours=0.0;
+				for(LeaveRequest day:days) {
+					if(type.getTypeName().equals(day.getLeaveType().getTypeName())) {
+						hours+=day.getLeaveHours().intValue();
+					}
+				}
+				if(hours!=0.0) {
+					hoursByType.put(type.getTypeName(), hours);				
+				}
+			}
+			if(hoursByType.size()==0||hoursByType==null) {
+				return null;
+			}
+			return hoursByType;
+		}
+	
+	//加班減班
+	public Map<String, Integer> overtimeAndMinus(Integer empId, String yearMonthStr){
+		YearMonth yearMonth = YearMonth.parse(yearMonthStr);
+	    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+	    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+		
+	    Integer overtimeHours=0;
+	    Integer minusHours=0;
+	    
+	    List<WorkAdjustmentRequest> overtimes = workAdjustmentRequestRepository.findWorkAdjustmentRequestByEmployeeAndTypeAndMonth(empId, "加班", startOfMonth, endOfMonth);
+	    List<WorkAdjustmentRequest> minuses = workAdjustmentRequestRepository.findWorkAdjustmentRequestByEmployeeAndTypeAndMonth(empId, "減班", startOfMonth, endOfMonth);
+	    
+	    for(WorkAdjustmentRequest requset:overtimes) {
+	    	overtimeHours+=requset.getHours().intValue();
+	    }
+	    for(WorkAdjustmentRequest requset:minuses) {
+	    	minusHours+=requset.getHours().intValue();
+	    }
+	    
+		HashMap<String, Integer> hours = new HashMap<String, Integer>();
+		hours.put("overtimeHours", overtimeHours);
+		hours.put("minusHours", minusHours);
+
 		return hours;
 	}
 

@@ -2,6 +2,7 @@ package com.example.fluxeip.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import com.example.fluxeip.model.SalaryBonus;
 
@@ -24,4 +25,6 @@ public class SalaryDetailResponse {
 	private Integer laborInsurance;
 	private List<SalaryBonus> bonuses;
 	private Integer yearEnd;
+	private Integer earnedSalary;
+	private Map<String,Double> leaveDaysHoursByType;
 }
