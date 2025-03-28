@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/notify")
 public class NotifyController {
 
@@ -44,11 +45,9 @@ public class NotifyController {
 
 		Integer receiverId = request.getReceiveEmployeeId();
 
-		Integer approvalStepId = request.getApprovalStepId();
-
 		String message = request.getMessage();
 
-		Optional<NotifyResponse> result = notifyService.sendNotification(receiverId, approvalStepId, message);
+		Optional<NotifyResponse> result = notifyService.sendNotification(receiverId, message);
 
 		if (result.isPresent()) {
 			return ResponseEntity.ok(result.get());

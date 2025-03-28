@@ -38,25 +38,25 @@ public class MeetingService {
 	@Autowired
 	private StatusRepository statusRepository;
 
+	@Autowired
+	private NotifyService notifyService;
+
 	// 查詢有會議
 	public List<MeetingResponse> findAll() {
-	    
-	    List<Meeting> meetings = meetingRepository.findAllByOrderByCreatedAtDesc();
 
-	    
-	    if (meetings.isEmpty()) {
-	        return new ArrayList<>();
-	    }
+		List<Meeting> meetings = meetingRepository.findAllByOrderByCreatedAtDesc();
 
-	    
-	    List<MeetingResponse> meetingResponses = new ArrayList<>();
-	    for (Meeting meeting : meetings) {
-	        meetingResponses.add(new MeetingResponse(meeting));
-	    }
+		if (meetings.isEmpty()) {
+			return new ArrayList<>();
+		}
 
-	    return meetingResponses;
+		List<MeetingResponse> meetingResponses = new ArrayList<>();
+		for (Meeting meeting : meetings) {
+			meetingResponses.add(new MeetingResponse(meeting));
+		}
+
+		return meetingResponses;
 	}
-
 
 	// 用Id查會議
 	public Optional<MeetingResponse> findById(Integer id) {
@@ -131,36 +131,27 @@ public class MeetingService {
 		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(roomId, startTime, endTime,
 				meetingId);
 	}
-	
-	
-	
-	
-	
-	
-	
 
 	// 新增
 	public Optional<MeetingResponse> create(MeetingRequest meetingRequest) {
 
-		 // **檢查時間是否合法（不能跨天、必須在 08:00-18:00）**
-	    if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-	        return Optional.empty(); // **回傳 empty，表示時間不合法**
-	    }
+		if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+			return Optional.empty();
+		}
 
-	    // **檢查是否與其他會議時間衝突**
-	    if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-	        return Optional.empty(); // **回傳 empty，表示時間衝突**
-	    }
+		if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+			return Optional.empty();
+		}
 
 		Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
 		Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
-		Optional<Status> optStatus = statusRepository.findById(5); 
+		Optional<Status> optStatus = statusRepository.findById(5); // 審核中
 
-		  if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
-		        return Optional.empty(); // **回傳 empty，表示參數錯誤**
-		    }
+		if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
+			return Optional.empty();
+		}
+
 		Meeting meeting = new Meeting();
-
 		meeting.setTitle(meetingRequest.getTitle());
 		meeting.setNotes(meetingRequest.getNotes());
 		meeting.setStartTime(meetingRequest.getStartTime());
@@ -169,9 +160,19 @@ public class MeetingService {
 		meeting.setRoom(optRoom.get());
 		meeting.setStatus(optStatus.get());
 
-		meetingRepository.save(meeting);
+		// ✅ 存會議並接回存檔結果
+		Meeting savedMeeting = meetingRepository.save(meeting);
 
-		return Optional.of(new MeetingResponse(meeting));
+		// ✅ 發送通知
+		try {
+			Integer approverId = 1002;
+			String message = "有新的會議室預約需要您審核（主題：" + savedMeeting.getTitle() + "）";
+			notifyService.sendNotification(approverId, message);
+		} catch (Exception e) {
+			System.out.println("⚠ 發送通知失敗：" + e.getMessage());
+		}
+
+		return Optional.of(new MeetingResponse(savedMeeting));
 	}
 
 	// 更新
@@ -228,129 +229,97 @@ public class MeetingService {
 		meetingRepository.deleteById(id);
 		return true;
 	}
-	
+
 	// 取得使用者的職位
 	public List<MeetingResponse> findByUser(Integer employeeId) {
-	    
-	    Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
-	    if (optEmployee.isEmpty()) {
-	        return new ArrayList<>(); 
-	    }
 
-	    // 取得員工物件，並查詢職位 ID
-	    Employee employee = optEmployee.get();
-	    Integer positionId = employee.getPosition().getPositionId(); 
-
-	    List<Meeting> meetings; // 會議列表
-
-	    // 根據職位決定查詢範圍
-	    if (positionId == 1 || positionId == 2) {
-	        
-	        meetings = meetingRepository.findAll();
-	    } else {
-	        
-	        meetings = meetingRepository.findByEmployeeEmployeeId(employeeId);
-	    }
-
-	    
-	    List<MeetingResponse> meetingResponses = new ArrayList<>();
-	    for (Meeting meeting : meetings) {
-	        meetingResponses.add(new MeetingResponse(meeting));
-	    }
-
-	    return meetingResponses;
-	}
-	
-	
-	//查會議室當天預約情況
-	public List<MeetingResponse> findReserve(Integer roomId ,LocalDateTime date){
-		
-		if(roomId == null || date == null) {
+		Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
+		if (optEmployee.isEmpty()) {
 			return new ArrayList<>();
 		}
-		
+
+		// 取得員工物件，並查詢職位 ID
+		Employee employee = optEmployee.get();
+		Integer positionId = employee.getPosition().getPositionId();
+
+		List<Meeting> meetings; // 會議列表
+
+		// 根據職位決定查詢範圍
+		if (positionId == 1 || positionId == 2) {
+
+			meetings = meetingRepository.findAll();
+		} else {
+
+			meetings = meetingRepository.findByEmployeeEmployeeId(employeeId);
+		}
+
+		List<MeetingResponse> meetingResponses = new ArrayList<>();
+		for (Meeting meeting : meetings) {
+			meetingResponses.add(new MeetingResponse(meeting));
+		}
+
+		return meetingResponses;
+	}
+
+	// 查會議室當天預約情況
+	public List<MeetingResponse> findReserve(Integer roomId, LocalDateTime date) {
+
+		if (roomId == null || date == null) {
+			return new ArrayList<>();
+		}
+
 		LocalDateTime startOfDay = date.withHour(8).withMinute(0).withSecond(0);
 		LocalDateTime endOfDay = date.withHour(18).withMinute(0).withSecond(0);
-		
-		
-		
+
 		List<Meeting> meetings = meetingRepository.findByRoomIdAndStartTimeBetween(roomId, startOfDay, endOfDay);
-		
-		if(meetings.isEmpty()) {
+
+		if (meetings.isEmpty()) {
 			return new ArrayList<>();
 		}
-		
-		
+
 		List<MeetingResponse> meetingResponses = new ArrayList<>();
 
 		for (Meeting meeting : meetings) {
 			meetingResponses.add(new MeetingResponse(meeting));
 		}
 		return meetingResponses;
-			
-		
-	}
-	
-	//審核
-	public Optional<MeetingResponse> approveMeeting(Integer meetingId, Integer employeeId, boolean isApproved) {
-	  
-	    if (meetingId == null || employeeId == null) {
-	        return Optional.empty();
-	    }
 
-	    
-	    Optional<Meeting> optMeeting = meetingRepository.findById(meetingId);
-	    Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
-
-	   
-	    if (optMeeting.isEmpty()) {
-	        return Optional.empty();
-	    }
-	    if (optEmployee.isEmpty()) {
-	        return Optional.empty();
-	    }
-
-	    
-	    Meeting meeting = optMeeting.get();
-	    Employee employee = optEmployee.get();
-
-	    
-	    if (employee.getPosition().getPositionId() != 2) {
-	        return Optional.empty();
-	    }
-
-	    
-	    if (meeting.getStatus().getStatusId() != 5) {
-	        return Optional.empty();
-	    }
-
-	    
-	    Integer newStatusId;
-	    if (isApproved) {
-	        newStatusId = 6; //"已審核"
-	    } else {
-	        newStatusId = 8; //"未核准"
-	    }
-
-	
-	    Optional<Status> optStatus = statusRepository.findById(newStatusId);
-	    if (optStatus.isEmpty()) {
-	        return Optional.empty();
-	    }
-
-	  
-	    meeting.setStatus(optStatus.get());
-	    meetingRepository.save(meeting);
-
-	   
-	    return Optional.of(new MeetingResponse(meeting));
 	}
 
+	// 審核
+	public Optional<Meeting> approveAndReturnMeeting(Integer meetingId, Integer employeeId, boolean isApproved) {
 
-	
-	
-	
-	
-	
+		if (meetingId == null || employeeId == null) {
+			return Optional.empty();
+		}
+
+		Optional<Meeting> optMeeting = meetingRepository.findById(meetingId);
+		Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
+
+		if (optMeeting.isEmpty() || optEmployee.isEmpty()) {
+			return Optional.empty();
+		}
+
+		Meeting meeting = optMeeting.get();
+		Employee employee = optEmployee.get();
+
+		if (employee.getPosition().getPositionId() != 2) {
+			return Optional.empty();
+		}
+
+		if (meeting.getStatus().getStatusId() != 5) {
+			return Optional.empty();
+		}
+
+		Integer newStatusId = isApproved ? 6 : 8;
+		Optional<Status> optStatus = statusRepository.findById(newStatusId);
+		if (optStatus.isEmpty())
+			return Optional.empty();
+
+		meeting.setStatus(optStatus.get());
+		meetingRepository.save(meeting);
+
+		return Optional.of(meeting);
+	}
 
 }
