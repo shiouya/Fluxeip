@@ -1,6 +1,6 @@
 package com.example.fluxeip.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +15,7 @@ public class MissingPunchRequestDTO {
 
 	private Integer employeeId;
 	private Integer clockTypeId;
-	private Date missingDate;
+	private LocalDate missingDate;
 	private String reason;
 	private Integer statusId;
 	

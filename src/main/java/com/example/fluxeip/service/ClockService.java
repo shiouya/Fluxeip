@@ -207,7 +207,9 @@ public class ClockService {
         LocalDateTime now = LocalDateTime.now();
         
         long totalMinutes = Duration.between(attendance.getCreatedAt(), now).toMinutes();
-        attendance.setTotalHours((int) (totalMinutes / 60));
+//        attendance.setTotalHours((int) (totalMinutes / 60));
+        int totalHours = Math.max(0, (int) ((totalMinutes-60) / 60)); // 確保不小於0
+        attendance.setTotalHours(totalHours);
         
         if (attendance.getTotalHours() > attendance.getRegularHours()) {
             attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());

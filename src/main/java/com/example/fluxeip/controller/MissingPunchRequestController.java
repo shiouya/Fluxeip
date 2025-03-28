@@ -47,7 +47,7 @@ public class MissingPunchRequestController {
         if (requestsByEmployeeId != null && !requestsByEmployeeId.isEmpty()) {
             return ResponseEntity.ok(requestsByEmployeeId);
         } else {
-            return ResponseEntity.noContent().build();  // 若沒有加班申請紀錄，返回 204 No Content
+            return ResponseEntity.noContent().build();  
         }
     	
     	

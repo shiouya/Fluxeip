@@ -1,7 +1,7 @@
 package com.example.fluxeip.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,7 +30,7 @@ public class MissingPunchRequest {
     private Employee employee;
     
     @Column(name = "missing_date", nullable = false)
-    private Date missingDate;
+    private LocalDate missingDate;
     
     @ManyToOne
     @JoinColumn(name = "clock_type_id", nullable = false)

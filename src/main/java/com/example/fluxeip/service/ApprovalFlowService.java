@@ -1,7 +1,10 @@
 package com.example.fluxeip.service;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -21,21 +24,28 @@ import com.example.fluxeip.dto.MissingPunchApprovalStepDTO;
 import com.example.fluxeip.dto.WorkAdjustApprovalStepDTO;
 import com.example.fluxeip.model.ApprovalFlow;
 import com.example.fluxeip.model.ApprovalStep;
-import com.example.fluxeip.model.BaseRequest;
+import com.example.fluxeip.model.Attendance;
+import com.example.fluxeip.model.AttendanceLogs;
+import com.example.fluxeip.model.AttendanceViolations;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.ExpenseRequest;
 import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.MissingPunchRequest;
-import com.example.fluxeip.model.Request;
+import com.example.fluxeip.model.ShiftType;
+import com.example.fluxeip.model.Type;
 import com.example.fluxeip.model.WorkAdjustmentRequest;
 import com.example.fluxeip.repository.ApprovalFlowRepository;
 import com.example.fluxeip.repository.ApprovalStepRepository;
+import com.example.fluxeip.repository.AttendanceLogsRepository;
+import com.example.fluxeip.repository.AttendanceRepository;
+import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.DepartmentRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.ExpenseRequestRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.MissingPunchRequestRepository;
 import com.example.fluxeip.repository.PositionRepository;
+import com.example.fluxeip.repository.ScheduleRepository;
 import com.example.fluxeip.repository.StatusRepository;
 import com.example.fluxeip.repository.TypeRepository;
 import com.example.fluxeip.repository.WorkAdjustmentRequestRepository;
@@ -75,9 +85,24 @@ public class ApprovalFlowService {
 
 	@Autowired
 	private MissingPunchRequestRepository missingPunchRequestRepository;
-	
+
 	@Autowired
 	private ExpenseRequestRepository expenseRequestRepository;
+
+	@Autowired
+	private AttendanceRepository attendanceRepository;
+
+	@Autowired
+	private AttendanceLogsRepository attendanceLogsRepository;
+
+	@Autowired
+	private AttendanceViolationsRepository attendanceViolationsRepository;
+
+	@Autowired
+	private AttendanceService attendanceService;
+
+	@Autowired
+	private ScheduleRepository scheduleRepository;
 
 	// 查詢員工待審核的請假單
 	@Transactional
@@ -159,7 +184,6 @@ public class ApprovalFlowService {
 		ApprovalStep approvalStep = new ApprovalStep();
 		approvalStep.setFlow(firstStepFlow);
 
-		// 使用 BaseRequest 類型來設定請求
 		approvalStep.setRequestId(leaveRequest.getId()); // leaveRequest 是 BaseRequest 類型的子類型
 
 		approvalStep.setCurrentStep(1);
@@ -568,8 +592,8 @@ public class ApprovalFlowService {
 		// ** 如果否決，直接更新請假單狀態**
 		if ("未核准".equals(step.getStatus().getStatusName())) {
 			Integer requestId = step.getRequestId();
-			Optional<MissingPunchRequest> missingPunchRequestOpt = missingPunchRequestRepository.findById(requestId);
-			MissingPunchRequest request = missingPunchRequestOpt.get();
+			MissingPunchRequest request = missingPunchRequestRepository.findById(requestId)
+					.orElseThrow(() -> new RuntimeException("找不到請假申請"));
 			request.setStatus(statusRepository.findByStatusNameAndStatusType("未核准", "表單狀態")
 					.orElseThrow(() -> new RuntimeException("狀態不存在")));
 
@@ -585,11 +609,60 @@ public class ApprovalFlowService {
 		if (nextStepFlow == null) {
 			// 如果沒有下一步，直接完成簽核流程
 			Integer requestId = step.getRequestId();
-			Optional<MissingPunchRequest> missingPunchRequestOpt = missingPunchRequestRepository.findById(requestId);
-			MissingPunchRequest request = missingPunchRequestOpt.get();
+			MissingPunchRequest request = missingPunchRequestRepository.findById(requestId)
+					.orElseThrow(() -> new RuntimeException("找不到請假申請"));
 			request.setStatus(statusRepository.findByStatusNameAndStatusType("已核決", "表單狀態")
 					.orElseThrow(() -> new RuntimeException("狀態不存在")));
 			missingPunchRequestRepository.save(request);
+			Employee employee = request.getEmployee();
+			LocalDate missingDate = request.getMissingDate();
+
+			ShiftType shiftType = scheduleRepository
+					.findShiftTypeByEmployeeIdAndDate(employee.getEmployeeId(), missingDate)
+					.orElseThrow(() -> new RuntimeException("找不到當日班別"));
+			if (request.getClockType().getTypeName().equals("上班")) {
+
+				// 驗證 LocalDateTime
+				LocalDateTime startOfDay = missingDate.atStartOfDay();
+				LocalDateTime endOfDay = startOfDay.plusDays(1);
+				Optional<Type> clockInTypeOpt = typeRepository.findByTypeName("上班");
+				Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee,
+						startOfDay, endOfDay);
+				Attendance attendance = attendanceOpt.orElseThrow(() -> new RuntimeException("指定日期無考勤紀錄或員工不存在"));
+				AttendanceLogs log = new AttendanceLogs();
+				log.setAttendance(attendance);
+				log.setEmployee(employee);
+				log.setClockType(clockInTypeOpt.orElseThrow(() -> new RuntimeException("上班打卡類型不存在")));
+				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
+				attendanceLogsRepository.save(log);
+				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByViolationType(
+						typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
+				if (lateOpt.isPresent()) {
+					attendanceViolationsRepository.deleteById(lateOpt.get().getId());
+				}
+				updateTotalHoursByClockCard(attendance, shiftType, clockInTypeOpt.get());
+			} else if (request.getClockType().getTypeName().equals("下班")) {
+				LocalDateTime startOfDay = missingDate.atStartOfDay();
+				LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+				Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee,
+						startOfDay, endOfDay);
+				Attendance attendance = attendanceOpt.orElseThrow(() -> new RuntimeException("指定日期無考勤紀錄或員工不存在"));
+				Optional<Type> clockOutTypeOpt = typeRepository.findByTypeName("下班");
+				AttendanceLogs log = new AttendanceLogs();
+				log.setAttendance(attendance);
+				log.setEmployee(employee);
+				log.setClockType(clockOutTypeOpt.orElseThrow(() -> new RuntimeException("下班打卡類型不存在")));
+				log.setClockTime(missingDate.atTime(shiftType.getFinishTime()));
+				attendanceLogsRepository.save(log);
+
+				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByViolationType(
+						typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
+				if (earlyLeaveOpt.isPresent()) {
+					attendanceViolationsRepository.deleteById(earlyLeaveOpt.get().getId());
+				}
+				updateTotalHoursByClockCard(attendance, shiftType, clockOutTypeOpt.get());
+			}
 			return "簽核成功";
 		}
 
@@ -598,8 +671,8 @@ public class ApprovalFlowService {
 		if (nextFlowOpt.isPresent()) {
 			// 若有下一步驟，新增下一個 `ApprovalStep`
 			Integer requestId = step.getRequestId();
-			Optional<MissingPunchRequest> missingPunchRequestOpt = missingPunchRequestRepository.findById(requestId);
-			MissingPunchRequest request = missingPunchRequestOpt.get();
+			MissingPunchRequest request = missingPunchRequestRepository.findById(requestId)
+					.orElseThrow(() -> new RuntimeException("找不到請假申請"));
 			request.setStatus(statusRepository.findByStatusNameAndStatusType("審核中", "表單狀態")
 					.orElseThrow(() -> new RuntimeException("狀態不存在")));
 			missingPunchRequestRepository.save(request);
@@ -633,16 +706,134 @@ public class ApprovalFlowService {
 
 			approvalStepRepository.save(nextStep);
 		} else {
-			// 若沒有下一步，代表簽核完成，更新請假單狀態
+			// 若沒有下一步，代表簽核完成，更新補卡單狀態
+			System.out.println("更新申請單");
 			Integer requestId = step.getRequestId();
-			Optional<MissingPunchRequest> missingPunchRequestOpt = missingPunchRequestRepository.findById(requestId);
-			MissingPunchRequest request = missingPunchRequestOpt.get();
+			MissingPunchRequest request = missingPunchRequestRepository.findById(requestId)
+					.orElseThrow(() -> new RuntimeException("找不到請假申請"));
 			request.setStatus(statusRepository.findByStatusNameAndStatusType("已核決", "表單狀態")
 					.orElseThrow(() -> new RuntimeException("狀態不存在")));
 			missingPunchRequestRepository.save(request);
+
+			Employee employee = request.getEmployee();
+			LocalDate missingDate = request.getMissingDate();
+
+			ShiftType shiftType = scheduleRepository
+					.findShiftTypeByEmployeeIdAndDate(employee.getEmployeeId(), missingDate)
+					.orElseThrow(() -> new RuntimeException("找不到當日班別"));
+			if (request.getClockType().getTypeName() == "上班") {
+				System.out.println("上班");
+				LocalDateTime startOfDay = missingDate.atStartOfDay();
+				LocalDateTime endOfDay = startOfDay.plusDays(1);
+				System.out.println(startOfDay);
+				Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee,
+						startOfDay, endOfDay);
+				Attendance attendance = attendanceOpt.orElseThrow(() -> new RuntimeException("指定日期無考勤紀錄或員工不存在"));
+				Optional<Type> clockInTypeOpt = typeRepository.findByTypeName("上班");
+				AttendanceLogs log = new AttendanceLogs();
+				log.setAttendance(attendance);
+				log.setEmployee(employee);
+				log.setClockType(clockInTypeOpt.orElseThrow(() -> new RuntimeException("上班打卡類型不存在")));
+				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
+				attendanceLogsRepository.save(log);
+				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByViolationType(
+						typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
+				if (lateOpt.isPresent()) {
+					attendanceViolationsRepository.deleteById(lateOpt.get().getId());
+				}
+				updateTotalHoursByClockCard(attendance, shiftType, clockInTypeOpt.get());
+			}
+
+			if (request.getClockType().getTypeName().equals("下班")) {
+				LocalDateTime startOfDay = missingDate.atStartOfDay();
+				LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+				Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee,
+						startOfDay, endOfDay);
+				Attendance attendance = attendanceOpt.orElseThrow(() -> new RuntimeException("指定日期無考勤紀錄或員工不存在"));
+				Optional<Type> clockOutTypeOpt = typeRepository.findByTypeName("下班");
+				AttendanceLogs log = new AttendanceLogs();
+				log.setAttendance(attendance);
+				log.setEmployee(employee);
+				log.setClockType(clockOutTypeOpt.orElseThrow(() -> new RuntimeException("下班打卡類型不存在")));
+				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
+				attendanceLogsRepository.save(log);
+
+				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByViolationType(
+						typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
+				if (earlyLeaveOpt.isPresent()) {
+					attendanceViolationsRepository.deleteById(earlyLeaveOpt.get().getId());
+				}
+				updateTotalHoursByClockCard(attendance, shiftType, clockOutTypeOpt.get());
+			} 
 		}
 
 		return "簽核成功";
+	}
+
+	private void updateTotalHoursByClockCard(Attendance attendance, ShiftType shiftType, Type clockType) {
+		// 取得所有打卡紀錄
+		List<AttendanceLogs> attendanceLogs = attendanceLogsRepository.findByAttendance(attendance);
+
+		// 根據 ClockType 找出最早的上班卡與最晚的下班卡
+		Optional<AttendanceLogs> earliestClockIn = attendanceLogs.stream()
+				.filter(log -> log.getClockType().getTypeName().equals("上班"))
+				.min(Comparator.comparing(AttendanceLogs::getClockTime)); // 最早的上班卡
+
+		Optional<AttendanceLogs> latestClockOut = attendanceLogs.stream()
+				.filter(log -> log.getClockType().getTypeName().equals("下班"))
+				.max(Comparator.comparing(AttendanceLogs::getClockTime)); // 最晚的下班卡
+
+		// 補上班卡邏輯：最早的下班卡時間減掉班表的上班時間
+		if (clockType.getTypeName().equals("上班") && earliestClockIn.isPresent() && latestClockOut.isPresent()) {
+			LocalDateTime clockOutTime = latestClockOut.get().getClockTime();
+			LocalDateTime shiftStartTime = shiftType.getStartTime().atDate(clockOutTime.toLocalDate()); // 班表上班時間
+
+			// 計算總工時
+			long totalMinutes = Duration.between(shiftStartTime, clockOutTime).toMinutes();
+			System.out.println("上班" + totalMinutes);
+			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
+
+			// 如果有加班，計算加班時間
+			if (attendance.getTotalHours() > attendance.getRegularHours()) {
+				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
+			}
+		}
+		// 補下班卡邏輯：班表的下班時間減掉最晚來的上班卡時間
+		else if (clockType.getTypeName().equals("下班") && earliestClockIn.isPresent() && latestClockOut.isPresent()) {
+			LocalDateTime clockInTime = earliestClockIn.get().getClockTime();
+			LocalDateTime shiftEndTime = shiftType.getFinishTime().atDate(clockInTime.toLocalDate()); // 班表下班時間
+
+			// 計算總工時
+			long totalMinutes = Duration.between(clockInTime, shiftEndTime).toMinutes();
+			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
+			System.out.println("下班" + totalMinutes);
+			// 如果有加班，計算加班時間
+			if (attendance.getTotalHours() > attendance.getRegularHours()) {
+				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
+			}
+		}
+		// 沒有補卡，則依最早的下班卡和最晚的上班卡來計算
+		else if (earliestClockIn.isPresent() && latestClockOut.isPresent()) {
+			LocalDateTime clockInTime = earliestClockIn.get().getClockTime();
+			LocalDateTime clockOutTime = latestClockOut.get().getClockTime();
+
+			// 計算總工時
+			long totalMinutes = Duration.between(clockInTime, clockOutTime).toMinutes();
+			System.out.println("沒補卡" + totalMinutes);
+			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
+
+			// 如果有加班，計算加班時間
+			if (attendance.getTotalHours() > attendance.getRegularHours()) {
+				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
+			}
+		}
+
+		// 更新是否有違規
+		attendance.setHasViolation(attendanceViolationsRepository.existsByAttendance(attendance));
+
+		// 保存更新的考勤
+		attendanceRepository.save(attendance);
 	}
 
 	// 查詢員工待審核的費用單
@@ -652,8 +843,8 @@ public class ApprovalFlowService {
 		List<ApprovalStep> pendingSteps = approvalStepRepository.findPendingApprovalSteps(approverId, "待審核");
 
 		// 將 ApprovalStep 轉換為 ApprovalStepDTO
-		return pendingSteps.stream().filter(step -> "expense_type".equals(step.getFlow().getRequestType().getCategory()))
-				.map(step -> {
+		return pendingSteps.stream()
+				.filter(step -> "expense_type".equals(step.getFlow().getRequestType().getCategory())).map(step -> {
 					Integer requestId = step.getRequestId();
 					System.out.println("草" + requestId);
 					// 避免 Optional 取值時發生錯誤
@@ -661,14 +852,13 @@ public class ApprovalFlowService {
 							.orElseThrow(() -> new NoSuchElementException("找不到 ID 為 " + requestId + " 的加減班申請"));
 
 					// 構建 ApprovalStepDTO
-					return new ExpenseApprovalStepDTO(step.getId(), requestId,
-							request.getEmployee().getEmployeeId(), request.getEmployee().getEmployeeName(),
-							request.getExpenseType().getTypeName(), request.getAmount(), request.getDescription(),
-							request.getSubmittedAt(),
-							fileService.extractOriginalFileName(request.getAttachments()),
-							request.getAttachments(), step.getApprover().getEmployeeId(),
-							step.getApprover().getEmployeeName(), step.getStatus().getStatusName(),
-							step.getCurrentStep(), step.getComment(), step.getUpdatedAt());
+					return new ExpenseApprovalStepDTO(step.getId(), requestId, request.getEmployee().getEmployeeId(),
+							request.getEmployee().getEmployeeName(), request.getExpenseType().getTypeName(),
+							request.getAmount(), request.getDescription(), request.getSubmittedAt(),
+							fileService.extractOriginalFileName(request.getAttachments()), request.getAttachments(),
+							step.getApprover().getEmployeeId(), step.getApprover().getEmployeeName(),
+							step.getStatus().getStatusName(), step.getCurrentStep(), step.getComment(),
+							step.getUpdatedAt());
 				}).collect(Collectors.toList());
 	}
 
@@ -844,6 +1034,7 @@ public class ApprovalFlowService {
 						flow.getApproverPosition().getPositionName()))
 				.collect(Collectors.toList());
 	}
+
 	// 查找簽核流程及所有後續步驟
 	@Transactional
 	public List<ApprovalFlowResponseDTO> getApprovalFlowAndNextSteps(Integer flowId) {
@@ -856,9 +1047,6 @@ public class ApprovalFlowService {
 						flow.getApproverPosition().getPositionName()))
 				.collect(Collectors.toList());
 	}
-	
-	
-	
 
 	// 查找全部的簽核流程
 	@Transactional
