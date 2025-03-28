@@ -13,6 +13,9 @@ import com.example.fluxeip.model.WorkAdjustmentRequest;
 public interface WorkAdjustmentRequestRepository extends JpaRepository<WorkAdjustmentRequest, Integer> {
 
 	List<WorkAdjustmentRequest> findByEmployee_EmployeeId(Integer employeeId);
+ 
+	@Query("SELECT COUNT(w) > 0 FROM WorkAdjustmentRequest w WHERE w.id IN :ids AND w.status.statusId NOT IN :statusIds AND w.employee.id = :employeeId")
+	boolean existsByRequestIdsAndStatusNotInAndEmployeeId(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds, @Param("employeeId") Integer employeeId);
 	
 	
 	@Query("SELECT w FROM WorkAdjustmentRequest w " +

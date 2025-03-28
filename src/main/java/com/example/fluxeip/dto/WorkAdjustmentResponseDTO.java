@@ -31,6 +31,7 @@ public class WorkAdjustmentResponseDTO {
 	private String employeeName;
 	private String adjustmentType;
 	private Date adjustmentDate;
+	private LocalDateTime submittedAt;
 	private BigDecimal hours;
 	private String reason;
 	private String status;

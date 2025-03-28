@@ -24,4 +24,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
 	                                                         @Param("status") String status,
 	                                                         @Param("startDate") LocalDateTime startOfMonth,
 	                                                         @Param("endDate") LocalDateTime endOfMonth);
+
+	@Query("SELECT COUNT(l) > 0 FROM LeaveRequest l WHERE l.id IN :ids AND l.status.statusId NOT IN :statusIds AND l.employee.id = :employeeId")
+	boolean existsByRequestIdsAndStatusNotInAndEmployeeId(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds, @Param("employeeId") Integer employeeId);
 }
