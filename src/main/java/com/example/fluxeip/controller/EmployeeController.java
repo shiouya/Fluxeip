@@ -36,6 +36,7 @@ import com.example.fluxeip.repository.EmployeeDetailRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.RolesRepository;
 import com.example.fluxeip.service.DepartmentService;
+import com.example.fluxeip.service.EmployeeApprovalFlowService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
@@ -68,6 +69,9 @@ public class EmployeeController {
 
 	@Autowired
 	private RolesRepository rolesRep;
+	
+	@Autowired
+	private EmployeeApprovalFlowService employeeApprovalFlowService;
 
 	@PostMapping("/employee/find")
 	public EmployeePageResponse getEmployeesPage(@RequestBody EmployeePageRequest page) {
@@ -193,6 +197,18 @@ public class EmployeeController {
 		String employeeName = entity.getEmployeeName();
 		String departmentName = entity.getDepartment();
 		String positionName = entity.getPosition();
+		
+	    // 如果職位變更，才執行刪除流程的邏輯
+	    if (!employee.getPosition().getPositionName().equals(positionName)) {
+	    	System.out.println("123");
+	        try {
+	            employeeApprovalFlowService.deleteAllEmployeeApprovalFlowsByEmployeeId(employeeId);
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return false;
+	        }
+	    }
+	    
 		Roles roles1 = rolesRep.findByRoleName("最高管理員");
 		Roles roles2 = rolesRep.findByRoleName("次等管理員");
 		Roles roles3 = rolesRep.findByRoleName("行政主管");
@@ -225,7 +241,6 @@ public class EmployeeController {
 		employee.setStatus(status);
 		System.out.println(employee.getRoles() + "11111111111111111111111111111111111111");
 		empRep.save(employee);
-
 		return true;
 	}
 
