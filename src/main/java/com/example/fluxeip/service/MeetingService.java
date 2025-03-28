@@ -119,11 +119,41 @@ public class MeetingService {
 			return true;
 		}
 	}
-
+	
 	// 檢查是否有重疊的會議(新贈用)
-	private boolean isOverlapping(Integer roomId, LocalDateTime startTime, LocalDateTime endTime) {
-		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfter(roomId, endTime, startTime);
+	public boolean isOverlapping(Integer roomId, LocalDateTime startTime, LocalDateTime endTime) {
+	    List<Meeting> meetings = meetingRepository.findByRoomId(roomId);
+
+	    for (Meeting m : meetings) {
+	        // 只檢查 審核中 / 已審核，不要算進 未核准
+	        int statusId = m.getStatus().getStatusId();
+	        if (statusId != 4 && statusId != 5 && statusId != 6) continue;
+
+	        // 判斷是否時間重疊：只要有交集就是衝突
+	        boolean isOverlap = m.getStartTime().isBefore(endTime) && m.getEndTime().isAfter(startTime);
+	        if (isOverlap) {
+	            return true; // 有重疊
+	        }
+	    }
+
+	    return false; // 沒有重疊
 	}
+	
+	
+	
+	
+	
+	
+	
+//	public boolean isOverlapping(Integer roomId, LocalDateTime start, LocalDateTime end) {
+//	    return meetingRepository.existsByRoomAndTimeOverlapValidStatus(roomId, start, end);
+//	}
+	
+	
+	
+//	private boolean isOverlapping(Integer roomId, LocalDateTime startTime, LocalDateTime endTime) {
+//		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfter(roomId, endTime, startTime);
+//	}
 
 	// 檢查是否有重疊的會議（更新用 不含自己）
 	private boolean isOverlappingExceptSelf(Integer meetingId, Integer roomId, LocalDateTime startTime,
@@ -135,45 +165,49 @@ public class MeetingService {
 	// 新增
 	public Optional<MeetingResponse> create(MeetingRequest meetingRequest) {
 
-		if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-			return Optional.empty();
-		}
+	    // 1. 檢查時間是否合法（起時間 < 結束時間，非週末，非上下班時間等）
+	    if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+	        return Optional.empty();
+	    }
 
-		if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-			return Optional.empty();
-		}
+	    // 2. 檢查是否有時間重疊（只考慮「審核中」「已審核」的會議）
+	    if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+	        return Optional.empty(); // 有重疊，不允許新增
+	    }
 
-		Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
-		Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
-		Optional<Status> optStatus = statusRepository.findById(5); // 審核中
+	    // 3. 查詢使用者與會議室
+	    Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
+	    Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
+	    Optional<Status> optStatus = statusRepository.findById(5); // 預設「審核中」狀態
 
-		if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
-			return Optional.empty();
-		}
+	    if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
+	        return Optional.empty(); // 必要資料查不到
+	    }
 
-		Meeting meeting = new Meeting();
-		meeting.setTitle(meetingRequest.getTitle());
-		meeting.setNotes(meetingRequest.getNotes());
-		meeting.setStartTime(meetingRequest.getStartTime());
-		meeting.setEndTime(meetingRequest.getEndTime());
-		meeting.setEmployee(optEmployee.get());
-		meeting.setRoom(optRoom.get());
-		meeting.setStatus(optStatus.get());
+	    // 4. 建立 Meeting Entity 並存入
+	    Meeting meeting = new Meeting();
+	    meeting.setTitle(meetingRequest.getTitle());
+	    meeting.setNotes(meetingRequest.getNotes());
+	    meeting.setStartTime(meetingRequest.getStartTime());
+	    meeting.setEndTime(meetingRequest.getEndTime());
+	    meeting.setEmployee(optEmployee.get());
+	    meeting.setRoom(optRoom.get());
+	    meeting.setStatus(optStatus.get());
 
-		// ✅ 存會議並接回存檔結果
-		Meeting savedMeeting = meetingRepository.save(meeting);
+	    Meeting savedMeeting = meetingRepository.save(meeting);
 
-		// ✅ 發送通知
-		try {
-			Integer approverId = 1002;
-			String message = "有新的會議室預約需要您審核（主題：" + savedMeeting.getTitle() + "）";
-			notifyService.sendNotification(approverId, message);
-		} catch (Exception e) {
-			System.out.println("⚠ 發送通知失敗：" + e.getMessage());
-		}
+	    // 5. 發送通知給審核人
+	    try {
+	        Integer approverId = 1002; // 次等管理員
+	        String message = "有新的會議室預約需要您審核（主題：" + savedMeeting.getTitle() + "）";
+	        notifyService.sendNotification(approverId, message);
+	    } catch (Exception e) {
+	        System.out.println("⚠ 發送通知失敗：" + e.getMessage());
+	    }
 
-		return Optional.of(new MeetingResponse(savedMeeting));
+	    return Optional.of(new MeetingResponse(savedMeeting));
 	}
+
 
 	// 更新
 	public Optional<MeetingResponse> update(Integer id, MeetingRequest meetingRequest) {
