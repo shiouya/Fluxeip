@@ -23,8 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.dto.SalaryDetailResponse;
+import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
+import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.SalaryService;
 
 @RestController
@@ -34,6 +37,8 @@ public class SalaryController {
 	
 	@Autowired
 	private SalaryService salaryService;
+	@Autowired
+	private EmployeeRepository employeeRepository;
 	
 	//薪資設定相關
 	@GetMapping("/{id}")
@@ -228,5 +233,11 @@ public class SalaryController {
 	@PostMapping("/earnedSalary")
 	public Integer earnedSalary(@RequestBody SalaryDetailRequest detailRequest) {
 		return salaryService.caculateEarnedSalary(detailRequest);
+	}
+	
+	//全部員工
+	@GetMapping("/allEmp")
+	public List<Employee> findAllEmp(){
+		return employeeRepository.findAll();
 	}
 }
