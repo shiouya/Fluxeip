@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.WorkTaskCreateRequest;
+import com.example.fluxeip.dto.WorkUpdateRequest;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Taskassign;
 import com.example.fluxeip.model.WorkProgess;
 import com.example.fluxeip.repository.EmployeeRepository;
-import com.example.fluxeip.repository.StatusRepository;
 import com.example.fluxeip.repository.TaskassignRepository;
 import com.example.fluxeip.repository.WorkProgessRepository;
 import com.example.fluxeip.service.StatusService;
@@ -33,7 +33,7 @@ public class WorkProgressController {
 	private EmployeeRepository empRep;
 
 	@Autowired
-	private StatusRepository statusRep;
+	private StatusService staSer;
 
 	@Autowired
 	private WorkProgessRepository workProRep;
@@ -55,23 +55,15 @@ public class WorkProgressController {
 	
 	@GetMapping("/workProgress/findstatus/{statusN}")
 	public List<WorkProgess> getWorkProgressByStatus(@PathVariable String statusN) {
-		Optional<Status> statusName = statusRep.findByStatusName(statusN);
-		Status status = new Status();
-		if(statusName!=null) {
-			status = statusName.get();
-		}
+		Status statusName = staSer.findByName(statusN);
 		
-		List<WorkProgess> WorkProgessFindByStatus = workProRep.findByStatus(status);
+		List<WorkProgess> WorkProgessFindByStatus = workProRep.findByStatus(statusName);
 		return WorkProgessFindByStatus;
 	}
 	
 	@GetMapping("/workProgress/find/{statusN}/{name}")
 	public List<WorkProgess> getWorkProgressByStatusAndName(@PathVariable String statusN,@PathVariable String name) {
-		Optional<Status> statusName = statusRep.findByStatusName(statusN);
-		Status status = new Status();
-		if(statusName!=null) {
-			status = statusName.get();
-		}
+		Status status = staSer.findByName(statusN);
 		
 		List<WorkProgess> WorkProgessFindByStatus = workProRep.findByNameAndStatus(name,status);
 		return WorkProgessFindByStatus;
@@ -84,6 +76,7 @@ public class WorkProgressController {
 		workProgess.setWorkName(entity.getWorkName());
 		workProgess.setCreateDate(entity.getCreateDate());
 		workProgess.setExpectedFinishDate(entity.getExpectedFinishdate());
+		workProgess.setProgress(0.0);
 		Status status = statusSer.findByName("未完成");
 		workProgess.setStatus(status);
 		Optional<Employee> emp = empRep.findById(entity.getSupervisorId());
@@ -109,6 +102,53 @@ public class WorkProgressController {
 			taskRep.save(taskassign);
 		});
 
+		return true;
+	}
+	
+	@PostMapping("/workProgress/update")
+	public boolean updateWorkProgress(@RequestBody WorkUpdateRequest entity) {
+		Optional<WorkProgess> workProgress = workProRep.findById(entity.getWorkId());
+		WorkProgess work = workProgress.get();
+		work.setWorkName(entity.getWorkName());
+		work.setCreateDate(entity.getCreateDate());
+		work.setExpectedFinishDate(entity.getExpectedFinishdate());
+		work.setFinishDate(entity.getFinishdate());
+		Status status = statusSer.findByName(entity.getStatus());
+		work.setStatus(status);
+		entity.getTaskassigns().forEach(task -> {
+			if (task.getTaskId() == null) {
+				Taskassign taskassign = new Taskassign();
+				taskassign.setWorkprogess(work);
+				taskassign.setTaskName(task.getTaskName());
+				taskassign.setTaskContent(task.getTaskContent());
+				taskassign.setAssign(empRep.findByEmployeeName(task.getEmployee()));
+				Optional<Employee> emp = empRep.findById(task.getReveiew());
+				taskassign.setReveiew(emp.get());
+				taskassign.setCreateDate(task.getCreateDate());
+				taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
+				Status statuss = statusSer.findByName(task.getStatus());
+				taskassign.setStatus(statuss);
+				taskRep.save(taskassign);
+			} else {
+				Taskassign taskassign = taskRep.findById(task.getTaskId()).get();
+				taskassign.setTaskName(task.getTaskName());
+				taskassign.setTaskContent(task.getTaskContent());
+				taskassign.setAssign(empRep.findByEmployeeName(task.getEmployee()));
+				taskassign.setCreateDate(task.getCreateDate());
+				taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
+				Status statuss = statusSer.findByName(task.getStatus());
+				taskassign.setStatus(statuss);
+				taskRep.save(taskassign);
+			}
+		});
+		long countByWorkprogess = taskRep.countByWorkprogess(work);
+		Status finishStatus = staSer.findByName("已完成");
+		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(work, finishStatus);
+		Double progress = (double) countByWorkprogessAndStatus / countByWorkprogess * 100;
+		double roundedProgress = Math.round(progress * 100.0) / 100.0;
+		work.setProgress(roundedProgress);
+		WorkProgess save = workProRep.save(work);
+		
 		return true;
 	}
 

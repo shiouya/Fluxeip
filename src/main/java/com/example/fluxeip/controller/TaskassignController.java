@@ -167,18 +167,17 @@ public class TaskassignController {
 		Status finishStatus = staSer.findByName("已完成");
 		taskassign.setStatus(statu);
 		WorkProgess workprogess = taskassign.getWorkprogess();
+		if (status.equals("已完成")) {
+			LocalDate today = LocalDate.now();
+			taskassign.setFinishDate(today);
+		}
+		taskRep.save(taskassign);
 		long countByWorkprogess = taskRep.countByWorkprogess(workprogess);
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workprogess, finishStatus);
 		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
 		double roundedProgress = Math.round(progress * 100.0) / 100.0;
-		if(status.equals("已完成")) {
-			LocalDate today = LocalDate.now();
-			taskassign.setFinishDate(today);
-			System.out.println(workprogess.getFinishDate());
-		}
 		workprogess.setProgress(roundedProgress);
 		WorkProgess save = workRep.save(workprogess);
-		System.out.println(save.getFinishDate());
 		
 		return true;
 	}
