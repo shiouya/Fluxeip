@@ -35,6 +35,15 @@ public class ApprovalFlowController {
     public ResponseEntity<?> getAllStepOneApprovalFlow() {
     	return ResponseEntity.ok(approvalFlowService.getAllStepOneApprovalFlow());
     }
+    
+    
+    // 從簽核1取得後續的簽核流程
+    @GetMapping("/flow/stepone/{flowId}")
+    public ResponseEntity<?> getApprovalFlowByStepOne(@PathVariable Integer flowId) {
+    	System.out.println("有喔");
+        return ResponseEntity.ok(approvalFlowService.getApprovalFlowAndNextSteps(flowId));
+    }
+    
     // 取得全部的簽核流程
     @GetMapping("/flow/all")
     public ResponseEntity<?> getAllApprovalFlow() {
@@ -46,40 +55,7 @@ public class ApprovalFlowController {
     public ResponseEntity<?> getApprovalFlow(@PathVariable Integer typeId) {
         return ResponseEntity.ok(approvalService.getApprovalFlowForType(typeId));
     }
-    
-    
-    
-
-//
-//    @PutMapping("/step/{stepId}/review")
-//    public ResponseEntity<String> approveOrRejectStep(
-//            @PathVariable Integer stepId,
-//            @RequestParam Integer approverId,
-//            @RequestParam String status,
-//            @RequestParam(required = false) String comment) {
-//        
-//        String result = approvalFlowService.approveLeaveRequest(stepId, approverId, status, comment);
-//        
-//        if ("簽核成功".equals(result)) {
-//            return ResponseEntity.ok(result);
-//        }else if("已否決請假單".equals(result)){
-//        	return ResponseEntity.ok(result);
-//        } else {
-//            return ResponseEntity.badRequest().body(result); 
-//        }
-//    }
-
-//    // 查詢當前審核人待審核的請假單
-//    @GetMapping("/pending/{approverId}")
-//    public ResponseEntity<List<ApprovalStepDTO>> getPendingApprovals(@PathVariable Integer approverId) {
-//        List<ApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingApprovalSteps(approverId);
-//        if (pendingApprovals.isEmpty()) {
-//            return ResponseEntity.noContent().build();
-//        } else {
-//            return ResponseEntity.ok(pendingApprovals);
-//        }
-//    }
-    
+        
 
     // 建立自訂簽核步驟
     @PostMapping("/create/approval-flows")

@@ -32,8 +32,6 @@ public class Notify {
 	@Column(name="receive_employee_id")
 	private Integer receiveEmployeeId;
 	
-	@Column(name="approval_steps_id")
-	private Integer approvalStepId;
 	
 	@Column(name="message")
 	private String message;
@@ -47,13 +45,7 @@ public class Notify {
 	@ManyToOne
 	@JoinColumn(name="receive_employee_id" , insertable = false, updatable = false)
 	private Employee receiveEmployee;
-	
-	@ManyToOne
-	@JoinColumn(name="approval_steps_id" , insertable = false, updatable = false)
-	private ApprovalStep approvalStep;
 		 
-	
-	
 	
 	
 	

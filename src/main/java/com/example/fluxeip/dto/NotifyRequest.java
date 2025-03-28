@@ -10,7 +10,6 @@ public class NotifyRequest {
 	
 	private Integer receiveEmployeeId;
 	
-	private Integer approvalStepId;
 	
 	private String message;
 	

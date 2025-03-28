@@ -1,11 +1,13 @@
 package com.example.fluxeip.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,6 +58,18 @@ public class TaskassignController {
 		return workTaskassignResponse;
 	}
 
+	@GetMapping("/work/taskassign/{id}/{status}")
+	public List<Taskassign> getWorkTaskassignByStatus(@PathVariable Integer id, @PathVariable String status) {
+		Optional<WorkProgess> work = workRep.findById(id);
+		WorkProgess workProgess = new WorkProgess();
+		if (work != null) {
+			workProgess = work.get();
+		}
+		Status statu = staSer.findByName(status);
+		List<Taskassign> Taskassigns = taskRep.findByWorkprogessAndStatus(workProgess, statu);
+		return Taskassigns;
+	}
+
 	@GetMapping("/taskassign/{id}")
 	public Taskassign getTaskassign(@PathVariable Integer id) {
 		Taskassign taskassign = new Taskassign();
@@ -76,11 +90,8 @@ public class TaskassignController {
 	        taskassign.setTaskContent(entity.getTaskContent()); 
 	        taskassign.setCreateDate(entity.getCreateDate());
 	        taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-			taskassign.setFinishDate(entity.getFinishDate());
 	        Employee employee = empRep.findByEmployeeName(entity.getEmployee());
 	        taskassign.setAssign(employee);
-			Status status = staSer.findByName(entity.getStatus());
-	        taskassign.setStatus(status);
 	        // 更新資料庫中的 taskassign
 	        taskRep.save(taskassign); // 儲存更新後的資料
 	        
@@ -106,12 +117,17 @@ public class TaskassignController {
 		taskassign.setReveiew(review);
 		taskassign.setCreateDate(entity.getCreateDate());
 		taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-		if (entity.getFinishDate() != null) {
-			taskassign.setFinishDate(entity.getFinishDate());
-		}
-		Status status = staSer.findByName(entity.getStatus());
+		Status status = staSer.findByName("未完成");
 		taskassign.setStatus(status);
 		taskRep.save(taskassign); // 儲存更新後的資料
+		
+		long countByWorkprogess = taskRep.countByWorkprogess(workProgess);
+		Status finishStatus = staSer.findByName("已完成");
+		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workProgess, finishStatus);
+		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
+		double roundedProgress = Math.round(progress * 100.0) / 100.0;
+		workProgess.setProgress(roundedProgress);
+		workRep.save(workProgess);
 		return true;
 	}
 	
@@ -148,9 +164,42 @@ public class TaskassignController {
 			taskassign = task.get();
 		}
 		Status statu = staSer.findByName(status);
+		Status finishStatus = staSer.findByName("已完成");
 		taskassign.setStatus(statu);
-		taskRep.save(taskassign);
+		WorkProgess workprogess = taskassign.getWorkprogess();
+		long countByWorkprogess = taskRep.countByWorkprogess(workprogess);
+		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workprogess, finishStatus);
+		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
+		double roundedProgress = Math.round(progress * 100.0) / 100.0;
+		if(status.equals("已完成")) {
+			LocalDate today = LocalDate.now();
+			taskassign.setFinishDate(today);
+			System.out.println(workprogess.getFinishDate());
+		}
+		workprogess.setProgress(roundedProgress);
+		WorkProgess save = workRep.save(workprogess);
+		System.out.println(save.getFinishDate());
 		
+		return true;
+	}
+	
+	@DeleteMapping("/taskassign/{id}")
+	public boolean taskassignDelete(@PathVariable Integer id) {
+		Optional<Taskassign> task = taskRep.findById(id);
+		Taskassign taskassign=null;
+		if(task.isPresent()) {
+			taskassign = task.get();
+		}
+		taskRep.deleteById(id);
+		
+		WorkProgess workprogess = taskassign.getWorkprogess();
+		long countByWorkprogess = taskRep.countByWorkprogess(workprogess);
+		Status finishStatus = staSer.findByName("已完成");
+		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workprogess, finishStatus);
+		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
+		double roundedProgress = Math.round(progress * 100.0) / 100.0;
+		workprogess.setProgress(roundedProgress);
+		WorkProgess save = workRep.save(workprogess);
 		return true;
 	}
 

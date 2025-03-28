@@ -1,5 +1,6 @@
 package com.example.fluxeip.model;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -54,7 +55,7 @@ public class Taskassign {
 	private Date expectedFinishDate;
 
 	@Column(name = "finish_date")
-	private Date finishDate;
+	private LocalDate finishDate;
 
 //	@JsonIgnore
 	@ManyToOne
