@@ -198,8 +198,11 @@ public class MeetingService {
 
 	    // 5. 發送通知給審核人
 	    try {
-	        Integer approverId = 1002; // 次等管理員
-	        String message = "有新的會議室預約需要您審核（主題：" + savedMeeting.getTitle() + "）";
+	        Integer approverId = 1002; 
+	        String message = "有新的會議室預約需要您審核\n"
+	        		+ "（申請人：" + savedMeeting.getEmployee().getEmployeeName() + "）\n"
+	                + "（主題：" + savedMeeting.getTitle() + "）";
+
 	        notifyService.sendNotification(approverId, message);
 	    } catch (Exception e) {
 	        System.out.println("⚠ 發送通知失敗：" + e.getMessage());
