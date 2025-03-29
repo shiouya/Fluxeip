@@ -21,6 +21,9 @@ import com.example.fluxeip.repository.EmployeeRepository;
 @Service
 @Transactional
 public class EmployeeService {
+	
+	@Autowired
+	private StatusService staSer;
 
 	@Autowired
 	private PasswordEncoder pwdEncoder;
@@ -81,7 +84,8 @@ public class EmployeeService {
 	}
 
 	public List<Employee> employeeFindByDepartment(Department dep) {
-		return employeeRepository.findByDepartment(dep);
+		Status status = staSer.findByName("在職");
+		return employeeRepository.findByDepartmentAndStatus(dep,status);
 	}
 	
 	

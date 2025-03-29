@@ -26,11 +26,14 @@ import com.example.fluxeip.model.Status;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.RolesRepository;
 import com.example.fluxeip.service.DepartmentService;
+import com.example.fluxeip.service.EmailService;
 import com.example.fluxeip.service.EmployeeDetailService;
 import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
 import com.example.fluxeip.service.SalaryService;
 import com.example.fluxeip.service.StatusService;
+
+import jakarta.mail.MessagingException;
 
 
 @RestController
@@ -65,6 +68,9 @@ public class UserController {
 
 	@Autowired
 	private RolesRepository rolesRep;
+	
+	@Autowired
+	private EmailService emailSer;
 
 	@PostMapping("/employee/create")
 	public EmployeeCreateResponse employeeCreate(@RequestBody EmployeeCreateRequest entity) {
@@ -158,9 +164,16 @@ public class UserController {
 			empDet.setPhone(entity.getPhone());
 			EmployeeDetail empDetCreate = empDetSer.empDetCreate(empDet);
 
+			try {
+				emailSer.sendNewEmployee(entity.getEmail(), id);
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 			
-			if(empbean!=null&&empDetCreate!=null) {
-				
+			if (empbean != null && empDetCreate != null) {
+
 				try {
 					SalaryDefaultSetting salarySetting = new SalaryDefaultSetting();
 					salarySetting.setEmployeeID(id);
@@ -170,7 +183,7 @@ public class UserController {
 					empCreRes.setSuccess(true);
 					empCreRes.setMessage("ID :" + id + " 姓名 :" + entity.getEmployeeName() + " 新增成功");
 
-				}catch (Exception e) {
+				} catch (Exception e) {
 					e.getMessage();
 					empCreRes.setSuccess(false);
 					empCreRes.setMessage("員工新增成功，薪資設定失敗");

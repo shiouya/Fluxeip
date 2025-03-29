@@ -95,20 +95,20 @@ public class EmployeeController {
 		} else if (page.getDepartment() == null || page.getDepartment().length() == 0 || page.getPosition() == null
 				|| page.getPosition().length() == 0) {
 			long allcount = empRep.countByStatus(status);
-		empPage.setCount(allcount);
+			empPage.setCount(allcount);
 			Page<Employee> allemployees = employeeService.getEmployees(status, page.getCurrent(), page.getRows());
-		empPage.setLists(allemployees);
-		return empPage;
-	}else {
-		Department department = depSer.findByName(page.getDepartment());
-		Position position = posSer.findByName(page.getPosition());
-		long countByDepartmentAndPosition = empRep.countByDepartmentAndPositionAndStatus(department, position,status);
-		empPage.setCount(countByDepartmentAndPosition);
-		Page<Employee> employeesByDepartmentAndPosition = employeeService
-				.getEmployeesByDepartmentAndPosition(department, position, status, page.getCurrent(), page.getRows());
-		empPage.setLists(employeesByDepartmentAndPosition);
-		return empPage;
-	}
+			empPage.setLists(allemployees);
+			return empPage;
+		}else {
+			Department department = depSer.findByName(page.getDepartment());
+			Position position = posSer.findByName(page.getPosition());
+			long countByDepartmentAndPosition = empRep.countByDepartmentAndPositionAndStatus(department, position,status);
+			empPage.setCount(countByDepartmentAndPosition);
+			Page<Employee> employeesByDepartmentAndPosition = employeeService
+					.getEmployeesByDepartmentAndPosition(department, position, status, page.getCurrent(), page.getRows());
+			empPage.setLists(employeesByDepartmentAndPosition);
+			return empPage;
+		}
     }
 
 	@GetMapping("/employee/detail/{id}")
@@ -154,7 +154,7 @@ public class EmployeeController {
 		String phone = formData.get("phone");
 		String address = formData.get("address");
 		String emergencyContact = formData.get("emergencyContact");
-		String emergencyPhone = formData.get("emergencyPhone");
+		String emergencyPhone = formData.get("energencyPhone");
 		EmployeeDetail empDet = empDetSer.empDetByIdFind(employeeId);
 		if (empDetSer.isEmailExist(email) && !empDet.getEmail().equals(email)) {
 			return false;

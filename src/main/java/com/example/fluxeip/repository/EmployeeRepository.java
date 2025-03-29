@@ -18,7 +18,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>,Emp
 
 	Employee findByEmployeeName(String employeeName);
 	
-	List<Employee> findByDepartment(Department department);
+	List<Employee> findByDepartmentAndStatus(Department department,Status status);
 
 	Page<Employee> findByStatus(Status status, Pageable pageable);
 

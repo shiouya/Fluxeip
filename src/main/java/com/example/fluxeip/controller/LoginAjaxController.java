@@ -66,6 +66,7 @@ public class LoginAjaxController {
 			response.setToken(token);
 			response.setEmployeeId(bean.getEmployeeId());
 			response.setRoleName(bean.getRoles().get(0).getRoleName());
+			response.setDepartment(bean.getDepartment().getDepartmentName());
 
 		}
 		return response;
