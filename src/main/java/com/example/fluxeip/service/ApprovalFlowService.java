@@ -177,7 +177,7 @@ public class ApprovalFlowService {
 		String typeName = leaveRequest.getLeaveType().getTypeName(); 
 		String employeeName = leaveRequest.getEmployee().getEmployeeName();
 
-		String message = "您有一筆新的請假申請待審核：員工 " + employeeName + " 的" + typeName + "單。";
+		String message = "您有一筆新的請假申請待審核：員工 " + employeeName + " 的" + typeName + " 假單。";
 		notifyService.sendNotification(approver.getEmployeeId(), message);
 	}
 
@@ -282,7 +282,7 @@ public class ApprovalFlowService {
 			String typeName = leaveRequest.getLeaveType().getTypeName(); 
 			String employeeName = leaveRequest.getEmployee().getEmployeeName();
 
-			String message = "您有一筆新的請假申請待審核：員工 " + employeeName + " 的" + typeName + "單。";
+			String message = "您有一筆新的請假申請待審核：員工 " + employeeName + " 的" + typeName + " 假單。";
 			notifyService.sendNotification(nextApprover.getEmployeeId(), message);
 			
 			

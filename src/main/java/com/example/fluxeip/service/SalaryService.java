@@ -65,6 +65,9 @@ public class SalaryService {
 
 	@Autowired
 	private EmployeeService employeeService;
+	
+	@Autowired
+	private NotifyService notifyService;
 
 	private static final int legalMinimumWage = 190; // 最低工資 190 元/時
 	private static final double LABOR_INSURANCE_RATE = 0.125; // 勞保 政府公告可更新
@@ -226,6 +229,12 @@ public class SalaryService {
 		if (employee != null) {
 			if (existDetail.size() == 0 || existDetail == null) {
 				detailRepository.save(salaryDetail);
+				
+				 // 發送通知
+	            String message = "您的 " + request.getYearMonth() + " 薪資已完成結算，可至薪資查詢頁面查看明細。";
+	            notifyService.sendNotification(empId, message);
+						
+				
 			} else {
 				throw new RuntimeException("該月份已結算");
 			}
