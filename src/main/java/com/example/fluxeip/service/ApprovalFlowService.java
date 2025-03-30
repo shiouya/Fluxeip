@@ -1,5 +1,7 @@
 package com.example.fluxeip.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -8,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -768,7 +771,7 @@ public class ApprovalFlowService {
 					attendanceViolationsRepository.deleteById(earlyLeaveOpt.get().getId());
 				}
 				updateTotalHoursByClockCard(attendance, shiftType, clockOutTypeOpt.get());
-			} 
+			}
 		}
 
 		return "簽核成功";
@@ -778,59 +781,58 @@ public class ApprovalFlowService {
 		// 取得所有打卡紀錄
 		List<AttendanceLogs> attendanceLogs = attendanceLogsRepository.findByAttendance(attendance);
 
-		// 根據 ClockType 找出最早的上班卡與最晚的下班卡
+		// 找出最早的上班卡與最晚的下班卡
 		Optional<AttendanceLogs> earliestClockIn = attendanceLogs.stream()
 				.filter(log -> log.getClockType().getTypeName().equals("上班"))
-				.min(Comparator.comparing(AttendanceLogs::getClockTime)); // 最早的上班卡
+				.min(Comparator.comparing(AttendanceLogs::getClockTime));
 
 		Optional<AttendanceLogs> latestClockOut = attendanceLogs.stream()
 				.filter(log -> log.getClockType().getTypeName().equals("下班"))
-				.max(Comparator.comparing(AttendanceLogs::getClockTime)); // 最晚的下班卡
+				.max(Comparator.comparing(AttendanceLogs::getClockTime));
 
-		// 補上班卡邏輯：最早的下班卡時間減掉班表的上班時間
-		if (clockType.getTypeName().equals("上班") && earliestClockIn.isPresent() && latestClockOut.isPresent()) {
-			LocalDateTime clockOutTime = latestClockOut.get().getClockTime();
-			LocalDateTime shiftStartTime = shiftType.getStartTime().atDate(clockOutTime.toLocalDate()); // 班表上班時間
+		// 設定午休時間（分鐘）
+		BigDecimal lunchBreakMinutes = BigDecimal.valueOf(60);
 
-			// 計算總工時
-			long totalMinutes = Duration.between(shiftStartTime, clockOutTime).toMinutes();
-			System.out.println("上班" + totalMinutes);
-			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
+		// 計算總工時的通用方法
+		BiFunction<LocalDateTime, LocalDateTime, BigDecimal> calculateWorkingHours = (start, end) -> {
+			BigDecimal totalMinutes = BigDecimal.valueOf(Duration.between(start, end).toMinutes());
+			return totalMinutes.subtract(lunchBreakMinutes).multiply(BigDecimal.valueOf(1.0 / 60)).setScale(2,
+					RoundingMode.HALF_UP);
+		};
 
-			// 如果有加班，計算加班時間
-			if (attendance.getTotalHours() > attendance.getRegularHours()) {
-				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
-			}
-		}
-		// 補下班卡邏輯：班表的下班時間減掉最晚來的上班卡時間
-		else if (clockType.getTypeName().equals("下班") && earliestClockIn.isPresent() && latestClockOut.isPresent()) {
-			LocalDateTime clockInTime = earliestClockIn.get().getClockTime();
-			LocalDateTime shiftEndTime = shiftType.getFinishTime().atDate(clockInTime.toLocalDate()); // 班表下班時間
+		BigDecimal totalHours = BigDecimal.ZERO;
 
-			// 計算總工時
-			long totalMinutes = Duration.between(clockInTime, shiftEndTime).toMinutes();
-			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
-			System.out.println("下班" + totalMinutes);
-			// 如果有加班，計算加班時間
-			if (attendance.getTotalHours() > attendance.getRegularHours()) {
-				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
-			}
-		}
-		// 沒有補卡，則依最早的下班卡和最晚的上班卡來計算
-		else if (earliestClockIn.isPresent() && latestClockOut.isPresent()) {
+		// 若有上下班打卡紀錄，計算工時
+		if (earliestClockIn.isPresent() && latestClockOut.isPresent()) {
 			LocalDateTime clockInTime = earliestClockIn.get().getClockTime();
 			LocalDateTime clockOutTime = latestClockOut.get().getClockTime();
-
-			// 計算總工時
-			long totalMinutes = Duration.between(clockInTime, clockOutTime).toMinutes();
-			System.out.println("沒補卡" + totalMinutes);
-			attendance.setTotalHours((int) ((totalMinutes - 60) / 60));
-
-			// 如果有加班，計算加班時間
-			if (attendance.getTotalHours() > attendance.getRegularHours()) {
-				attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
-			}
+			totalHours = calculateWorkingHours.apply(clockInTime, clockOutTime);
 		}
+		// 若只有下班打卡，則以班表的上班時間作為計算基準
+		else if (clockType.getTypeName().equals("上班") && latestClockOut.isPresent()) {
+			LocalDateTime clockOutTime = latestClockOut.get().getClockTime();
+			LocalDateTime shiftStartTime = shiftType.getStartTime().atDate(clockOutTime.toLocalDate());
+			totalHours = calculateWorkingHours.apply(shiftStartTime, clockOutTime);
+		}
+		// 若只有上班打卡，則以班表的下班時間作為計算基準
+		else if (clockType.getTypeName().equals("下班") && earliestClockIn.isPresent()) {
+			LocalDateTime clockInTime = earliestClockIn.get().getClockTime();
+			LocalDateTime shiftEndTime = shiftType.getFinishTime().atDate(clockInTime.toLocalDate());
+			totalHours = calculateWorkingHours.apply(clockInTime, shiftEndTime);
+		}
+
+		// 確保工時不為負數
+		totalHours = totalHours.max(BigDecimal.ZERO);
+		attendance.setTotalHours(totalHours);
+
+		// 設定正規工時（若為 null 則預設為 8 小時）
+		BigDecimal regularHours = attendance.getRegularHours() != null ? attendance.getRegularHours()
+				: BigDecimal.valueOf(8);
+		attendance.setRegularHours(regularHours);
+
+		// 計算加班時間（總工時 - 正規工時）
+		BigDecimal overtimeHours = totalHours.subtract(regularHours).max(BigDecimal.ZERO);
+		attendance.setOvertimeHours(overtimeHours);
 
 		// 更新是否有違規
 		attendance.setHasViolation(attendanceViolationsRepository.existsByAttendance(attendance));
@@ -1037,7 +1039,7 @@ public class ApprovalFlowService {
 						flow.getApproverPosition().getPositionName()))
 				.collect(Collectors.toList());
 	}
-	
+
 	// 查找全部簽核步驟1的簽核流程ByPage
 	@Transactional
 	public List<ApprovalFlowResponseDTO> getAllStepOneApprovalFlowByPage(int page, int size) {
@@ -1050,20 +1052,17 @@ public class ApprovalFlowService {
 				.collect(Collectors.toList());
 	}
 
-	
-	public Page<ApprovalFlowResponseDTO> getFilteredApprovalFlows(int page, int size, String search, String position, String requestType) {
-	    Pageable pageable = PageRequest.of(page - 1, size);
-	    
-	    Page<ApprovalFlow> flows = approvalFlowRepository.findFilteredFlows(search, position, requestType, pageable);
-	    
-	    return flows.map(flow -> new ApprovalFlowResponseDTO(
-	        flow.getId(), flow.getFlowName(),
-	        flow.getRequestType().getTypeName(), flow.getStepOrder(),
-	        flow.getPosition().getPositionName(), flow.getApproverPosition().getPositionName()
-	    ));
+	public Page<ApprovalFlowResponseDTO> getFilteredApprovalFlows(int page, int size, String search, String position,
+			String requestType) {
+		Pageable pageable = PageRequest.of(page - 1, size);
+
+		Page<ApprovalFlow> flows = approvalFlowRepository.findFilteredFlows(search, position, requestType, pageable);
+
+		return flows.map(flow -> new ApprovalFlowResponseDTO(flow.getId(), flow.getFlowName(),
+				flow.getRequestType().getTypeName(), flow.getStepOrder(), flow.getPosition().getPositionName(),
+				flow.getApproverPosition().getPositionName()));
 	}
-	
-	
+
 	// 查找簽核流程及所有後續步驟
 	@Transactional
 	public List<ApprovalFlowResponseDTO> getApprovalFlowAndNextSteps(Integer flowId) {

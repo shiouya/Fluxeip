@@ -1,5 +1,6 @@
 package com.example.fluxeip.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ import com.example.fluxeip.repository.AttendanceLogsRepository;
 import com.example.fluxeip.repository.AttendanceRepository;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
-import com.example.fluxeip.repository.TypeRepository;
 
 @Service
 @Transactional
@@ -39,10 +39,9 @@ public class AttendanceService {
     @Autowired
     private AttendanceViolationsRepository attendanceViolationsRepository;
     
-
     public AttendanceDTO getAttendanceWithDetails(int employeeId, LocalDate date) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (!employeeOpt.isPresent()) {
+        if (employeeOpt.isEmpty()) {
             return null; // 員工不存在
         }
 
@@ -51,7 +50,7 @@ public class AttendanceService {
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
         Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee, startOfDay, endOfDay);
-        if (!attendanceOpt.isPresent()) {
+        if (attendanceOpt.isEmpty()) {
             return null; // 當日無考勤記錄
         }
         
@@ -59,7 +58,7 @@ public class AttendanceService {
         List<AttendanceViolations> violations = attendanceViolationsRepository.findByAttendance(attendance);
         List<AttendanceLogs> logs = attendanceLogsRepository.findByAttendance(attendance);
 
-        // 轉換成DTO
+        // 轉換成 DTO
         AttendanceDTO attendanceDTO = new AttendanceDTO();
         attendanceDTO.setTotalHours(attendance.getTotalHours());
         attendanceDTO.setRegularHours(attendance.getRegularHours());
@@ -67,17 +66,13 @@ public class AttendanceService {
         attendanceDTO.setFieldWorkHours(attendance.getFieldWorkHours());
         attendanceDTO.setHasViolation(attendance.isHasViolation());
         
-        
         List<AttendanceLogDTO> logsDTOs = new ArrayList<>();
         for (AttendanceLogs log : logs) {
-			AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
-			attendanceLogDTO.setClockTime(log.getClockTime());
-			attendanceLogDTO.setClockType(log.getClockType().getTypeName());
-			logsDTOs.add(attendanceLogDTO);
-		}
-        
-        
-        
+            AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
+            attendanceLogDTO.setClockTime(log.getClockTime());
+            attendanceLogDTO.setClockType(log.getClockType().getTypeName());
+            logsDTOs.add(attendanceLogDTO);
+        }
 
         List<AttendanceViolationDTO> violationDTOs = new ArrayList<>();
         for (AttendanceViolations violation : violations) {
@@ -96,7 +91,7 @@ public class AttendanceService {
 
     public List<AttendanceDTO> getAttendancesForMonth(int employeeId, LocalDate month) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (!employeeOpt.isPresent()) {
+        if (employeeOpt.isEmpty()) {
             return null; // 員工不存在
         }
 
@@ -108,36 +103,12 @@ public class AttendanceService {
 
         List<AttendanceDTO> attendanceDTOs = new ArrayList<>();
         for (Attendance attendance : attendances) {
-            List<AttendanceViolations> violations = attendanceViolationsRepository.findByAttendance(attendance);
-            List<AttendanceLogs> logs = attendanceLogsRepository.findByAttendance(attendance);
-            
             AttendanceDTO attendanceDTO = new AttendanceDTO();
             attendanceDTO.setTotalHours(attendance.getTotalHours());
             attendanceDTO.setRegularHours(attendance.getRegularHours());
             attendanceDTO.setOvertimeHours(attendance.getOvertimeHours());
             attendanceDTO.setFieldWorkHours(attendance.getFieldWorkHours());
             attendanceDTO.setHasViolation(attendance.isHasViolation());
-
-            
-            List<AttendanceLogDTO> logsDTOs = new ArrayList<>();
-            for (AttendanceLogs log : logs) {
-    			AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
-    			attendanceLogDTO.setClockTime(log.getClockTime());
-    			attendanceLogDTO.setClockType(log.getClockType().getTypeName());
-    			logsDTOs.add(attendanceLogDTO);
-    		}
-            
-            List<AttendanceViolationDTO> violationDTOs = new ArrayList<>();
-            for (AttendanceViolations violation : violations) {
-                AttendanceViolationDTO violationDTO = new AttendanceViolationDTO();
-                violationDTO.setViolationType(violation.getViolationType().getTypeName());
-                violationDTO.setViolationMinutes(violation.getViolationMinutes());
-                violationDTO.setCreatedAt(violation.getCreatedAt());
-                violationDTOs.add(violationDTO);
-            }
-            
-            attendanceDTO.setAttendanceLogs(logsDTOs);
-            attendanceDTO.setAttendanceViolations(violationDTOs);
 
             attendanceDTOs.add(attendanceDTO);
         }
@@ -147,7 +118,7 @@ public class AttendanceService {
 
     public List<AttendanceDTO> getAttendancesForYear(int employeeId, LocalDate year) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (!employeeOpt.isPresent()) {
+        if (employeeOpt.isEmpty()) {
             return null; // 員工不存在
         }
 
@@ -159,35 +130,12 @@ public class AttendanceService {
 
         List<AttendanceDTO> attendanceDTOs = new ArrayList<>();
         for (Attendance attendance : attendances) {
-            List<AttendanceViolations> violations = attendanceViolationsRepository.findByAttendance(attendance);
-            List<AttendanceLogs> logs = attendanceLogsRepository.findByAttendance(attendance);
-            
             AttendanceDTO attendanceDTO = new AttendanceDTO();
             attendanceDTO.setTotalHours(attendance.getTotalHours());
             attendanceDTO.setRegularHours(attendance.getRegularHours());
             attendanceDTO.setOvertimeHours(attendance.getOvertimeHours());
             attendanceDTO.setFieldWorkHours(attendance.getFieldWorkHours());
             attendanceDTO.setHasViolation(attendance.isHasViolation());
-            
-            List<AttendanceLogDTO> logsDTOs = new ArrayList<>();
-            for (AttendanceLogs log : logs) {
-    			AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
-    			attendanceLogDTO.setClockTime(log.getClockTime());
-    			attendanceLogDTO.setClockType(log.getClockType().getTypeName());
-    			logsDTOs.add(attendanceLogDTO);
-    		}
-
-            List<AttendanceViolationDTO> violationDTOs = new ArrayList<>();
-            for (AttendanceViolations violation : violations) {
-                AttendanceViolationDTO violationDTO = new AttendanceViolationDTO();
-                violationDTO.setViolationType(violation.getViolationType().getTypeName());
-                violationDTO.setViolationMinutes(violation.getViolationMinutes());
-                violationDTO.setCreatedAt(violation.getCreatedAt());
-                violationDTOs.add(violationDTO);
-            }
-            
-            attendanceDTO.setAttendanceLogs(logsDTOs);
-            attendanceDTO.setAttendanceViolations(violationDTOs);
 
             attendanceDTOs.add(attendanceDTO);
         }
@@ -197,7 +145,7 @@ public class AttendanceService {
 
     public AttendanceDTO getAttendanceByDate(int employeeId, LocalDate date) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (!employeeOpt.isPresent()) {
+        if (employeeOpt.isEmpty()) {
             return null; // 員工不存在
         }
 
@@ -206,13 +154,11 @@ public class AttendanceService {
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
         Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeAndCreatedAtBetween(employee, startOfDay, endOfDay);
-        if (!attendanceOpt.isPresent()) {
+        if (attendanceOpt.isEmpty()) {
             return null; // 指定日期無考勤記錄
         }
 
         Attendance attendance = attendanceOpt.get();
-        List<AttendanceViolations> violations = attendanceViolationsRepository.findByAttendance(attendance);
-        List<AttendanceLogs> logs = attendanceLogsRepository.findByAttendance(attendance);
         
         AttendanceDTO attendanceDTO = new AttendanceDTO();
         attendanceDTO.setTotalHours(attendance.getTotalHours());
@@ -220,26 +166,6 @@ public class AttendanceService {
         attendanceDTO.setOvertimeHours(attendance.getOvertimeHours());
         attendanceDTO.setFieldWorkHours(attendance.getFieldWorkHours());
         attendanceDTO.setHasViolation(attendance.isHasViolation());
-        
-        List<AttendanceLogDTO> logsDTOs = new ArrayList<>();
-        for (AttendanceLogs log : logs) {
-			AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
-			attendanceLogDTO.setClockTime(log.getClockTime());
-			attendanceLogDTO.setClockType(log.getClockType().getTypeName());
-			logsDTOs.add(attendanceLogDTO);
-		}
-
-        List<AttendanceViolationDTO> violationDTOs = new ArrayList<>();
-        for (AttendanceViolations violation : violations) {
-            AttendanceViolationDTO violationDTO = new AttendanceViolationDTO();
-            violationDTO.setViolationType(violation.getViolationType().getTypeName());
-            violationDTO.setViolationMinutes(violation.getViolationMinutes());
-            violationDTO.setCreatedAt(violation.getCreatedAt());
-            violationDTOs.add(violationDTO);
-        }
-        
-        attendanceDTO.setAttendanceLogs(logsDTOs);
-        attendanceDTO.setAttendanceViolations(violationDTOs);
 
         return attendanceDTO;
     }
