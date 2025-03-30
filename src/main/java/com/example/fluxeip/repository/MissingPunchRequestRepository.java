@@ -15,6 +15,9 @@ public interface MissingPunchRequestRepository extends JpaRepository<MissingPunc
 
 	@Query("SELECT COUNT(m) > 0 FROM MissingPunchRequest m WHERE m.id IN :ids AND m.status.statusId NOT IN :statusIds AND m.employee.id = :employeeId")
 	boolean existsByRequestIdsAndStatusNotInAndEmployeeId(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds, @Param("employeeId") Integer employeeId);
+
+	@Query("SELECT COUNT(m) > 0 FROM MissingPunchRequest m WHERE m.id IN :ids AND m.status.statusId NOT IN :statusIds")
+	boolean existsByRequestIdsAndStatusNotIn(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds);
 	
 }
 

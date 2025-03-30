@@ -2,21 +2,20 @@ package com.example.fluxeip.controller;
 
 import java.util.List;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ApprovalFlowDTO;
-import com.example.fluxeip.dto.ApprovalStepResponseDTO;
+import com.example.fluxeip.dto.ApprovalFlowResponseDTO;
 import com.example.fluxeip.service.ApprovalFlowService;
 import com.example.fluxeip.service.ApprovalService;
 
@@ -29,11 +28,27 @@ public class ApprovalFlowController {
     @Autowired
     private ApprovalFlowService approvalFlowService;
     
+//    
+//    // 取得全部簽核步驟1的簽核流程
+//    @GetMapping("/flow/stepone/all")
+//    public ResponseEntity<?> getAllStepOneApprovalFlow(
+//    		@RequestParam(defaultValue = "1") int page,
+//            @RequestParam(defaultValue = "10") int size
+//    		) {
+//    	return ResponseEntity.ok(approvalFlowService.getAllStepOneApprovalFlow(page, size));
+//    }
     
     // 取得全部簽核步驟1的簽核流程
-    @GetMapping("/flow/stepone/all")
-    public ResponseEntity<?> getAllStepOneApprovalFlow() {
-    	return ResponseEntity.ok(approvalFlowService.getAllStepOneApprovalFlow());
+    @GetMapping("/flow/stepone")
+    public ResponseEntity<?> getStepOneApprovalFlowByPositionAndRequestType(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String requestType) {
+        
+        Page<ApprovalFlowResponseDTO> result = approvalFlowService.getFilteredApprovalFlows(page, size, search, position, requestType);
+        return ResponseEntity.ok(result);
     }
     
     

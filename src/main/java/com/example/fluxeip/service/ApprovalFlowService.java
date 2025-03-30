@@ -11,6 +11,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -1034,7 +1037,33 @@ public class ApprovalFlowService {
 						flow.getApproverPosition().getPositionName()))
 				.collect(Collectors.toList());
 	}
+	
+	// 查找全部簽核步驟1的簽核流程ByPage
+	@Transactional
+	public List<ApprovalFlowResponseDTO> getAllStepOneApprovalFlowByPage(int page, int size) {
+		Pageable pageable = PageRequest.of(page - 1, size);
+		List<ApprovalFlow> byFirstStepOrder = approvalFlowRepository.findByStepOrder(1);
+		return byFirstStepOrder.stream()
+				.map(flow -> new ApprovalFlowResponseDTO(flow.getId(), flow.getFlowName(),
+						flow.getRequestType().getTypeName(), flow.getStepOrder(), flow.getPosition().getPositionName(),
+						flow.getApproverPosition().getPositionName()))
+				.collect(Collectors.toList());
+	}
 
+	
+	public Page<ApprovalFlowResponseDTO> getFilteredApprovalFlows(int page, int size, String search, String position, String requestType) {
+	    Pageable pageable = PageRequest.of(page - 1, size);
+	    
+	    Page<ApprovalFlow> flows = approvalFlowRepository.findFilteredFlows(search, position, requestType, pageable);
+	    
+	    return flows.map(flow -> new ApprovalFlowResponseDTO(
+	        flow.getId(), flow.getFlowName(),
+	        flow.getRequestType().getTypeName(), flow.getStepOrder(),
+	        flow.getPosition().getPositionName(), flow.getApproverPosition().getPositionName()
+	    ));
+	}
+	
+	
 	// 查找簽核流程及所有後續步驟
 	@Transactional
 	public List<ApprovalFlowResponseDTO> getApprovalFlowAndNextSteps(Integer flowId) {

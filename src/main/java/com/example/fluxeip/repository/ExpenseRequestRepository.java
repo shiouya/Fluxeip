@@ -15,6 +15,9 @@ public interface ExpenseRequestRepository extends JpaRepository<ExpenseRequest, 
 
 	@Query("SELECT COUNT(e) > 0 FROM ExpenseRequest e WHERE e.id IN :ids AND e.status.statusId NOT IN :statusIds AND e.employee.id = :employeeId")
 	boolean existsByRequestIdsAndStatusNotInAndEmployeeId(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds, @Param("employeeId") Integer employeeId);
+
+	@Query("SELECT COUNT(e) > 0 FROM ExpenseRequest e WHERE e.id IN :ids AND e.status.statusId NOT IN :statusIds")
+	boolean existsByRequestIdsAndStatusNotIn(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds);
 	
 }
 
