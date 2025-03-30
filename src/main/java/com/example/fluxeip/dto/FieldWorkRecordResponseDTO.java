@@ -13,9 +13,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FieldWorkRecordRequestDTO {
+public class FieldWorkRecordResponseDTO {
 
+	private Integer recordId;
 	private Integer employeeId;
+	private String employeeName;
 	private LocalDate fieldWorkDate;
 	private BigDecimal totalHours;
     private String location;  

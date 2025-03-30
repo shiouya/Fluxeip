@@ -159,6 +159,8 @@ public class AttendanceService {
         }
 
         Attendance attendance = attendanceOpt.get();
+        List<AttendanceViolations> violations = attendanceViolationsRepository.findByAttendance(attendance);
+        List<AttendanceLogs> logs = attendanceLogsRepository.findByAttendance(attendance);
         
         AttendanceDTO attendanceDTO = new AttendanceDTO();
         attendanceDTO.setTotalHours(attendance.getTotalHours());
@@ -166,6 +168,26 @@ public class AttendanceService {
         attendanceDTO.setOvertimeHours(attendance.getOvertimeHours());
         attendanceDTO.setFieldWorkHours(attendance.getFieldWorkHours());
         attendanceDTO.setHasViolation(attendance.isHasViolation());
+        
+        List<AttendanceLogDTO> logsDTOs = new ArrayList<>();
+        for (AttendanceLogs log : logs) {
+            AttendanceLogDTO attendanceLogDTO = new AttendanceLogDTO();
+            attendanceLogDTO.setClockTime(log.getClockTime());
+            attendanceLogDTO.setClockType(log.getClockType().getTypeName());
+            logsDTOs.add(attendanceLogDTO);
+        }
+
+        List<AttendanceViolationDTO> violationDTOs = new ArrayList<>();
+        for (AttendanceViolations violation : violations) {
+            AttendanceViolationDTO violationDTO = new AttendanceViolationDTO();
+            violationDTO.setViolationType(violation.getViolationType().getTypeName());
+            violationDTO.setViolationMinutes(violation.getViolationMinutes());
+            violationDTO.setCreatedAt(violation.getCreatedAt());
+            violationDTOs.add(violationDTO);
+        }
+        
+        attendanceDTO.setAttendanceLogs(logsDTOs);
+        attendanceDTO.setAttendanceViolations(violationDTOs);
 
         return attendanceDTO;
     }
