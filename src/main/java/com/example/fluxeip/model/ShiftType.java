@@ -48,4 +48,7 @@ public class ShiftType {
     @OneToMany(mappedBy = "shiftType", cascade = CascadeType.ALL)
     private List<Schedule> schedules;
 
+    @OneToMany(mappedBy = "shiftType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Attendance> attendance;
 }

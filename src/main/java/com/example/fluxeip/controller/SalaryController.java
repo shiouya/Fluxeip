@@ -23,8 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.fluxeip.dto.SalaryDefaultSetting;
 import com.example.fluxeip.dto.SalaryDetailRequest;
 import com.example.fluxeip.dto.SalaryDetailResponse;
+import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.SalaryBonus;
 import com.example.fluxeip.model.SalaryDetail;
+import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.SalaryService;
 
 @RestController
@@ -34,6 +37,8 @@ public class SalaryController {
 	
 	@Autowired
 	private SalaryService salaryService;
+	@Autowired
+	private EmployeeRepository employeeRepository;
 	
 	//薪資設定相關
 	@GetMapping("/{id}")
@@ -115,7 +120,7 @@ public class SalaryController {
 		
 		try {
 			salaryService.monthlySalaryCaculate(detailRequest);
-			return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+			return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "成功"));
 
 		}catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -223,5 +228,16 @@ public class SalaryController {
 		List<SalaryBonus> allBonus = salaryService.findAllBonus();
 		
 		return ResponseEntity.ok(allBonus);
+	}
+	//應得薪資
+	@PostMapping("/earnedSalary")
+	public Integer earnedSalary(@RequestBody SalaryDetailRequest detailRequest) {
+		return salaryService.caculateEarnedSalary(detailRequest);
+	}
+	
+	//全部員工
+	@GetMapping("/allEmp")
+	public List<Employee> findAllEmp(){
+		return employeeRepository.findAll();
 	}
 }
