@@ -143,6 +143,31 @@ public class ApprovalController {
 		}
 	}
 
+	// 請假一鍵簽核
+	@PutMapping("/leave/pending/{approverId}/review")
+	public ResponseEntity<String> leaveAllApprove(@PathVariable Integer approverId) {
+		List<LeaveApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingApprovalSteps(approverId);
+		if (pendingApprovals.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		// 迭代每一筆待簽核請假單，依序簽核
+		for (LeaveApprovalStepDTO step : pendingApprovals) {
+			Integer stepId = step.getStepId();
+			String status = "核准";
+			String comment = "一鍵簽核";
+
+			String result = approvalFlowService.approveLeaveRequest(stepId, approverId, status, comment);
+
+			if (!"簽核成功".equals(result)) {
+				return ResponseEntity.badRequest().body("簽核失敗: " + result);
+			}
+		}
+
+		return ResponseEntity.ok("所有待簽核請假單已成功處理");
+
+	}
+
 	// 查詢當前審核人待審核的加減班單
 	@GetMapping("/workadjust/pending/{approverId}")
 	public ResponseEntity<List<WorkAdjustApprovalStepDTO>> getWorkAdjustPendingApprovals(
@@ -154,6 +179,31 @@ public class ApprovalController {
 		} else {
 			return ResponseEntity.ok(pendingApprovals);
 		}
+	}
+
+	// 加減班一鍵簽核
+	@PutMapping("/workadjust/pending/{approverId}/review")
+	public ResponseEntity<String> workadjustAllApprove(@PathVariable Integer approverId) {
+		List<WorkAdjustApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingWorkAdjustApprovalSteps(approverId);
+		if (pendingApprovals.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		// 迭代每一筆待簽核加減班單，依序簽核
+		for (WorkAdjustApprovalStepDTO step : pendingApprovals) {
+			Integer stepId = step.getStepId();
+			String status = "核准";
+			String comment = "一鍵簽核";
+
+			String result = approvalFlowService.approveWorkAdjustmentRequest(stepId, approverId, status, comment);
+
+			if (!"簽核成功".equals(result)) {
+				return ResponseEntity.badRequest().body("簽核失敗: " + result);
+			}
+		}
+
+		return ResponseEntity.ok("所有待簽核加減班單已成功處理");
+
 	}
 
 	// 查詢當前審核人待審核的補卡單
@@ -169,6 +219,32 @@ public class ApprovalController {
 		}
 	}
 
+	// 補卡一鍵簽核
+	@PutMapping("/missingpunch/pending/{approverId}/review")
+	public ResponseEntity<String> missingpunchAllApprove(@PathVariable Integer approverId) {
+		List<MissingPunchApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingMissingPunchApprovalSteps(approverId);
+		if (pendingApprovals.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		// 迭代每一筆待簽核補卡單，依序簽核
+		for (MissingPunchApprovalStepDTO step : pendingApprovals) {
+			Integer stepId = step.getStepId();
+			String status = "核准";
+			String comment = "一鍵簽核";
+
+			String result = approvalFlowService.approveMissingPunchRequest(stepId, approverId, status, comment);
+
+			if (!"簽核成功".equals(result)) {
+				return ResponseEntity.badRequest().body("簽核失敗: " + result);
+			}
+		}
+
+		return ResponseEntity.ok("所有待簽核補卡單已成功處理");
+
+	}
+	
+	
 	// 查詢當前審核人待審核的費用單
 	@GetMapping("/expense/pending/{approverId}")
 	public ResponseEntity<List<ExpenseApprovalStepDTO>> getExpensePendingApprovals(@PathVariable Integer approverId) {
@@ -178,6 +254,31 @@ public class ApprovalController {
 		} else {
 			return ResponseEntity.ok(pendingApprovals);
 		}
+	}
+	
+	// 費用一鍵簽核
+	@PutMapping("/expense/pending/{approverId}/review")
+	public ResponseEntity<String> expenseAllApprove(@PathVariable Integer approverId) {
+		List<ExpenseApprovalStepDTO> pendingApprovals = approvalFlowService.getPendingExpenseApprovalSteps(approverId);
+		if (pendingApprovals.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		// 迭代每一筆待簽核費用單，依序簽核
+		for (ExpenseApprovalStepDTO step : pendingApprovals) {
+			Integer stepId = step.getStepId();
+			String status = "核准";
+			String comment = "一鍵簽核";
+
+			String result = approvalFlowService.approveExpenseRequest(stepId, approverId, status, comment);
+
+			if (!"簽核成功".equals(result)) {
+				return ResponseEntity.badRequest().body("簽核失敗: " + result);
+			}
+		}
+
+		return ResponseEntity.ok("所有待簽核費用單已成功處理");
+
 	}
 
 }
