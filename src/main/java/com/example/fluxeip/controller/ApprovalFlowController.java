@@ -28,6 +28,13 @@ public class ApprovalFlowController {
 	@Autowired
 	private ApprovalFlowService approvalFlowService;
 
+    // 取得全部簽核步驟1的簽核流程
+    @GetMapping("/flow/stepone/all")
+    public ResponseEntity<?> getAllStepOneApprovalFlow() {
+    	return ResponseEntity.ok(approvalFlowService.getAllStepOneApprovalFlow());
+    }
+
+	
 	// 取得全部簽核步驟1的簽核流程
 	@GetMapping("/flow/stepone")
 	public ResponseEntity<?> getStepOneApprovalFlowByPositionAndRequestType(@RequestParam(defaultValue = "1") int page,
