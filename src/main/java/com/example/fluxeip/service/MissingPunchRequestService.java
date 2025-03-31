@@ -15,12 +15,14 @@ import com.example.fluxeip.dto.MissingPunchRequestDTO;
 import com.example.fluxeip.dto.MissingPunchResponseDTO;
 import com.example.fluxeip.dto.WorkAdjustmentRequestDTO;
 import com.example.fluxeip.dto.WorkAdjustmentResponseDTO;
+import com.example.fluxeip.model.ApprovalStep;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.MissingPunchRequest;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Type;
 import com.example.fluxeip.model.WorkAdjustmentRequest;
+import com.example.fluxeip.repository.ApprovalStepRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.MissingPunchRequestRepository;
 import com.example.fluxeip.repository.StatusRepository;
@@ -47,6 +49,9 @@ public class MissingPunchRequestService {
     
     @Autowired
     private ApprovalFlowService approvalFlowService;  // 注入簽核流程 Service
+    
+    @Autowired
+    private ApprovalStepRepository approvalStepRepository;
     
     @Transactional
     public List<MissingPunchRequest> getAllRequests() {
@@ -130,6 +135,16 @@ public class MissingPunchRequestService {
     }
 
     public void deleteRequest(Integer id) {
-    	missingPunchRequestRepository.deleteById(id);
-    }
+    	
+   	 // 取得與加減班單相關聯的所有審核步驟
+       List<ApprovalStep> approvalStepByLeaveRequestId = approvalStepRepository.findApprovalStepByLeaveRequestId(id);
+
+       // 逐一刪除每一個 ApprovalStep
+       for (ApprovalStep approvalStep : approvalStepByLeaveRequestId) {
+           approvalStepRepository.deleteById(approvalStep.getId()); // 刪除 ApprovalStep
+       }
+       
+       // 刪除與補卡單單相關的 workAdjustmentRequest
+       missingPunchRequestRepository.deleteById(id);
+   }
 }

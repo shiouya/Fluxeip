@@ -40,12 +40,12 @@ public class SpringBootConfig implements WebMvcConfigurer {
 
 		registry.addMapping("/api/clock/**").allowedMethods("POST");
 		registry.addMapping("/api/attendancelogs/**");
-		registry.addMapping("/api/leave-requests/**").allowedMethods("GET", "POST","PUT");
+		registry.addMapping("/api/leave-requests/**").allowedMethods("GET", "POST","PUT","DELETE");
 		registry.addMapping("/api/approval/**").allowedMethods("GET", "POST","PUT","DELETE");
 		registry.addMapping("/api/employee-approval-flows/**").allowedMethods("GET", "POST","DELETE");
-		registry.addMapping("/api/work-adjustments/**").allowedMethods("GET", "POST");
-		registry.addMapping("/api/missing-punch/**").allowedMethods("GET", "POST");
-		registry.addMapping("/api/expense-requests/**").allowedMethods("GET", "POST");
+		registry.addMapping("/api/work-adjustments/**").allowedMethods("GET", "POST","PUT","DELETE");
+		registry.addMapping("/api/missing-punch/**").allowedMethods("GET", "POST","PUT","DELETE");
+		registry.addMapping("/api/expense-requests/**").allowedMethods("GET", "POST","PUT","DELETE");
 		registry.addMapping("/api/field-work/**").allowedMethods("GET", "POST","PUT");
 		
 		

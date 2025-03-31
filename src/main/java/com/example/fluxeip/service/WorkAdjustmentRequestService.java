@@ -12,11 +12,13 @@ import org.springframework.stereotype.Service;
 
 import com.example.fluxeip.dto.WorkAdjustmentRequestDTO;
 import com.example.fluxeip.dto.WorkAdjustmentResponseDTO;
+import com.example.fluxeip.model.ApprovalStep;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Type;
 import com.example.fluxeip.model.WorkAdjustmentRequest;
+import com.example.fluxeip.repository.ApprovalStepRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.StatusRepository;
 import com.example.fluxeip.repository.TypeRepository;
@@ -42,6 +44,9 @@ public class WorkAdjustmentRequestService {
     
     @Autowired
     private ApprovalFlowService approvalFlowService;  // 注入簽核流程 Service
+    
+    @Autowired
+    private ApprovalStepRepository approvalStepRepository;
 
     public List<WorkAdjustmentRequest> getAllRequests() {
         return workAdjustmentRequestRepository.findAll();
@@ -124,6 +129,16 @@ public class WorkAdjustmentRequestService {
     }
 
     public void deleteRequest(Integer id) {
+    	
+    	 // 取得與加減班單相關聯的所有審核步驟
+        List<ApprovalStep> approvalStepByLeaveRequestId = approvalStepRepository.findApprovalStepByLeaveRequestId(id);
+
+        // 逐一刪除每一個 ApprovalStep
+        for (ApprovalStep approvalStep : approvalStepByLeaveRequestId) {
+            approvalStepRepository.deleteById(approvalStep.getId()); // 刪除 ApprovalStep
+        }
+        
+        // 刪除與加減班單單相關的 workAdjustmentRequest
         workAdjustmentRequestRepository.deleteById(id);
     }
 }
