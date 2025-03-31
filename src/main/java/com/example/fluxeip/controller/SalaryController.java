@@ -240,4 +240,52 @@ public class SalaryController {
 	public List<Employee> findAllEmp(){
 		return employeeRepository.findAll();
 	}
+	
+	//新增bonus
+	@PostMapping("/newBonus")
+	public ResponseEntity<?> newBonus(@RequestParam Integer amount,@RequestParam String bonusType){
+		try {
+			salaryService.insertNewBonus(bonusType, amount);
+			return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//修改獎金津貼數字
+	@PostMapping("/newBonus/{id}")
+	public ResponseEntity<?> updateBonus(@PathVariable("id") Integer salaryBonusId,@RequestParam Integer amount){
+		try {
+			salaryService.updateBonus(salaryBonusId, amount);
+			return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//修改獎金津貼名稱
+	@PutMapping("/newBonus/{id}")
+	public ResponseEntity<?> updateBonusName(@PathVariable("id") Integer salaryBonusId,@RequestParam String bonusType){
+		try {
+			salaryService.updateBonusName(salaryBonusId, bonusType);
+			return ResponseEntity.status(HttpStatus.CREATED).body("updated successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//獎金津貼改為不可用
+	@DeleteMapping("/newBonus/{id}")
+	public ResponseEntity<?> deleteBonus(@PathVariable("id") Integer salaryBonusId){
+		try {
+			salaryService.deleteBonusById(salaryBonusId);
+			return ResponseEntity.status(HttpStatus.CREATED).body("deleted successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
 }

@@ -29,7 +29,7 @@ public class ShiftTypeService {
 
 	public List<ShiftTypeResponse> findAllShiftType() {
 
-		List<ShiftType> allShiftType = shiftTypeRepository.findAll();
+		List<ShiftType> allShiftType = shiftTypeRepository.findByIsActiveTrueOrderByDepartment();
 
 		ArrayList<ShiftTypeResponse> responses = new ArrayList<ShiftTypeResponse>();
 		
@@ -68,7 +68,7 @@ public class ShiftTypeService {
 		shiftType.setShiftCategory(shiftTypeRequest.getShiftCategory());
 		shiftType.setShiftName(shiftTypeRequest.getShiftName());
 		shiftType.setEstimatedHours(estimatedHours);
-
+		shiftType.setActive(true);
 		shiftTypeRepository.save(shiftType);
 
 	}
@@ -103,7 +103,13 @@ public class ShiftTypeService {
 			throw new RuntimeException("ShiftType 不存在，無法刪除");
 		}
 		
-		shiftTypeRepository.deleteById(shiftTypeId);
+		Optional<ShiftType> byId = shiftTypeRepository.findById(shiftTypeId);
+		ShiftType shiftType = byId.orElse(null);
+		
+		if(shiftType==null) {
+			throw new RuntimeException("ShiftType 不存在，無法刪除");
+		}
+		shiftType.setActive(false);
 		return true;
 	}
 	
