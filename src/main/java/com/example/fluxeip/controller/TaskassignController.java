@@ -159,12 +159,13 @@ public class TaskassignController {
 	@PutMapping("/taskassign/update/{id}/{status}")
 	public boolean reviewTaskassign(@PathVariable Integer id,@PathVariable String status) {
 		Optional<Taskassign> task = taskRep.findById(id);
+		System.out.println(status + "21111111111111111111111111111111111111111111111111111111");
 		Taskassign taskassign=null;
 		if(task.isPresent()) {
 			taskassign = task.get();
 		}
 		Status statu = staSer.findByName(status);
-		Status finishStatus = staSer.findByName("已完成");
+		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		taskassign.setStatus(statu);
 		WorkProgess workprogess = taskassign.getWorkprogess();
 		if (status.equals("已完成")) {
