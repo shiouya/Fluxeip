@@ -21,5 +21,4 @@ public interface MeetingRepository extends JpaRepository<Meeting, Integer> {
     List<Meeting> findByRoomIdAndStartTimeBetween(Integer roomId, LocalDateTime startOfDay, LocalDateTime endOfDay);
     
    
-
 }
