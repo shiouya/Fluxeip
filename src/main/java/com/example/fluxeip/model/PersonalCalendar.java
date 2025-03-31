@@ -34,11 +34,15 @@ public class PersonalCalendar {
     @Column(name = "finish_date", nullable = false)  // 結束時間
     private LocalDateTime finishDate;
 
-    @Column(name = "created_at", nullable = false, updatable = false)  // 創建時間
-    private LocalDateTime createdAt;
+    @Column(name = "employee_id", nullable = false)  // 新增 employeeId 欄位
+    private String employeeId;  // 員工ID
 
+    // 如果有需要自動設置 employeeId 的邏輯，可以在這裡處理
     @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();  // 當事件創建時，設置創建時間
+    public void prePersist() {
+        // 如果你需要在事件創建之前自動設置員工ID，可以在這裡進行處理
+        // 這裡假設你會從會話中獲取當前的員工ID
+        // 比如: this.employeeId = getCurrentEmployeeId();
     }
 }
+
