@@ -23,6 +23,7 @@ import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.TaskassignRepository;
 import com.example.fluxeip.repository.WorkProgessRepository;
 import com.example.fluxeip.service.DepartmentService;
+import com.example.fluxeip.service.NotifyService;
 import com.example.fluxeip.service.StatusService;
 
 @CrossOrigin
@@ -43,6 +44,9 @@ public class WorkProgressController {
 
 	@Autowired
 	private TaskassignRepository taskRep;
+	
+	@Autowired
+	private NotifyService notifyService;
 
 	@GetMapping("/workProgress/all")
 	public List<WorkProgess> getWorkProgressAll() {
@@ -133,6 +137,12 @@ public class WorkProgressController {
 			taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
 			taskassign.setStatus(status);
 			taskRep.save(taskassign);
+			
+			// 發送通知給被指派人
+			String message = "您有一筆新的交辦任務：《" + task.getTaskName() + "》。";
+			notifyService.sendNotification(taskassign.getAssign().getEmployeeId(), message);
+			
+			
 		});
 
 		return true;
