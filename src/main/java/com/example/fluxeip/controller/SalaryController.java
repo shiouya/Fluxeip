@@ -241,6 +241,7 @@ public class SalaryController {
 		return employeeRepository.findAll();
 	}
 	
+	//新增bonus
 	@PostMapping("/newBonus")
 	public ResponseEntity<?> newBonus(@RequestParam Integer amount,@RequestParam String bonusType){
 		try {
@@ -270,6 +271,18 @@ public class SalaryController {
 		try {
 			salaryService.updateBonusName(salaryBonusId, bonusType);
 			return ResponseEntity.status(HttpStatus.CREATED).body("updated successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+	}
+	
+	//獎金津貼改為不可用
+	@DeleteMapping("/newBonus/{id}")
+	public ResponseEntity<?> deleteBonus(@PathVariable("id") Integer salaryBonusId){
+		try {
+			salaryService.deleteBonusById(salaryBonusId);
+			return ResponseEntity.status(HttpStatus.CREATED).body("deleted successfully");
 		}catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(e.getMessage());

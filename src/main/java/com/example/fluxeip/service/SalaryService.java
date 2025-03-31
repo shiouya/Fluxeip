@@ -571,6 +571,7 @@ public class SalaryService {
 		newSalaryBonus.setBonusType(bonus.getBonusType());
 		newSalaryBonus.setActive(true);
 
+		deleteBonusFromSql(id);
 		bonusRepository.save(newSalaryBonus);
 	}
 
@@ -582,14 +583,16 @@ public class SalaryService {
 		if (bonus == null) {
 			throw new RuntimeException("發生錯誤");
 		}
+		bonus.setActive(false);
+
 		bonusRepository.save(bonus);
 
 		SalaryBonus newSalaryBonus = new SalaryBonus();
-		newSalaryBonus.setSalaryBonusId(id);
 		newSalaryBonus.setAmount(bonus.getAmount());
 		newSalaryBonus.setBonusType(name);
-		newSalaryBonus.setActive(bonus.isActive());
+		newSalaryBonus.setActive(true);
 
+		deleteBonusFromSql(id);
 		bonusRepository.save(newSalaryBonus);
 	}
 	
@@ -611,5 +614,31 @@ public class SalaryService {
 		newBonus.setActive(true);
 		
 		bonusRepository.save(newBonus);
+	}
+	
+	//獎金津貼改為不可用
+	@Transactional
+	public void deleteBonusById(Integer id) {
+		SalaryBonus bonus = bonusRepository.findBySalaryBonusIdAndIsActiveTrue(id);
+
+		if (bonus == null) {
+			throw new RuntimeException("發生錯誤");
+		}
+		
+		bonus.setActive(false);
+		
+		bonusRepository.save(bonus);
+		
+		deleteBonusFromSql(id);
+	}
+	
+	//從資料庫刪除獎金津貼
+	@Transactional
+	private void deleteBonusFromSql(Integer id) {
+		boolean exists = bonusRepository.existsInSalaryDetail(id);
+		
+		if(!exists) {
+			bonusRepository.deleteById(id);
+		}
 	}
 }
