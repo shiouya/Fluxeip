@@ -37,5 +37,7 @@ public class SalaryBonus {
 
     @Column(name = "amount", nullable = false)
     private Integer amount;
-
+    
+    @Column(name = "IsActive", nullable = false)
+    private boolean isActive;
 }

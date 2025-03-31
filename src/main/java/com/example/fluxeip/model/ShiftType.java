@@ -47,8 +47,7 @@ public class ShiftType {
     @JsonIgnore
     @OneToMany(mappedBy = "shiftType", cascade = CascadeType.ALL)
     private List<Schedule> schedules;
-
-    @OneToMany(mappedBy = "shiftType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Attendance> attendance;
+    
+    @Column(name = "IsActive", nullable = false)
+    private boolean isActive;
 }
