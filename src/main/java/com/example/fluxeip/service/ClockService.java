@@ -1,8 +1,11 @@
 package com.example.fluxeip.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,7 @@ import com.example.fluxeip.model.Attendance;
 import com.example.fluxeip.model.AttendanceLogs;
 import com.example.fluxeip.model.AttendanceViolations;
 import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.FieldWorkRecord;
 import com.example.fluxeip.model.ShiftType;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Type;
@@ -20,6 +24,7 @@ import com.example.fluxeip.repository.AttendanceLogsRepository;
 import com.example.fluxeip.repository.AttendanceRepository;
 import com.example.fluxeip.repository.AttendanceViolationsRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.repository.FieldWorkRecordRepository;
 import com.example.fluxeip.repository.ScheduleRepository;
 import com.example.fluxeip.repository.StatusRepository;
 import com.example.fluxeip.repository.TypeRepository;
@@ -42,6 +47,8 @@ public class ClockService {
     private ScheduleRepository scheduleRepository;
     @Autowired
     private AttendanceViolationsRepository attendanceViolationsRepository;
+    @Autowired
+    private FieldWorkRecordRepository fieldWorkRecordRepository;
 
     public String clockIn(int employeeId) {
         return handleClockEvent(employeeId, "上班");
@@ -102,6 +109,11 @@ public class ClockService {
         log.setClockTime(now);
         attendanceLogsRepository.save(log);
         
+        // 更新外勤時數
+        if ("外出結束".equals(typeName)) {
+            updateFieldWorkHours(attendance, employee, today);
+        }
+
         // 更新出勤時數
         if ("下班".equals(typeName)) {
             updateAttendanceHours(attendance);
@@ -111,8 +123,54 @@ public class ClockService {
         }
         return exceptionMessage;
     }
+    
+    private void updateFieldWorkHours(Attendance attendance, Employee employee, LocalDate today) {
+        if(attendance==null) {
+        	return;
+        }
+        Integer attendanceId = attendance.getId();
+        List<AttendanceLogs> startLogs = attendanceLogsRepository.findByAttendance_IdAndClockType_TypeName(attendanceId, "外出打卡");
+        List<AttendanceLogs> endLogs = attendanceLogsRepository.findByAttendance_IdAndClockType_TypeName(attendanceId, "外出結束");
 
+        System.out.println(startLogs.getFirst().getClockTime());
+        System.out.println(endLogs.getFirst().getClockTime());
+        if (startLogs.size() != endLogs.size()) {
+            return; // 避免異常狀況
+        }
 
+        long totalFieldWorkMinutes = 0; 
+        for (int i = 0; i < startLogs.size(); i++) {
+            LocalDateTime start = startLogs.get(i).getClockTime();
+            LocalDateTime end = endLogs.get(i).getClockTime();
+            totalFieldWorkMinutes += Duration.between(start, end).toMinutes();
+        }
+
+        // 使用 RoundingMode.HALF_UP 確保四捨五入
+        BigDecimal fieldWorkHours = BigDecimal.valueOf(totalFieldWorkMinutes)
+            .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+
+        attendance.setFieldWorkHours(fieldWorkHours);
+        attendanceRepository.save(attendance);
+
+        Optional<FieldWorkRecord> fieldWorkRecordOpt = fieldWorkRecordRepository.findByEmployee_EmployeeIdAndFieldWorkDate(employee.getEmployeeId(), today);
+
+        if (fieldWorkRecordOpt.isPresent()) {
+            FieldWorkRecord fieldWorkRecord = fieldWorkRecordOpt.get();
+            fieldWorkRecord.setTotalHours(fieldWorkHours);
+            fieldWorkRecordRepository.save(fieldWorkRecord); 
+        } else if (fieldWorkHours.compareTo(BigDecimal.ZERO) > 0) {
+            FieldWorkRecord newFieldWork = new FieldWorkRecord();
+            newFieldWork.setEmployee(employee);
+            newFieldWork.setFieldWorkDate(today);
+            newFieldWork.setTotalHours(fieldWorkHours);
+            newFieldWork.setLocation("未知");
+            newFieldWork.setPurpose("未知");
+            newFieldWork.setStatus(statusRepository.findByStatusNameAndStatusType("未填寫", "外勤表單狀態").get());
+            fieldWorkRecordRepository.save(newFieldWork);
+        }
+    }
+
+  
     private Attendance getOrCreateAttendance(Employee employee, ShiftType shiftType, Status status) {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime todayEnd = todayStart.plusDays(1);
@@ -122,14 +180,18 @@ public class ClockService {
                     newAttendance.setEmployee(employee);
                     newAttendance.setShiftType(shiftType);
                     newAttendance.setStatus(status);
-                    newAttendance.setTotalHours(0);
-                    newAttendance.setRegularHours(8);
-                    newAttendance.setOvertimeHours(0);
-                    newAttendance.setFieldWorkHours(0);
+                    
+                    // 使用 BigDecimal 初始化數值
+                    newAttendance.setTotalHours(BigDecimal.ZERO);
+                    newAttendance.setRegularHours(BigDecimal.valueOf(8));
+                    newAttendance.setOvertimeHours(BigDecimal.ZERO);
+                    newAttendance.setFieldWorkHours(BigDecimal.ZERO);
+                    
                     newAttendance.setHasViolation(false);
                     return attendanceRepository.save(newAttendance);
                 });
     }
+
 
     private long calculateViolationMinutes(LocalDateTime now, ShiftType shiftType, String typeName) {
         LocalDateTime shiftStartTime = LocalDate.now().atTime(shiftType.getStartTime());
@@ -184,7 +246,7 @@ public class ClockService {
         return null;
     }
 
- // 是否有「上班」記錄
+    // 是否有「上班」記錄
     private boolean hasClockedIn(Attendance attendance) {
         return attendanceLogsRepository.existsByAttendanceAndClockTypeName(attendance, "上班");
     }
@@ -203,18 +265,27 @@ public class ClockService {
 
 
     private void updateAttendanceHours(Attendance attendance) {
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
         
         long totalMinutes = Duration.between(attendance.getCreatedAt(), now).toMinutes();
-        attendance.setTotalHours((int) (totalMinutes / 60));
         
-        if (attendance.getTotalHours() > attendance.getRegularHours()) {
-            attendance.setOvertimeHours(attendance.getTotalHours() - attendance.getRegularHours());
+        // 計算總工時並轉換為 BigDecimal
+        BigDecimal totalHours = BigDecimal.valueOf(Math.max(0, (totalMinutes - 60) / 60.0))
+                                          .setScale(2, RoundingMode.HALF_UP);
+        attendance.setTotalHours(totalHours);
+
+        // 計算加班時數
+        if (totalHours.compareTo(attendance.getRegularHours()) > 0) {
+            attendance.setOvertimeHours(totalHours.subtract(attendance.getRegularHours()));
+        } else {
+            attendance.setOvertimeHours(BigDecimal.ZERO);
         }
-        
+
+        // 檢查是否有違規
         attendance.setHasViolation(attendanceViolationsRepository.existsByAttendance(attendance));
+
         attendanceRepository.save(attendance);
     }
+
 }
 

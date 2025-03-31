@@ -17,6 +17,8 @@ public interface WorkAdjustmentRequestRepository extends JpaRepository<WorkAdjus
 	@Query("SELECT COUNT(w) > 0 FROM WorkAdjustmentRequest w WHERE w.id IN :ids AND w.status.statusId NOT IN :statusIds AND w.employee.id = :employeeId")
 	boolean existsByRequestIdsAndStatusNotInAndEmployeeId(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds, @Param("employeeId") Integer employeeId);
 	
+	@Query("SELECT COUNT(w) > 0 FROM WorkAdjustmentRequest w WHERE w.id IN :ids AND w.status.statusId NOT IN :statusIds")
+	boolean existsByRequestIdsAndStatusNotIn(@Param("ids") List<Integer> ids, @Param("statusIds") List<Integer> statusIds);
 	
 	@Query("SELECT w FROM WorkAdjustmentRequest w " +
 		       "WHERE w.employee.employeeId = :employeeId " +
@@ -27,6 +29,8 @@ public interface WorkAdjustmentRequestRepository extends JpaRepository<WorkAdjus
 		        @Param("adjustmentType") String adjustmentType,
 		        @Param("startDate") LocalDateTime startDate,
 		        @Param("endDate") LocalDateTime endDate);
+	
+	
 }
 
 

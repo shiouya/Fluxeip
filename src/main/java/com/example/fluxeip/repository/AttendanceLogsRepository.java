@@ -28,4 +28,6 @@ public interface AttendanceLogsRepository extends JpaRepository<AttendanceLogs, 
 	long countByAttendanceAndClockTypeName(@Param("attendance") Attendance attendance,
 			@Param("typeName") String typeName);
 
+	List<AttendanceLogs> findByAttendance_IdAndClockType_TypeName(Integer attendanceId, String string);
+
 }

@@ -1,9 +1,9 @@
 package com.example.fluxeip.dto;
 
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,16 +13,16 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MissingPunchResponseDTO {
+public class FieldWorkRecordResponseDTO {
 
-	private Integer missingPunchRequestId;
+	private Integer recordId;
+	private Integer employeeId;
 	private String employeeName;
-	private LocalDate missingDate;
-	private String clockType;
-	private String reason;
-	private LocalDateTime submittedAt;
+	private LocalDate fieldWorkDate;
+	private BigDecimal totalHours;
+    private String location;  
+	private String purpose;
 	private String status;
-	
 	
 
 }
