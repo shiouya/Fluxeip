@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 
 import com.example.fluxeip.dto.LeaveRequestRequest;
 import com.example.fluxeip.dto.LeaveRequestResponseDTO;
+import com.example.fluxeip.model.ApprovalStep;
 import com.example.fluxeip.model.Employee;
 import com.example.fluxeip.model.LeaveRequest;
 import com.example.fluxeip.model.Status;
 import com.example.fluxeip.model.Type;
+import com.example.fluxeip.repository.ApprovalStepRepository;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.LeaveRequestRepository;
 import com.example.fluxeip.repository.StatusRepository;
@@ -42,6 +44,9 @@ public class LeaveRequestService {
     
     @Autowired 
     private RequestIdGenerator requestIdGenerator;
+    
+    @Autowired
+    private ApprovalStepRepository approvalStepRepository;
 
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRequestRepository.findAll();
@@ -84,6 +89,15 @@ public class LeaveRequestService {
     }
 
     public void deleteLeaveRequest(Integer id) {
+        // 取得與請假單相關聯的所有審核步驟
+        List<ApprovalStep> approvalStepByLeaveRequestId = approvalStepRepository.findApprovalStepByLeaveRequestId(id);
+
+        // 逐一刪除每一個 ApprovalStep
+        for (ApprovalStep approvalStep : approvalStepByLeaveRequestId) {
+            approvalStepRepository.deleteById(approvalStep.getId()); // 刪除 ApprovalStep
+        }
+        
+        // 刪除與請假單相關的 LeaveRequest
         leaveRequestRepository.deleteById(id);
     }
     

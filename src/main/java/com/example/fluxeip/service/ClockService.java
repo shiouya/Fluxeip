@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -229,8 +230,8 @@ public class ClockService {
             case "下班":
             	if (!hasClockedIn(attendance)) return "非上班時間";
             	if (hasClockedOut(attendance)) return "重複打卡";
+            	if (hasUnfinishedFieldWork(attendance)) return "缺外出結束"; // 需完成所有外出結束
                 if (now.isBefore(shiftEndTime.minusMinutes(10))) return "早退";
-                if (hasUnfinishedFieldWork(attendance)) return "缺外出結束"; // 需完成所有外出結束
                 break;
 
             case "外出打卡":
