@@ -80,7 +80,7 @@ public class BulletinController {
     }
 
     // 刪除公告
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteBulletin(@PathVariable Integer id) {
         if (bulletinRepository.existsById(id)) {
             bulletinRepository.deleteById(id);
