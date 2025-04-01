@@ -150,7 +150,7 @@ public class TaskassignController {
 		if(emp.isPresent()) {
 			employee = emp.get();
 		}
-		Status statu = staSer.findByName(status);
+		Status statu = staSer.findByStatusNameAndStatusType(status, "工作狀態");
 		List<Taskassign> taskassign = taskRep.findByAssignAndStatus(employee,statu);
 		
 		return ResponseEntity.ok(taskassign);

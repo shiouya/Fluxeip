@@ -62,7 +62,7 @@ public class WorkProgressController {
 	
 	@GetMapping("/workProgress/findstatus/{statusN}")
 	public List<WorkProgess> getWorkProgressByStatus(@PathVariable String statusN) {
-		Status statusName = statusSer.findByName(statusN);
+		Status statusName = statusSer.findByStatusNameAndStatusType(statusN, "工作狀態");
 		
 		List<WorkProgess> WorkProgessFindByStatus = workProRep.findByStatus(statusName);
 		return WorkProgessFindByStatus;
@@ -78,7 +78,7 @@ public class WorkProgressController {
 	@GetMapping("/workProgress/findDepAndSta/{dep}/{sta}")
 	public List<WorkProgess> getWorkProgressByDepartmentAndStatus(@PathVariable String dep,@PathVariable String sta) {
 		Department department = depSer.findByName(dep);
-		Status status = statusSer.findByName(sta);
+		Status status = statusSer.findByStatusNameAndStatusType(sta, "工作狀態");
 		List<WorkProgess> work = workProRep.findBySupervisorDepartmentAndStatus(department,status);
 		return work;
 	}
@@ -92,7 +92,7 @@ public class WorkProgressController {
 	
 	@GetMapping("/workProgress/find/{statusN}/{name}")
 	public List<WorkProgess> getWorkProgressByStatusAndName(@PathVariable String statusN,@PathVariable String name) {
-		Status status = statusSer.findByName(statusN);
+		Status status = statusSer.findByStatusNameAndStatusType(statusN, "工作狀態");
 		
 		List<WorkProgess> WorkProgessFindByStatus = workProRep.findByNameAndStatus(name,status);
 		return WorkProgessFindByStatus;
@@ -101,7 +101,7 @@ public class WorkProgressController {
 	@GetMapping("/workProgress/findDepAndStaAndName/{dep}/{sta}/{name}")
 	public List<WorkProgess> getWorkProgressByDepartmentAndStatusAndName(@PathVariable String dep,@PathVariable String sta,@PathVariable String name) {
 		Department department = depSer.findByName(dep);
-		Status status = statusSer.findByName(sta);
+		Status status = statusSer.findByStatusNameAndStatusType(sta, "工作狀態");
 		List<WorkProgess> work = workProRep.findByNameAndDepartmentAndStatus(name,department,status);
 		return work;
 	}
@@ -114,7 +114,7 @@ public class WorkProgressController {
 		workProgess.setCreateDate(entity.getCreateDate());
 		workProgess.setExpectedFinishDate(entity.getExpectedFinishdate());
 		workProgess.setProgress(0.0);
-		Status status = statusSer.findByName("未完成");
+		Status status = statusSer.findByStatusNameAndStatusType("未完成", "工作狀態");
 		workProgess.setStatus(status);
 		Optional<Employee> emp = empRep.findById(entity.getSupervisorId());
 		if (emp.isPresent()) {
@@ -156,7 +156,7 @@ public class WorkProgressController {
 		work.setCreateDate(entity.getCreateDate());
 		work.setExpectedFinishDate(entity.getExpectedFinishdate());
 		work.setFinishDate(entity.getFinishdate());
-		Status status = statusSer.findByName(entity.getStatus());
+		Status status = statusSer.findByStatusNameAndStatusType(entity.getStatus(), "工作狀態");
 		work.setStatus(status);
 		entity.getTaskassigns().forEach(task -> {
 			if (task.getTaskId() == null) {
@@ -169,7 +169,7 @@ public class WorkProgressController {
 				taskassign.setReveiew(emp.get());
 				taskassign.setCreateDate(task.getCreateDate());
 				taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
-				Status statuss = statusSer.findByName(task.getStatus());
+				Status statuss = statusSer.findByStatusNameAndStatusType(task.getStatus(), "工作狀態");
 				taskassign.setStatus(statuss);
 				taskRep.save(taskassign);
 			} else {
@@ -179,13 +179,13 @@ public class WorkProgressController {
 				taskassign.setAssign(empRep.findByEmployeeName(task.getEmployee()));
 				taskassign.setCreateDate(task.getCreateDate());
 				taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
-				Status statuss = statusSer.findByName(task.getStatus());
+				Status statuss = statusSer.findByStatusNameAndStatusType(task.getStatus(), "工作狀態");
 				taskassign.setStatus(statuss);
 				taskRep.save(taskassign);
 			}
 		});
 		long countByWorkprogess = taskRep.countByWorkprogess(work);
-		Status finishStatus = statusSer.findByName("已完成");
+		Status finishStatus = statusSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(work, finishStatus);
 		Double progress = (double) countByWorkprogessAndStatus / countByWorkprogess * 100;
 		double roundedProgress = Math.round(progress * 100.0) / 100.0;
