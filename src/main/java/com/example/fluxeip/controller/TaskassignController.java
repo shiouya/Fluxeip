@@ -24,6 +24,7 @@ import com.example.fluxeip.model.WorkProgess;
 import com.example.fluxeip.repository.EmployeeRepository;
 import com.example.fluxeip.repository.TaskassignRepository;
 import com.example.fluxeip.repository.WorkProgessRepository;
+import com.example.fluxeip.service.NotifyService;
 import com.example.fluxeip.service.StatusService;
 
 
@@ -43,6 +44,9 @@ public class TaskassignController {
 
 	@Autowired
 	private TaskassignRepository taskRep;
+	
+	@Autowired
+	private NotifyService notifyService;
 
 	@GetMapping("/work/taskassign/{id}")
 	public WorkTaskassignResponse getWorkTaskassign(@PathVariable Integer id) {
@@ -121,6 +125,9 @@ public class TaskassignController {
 		taskassign.setStatus(status);
 		taskRep.save(taskassign); // 儲存更新後的資料
 		
+		String message = "您有一筆新的交辦任務：《" + taskassign.getTaskName() + "》。";
+		notifyService.sendNotification(assign.getEmployeeId(), message);
+		
 		long countByWorkprogess = taskRep.countByWorkprogess(workProgess);
 		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workProgess, finishStatus);
@@ -165,14 +172,36 @@ public class TaskassignController {
 		if(task.isPresent()) {
 			taskassign = task.get();
 		}
+		
+		// 通知取得更新前狀態
+		Status originalStatus = taskassign.getStatus(); 
 		Status statu = staSer.findByStatusNameAndStatusType(status, "工作狀態");
 		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
+			
 		taskassign.setStatus(statu);
 		WorkProgess workprogess = taskassign.getWorkprogess();
-		if (status.equals("已完成")) {
-			LocalDate today = LocalDate.now();
-			taskassign.setFinishDate(today);
+		
+		 //通知指派人要審核
+	    if ("未完成".equals(originalStatus.getStatusName()) && "待審核".equals(statu.getStatusName())) {
+	        String message = "您有一筆工作分配《" + taskassign.getTaskName() + "》送出審核，請確認。";
+	        notifyService.sendNotification(taskassign.getReveiew().getEmployeeId(), message);
+	    }
+
+
+	    // 審核後通知被指派人
+	    if (status.equals("已完成")) {
+	        LocalDate today = LocalDate.now();
+	        taskassign.setFinishDate(today);
+	        String message = "您的交辦任務《" + taskassign.getTaskName() + "》已完成，已通過審核 。";
+	        notifyService.sendNotification(taskassign.getAssign().getEmployeeId(), message); 
+	    }
+
+	    // 審核後通知被指派人
+		if (status.equals("未完成")) {
+			String message = "您的交辦任務《" + taskassign.getTaskName() + "》被退回，請重新確認內容 。";
+			notifyService.sendNotification(taskassign.getAssign().getEmployeeId(), message); 
 		}
+		
 		taskRep.save(taskassign);
 		long countByWorkprogess = taskRep.countByWorkprogess(workprogess);
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workprogess, finishStatus);
