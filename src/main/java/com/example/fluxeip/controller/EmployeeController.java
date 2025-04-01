@@ -41,7 +41,7 @@ import com.example.fluxeip.service.EmployeeService;
 import com.example.fluxeip.service.PositionService;
 import com.example.fluxeip.service.StatusService;
 
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class EmployeeController {
 	
