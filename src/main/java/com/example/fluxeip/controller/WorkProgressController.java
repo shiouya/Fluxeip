@@ -172,6 +172,10 @@ public class WorkProgressController {
 				Status statuss = statusSer.findByStatusNameAndStatusType(task.getStatus(), "工作狀態");
 				taskassign.setStatus(statuss);
 				taskRep.save(taskassign);
+				
+				// 發送通知：新增任務
+				String message = "您有一筆新的交辦任務：《" + task.getTaskName() + "》。";
+				notifyService.sendNotification(taskassign.getAssign().getEmployeeId(), message);
 			} else {
 				Taskassign taskassign = taskRep.findById(task.getTaskId()).get();
 				taskassign.setTaskName(task.getTaskName());
@@ -180,8 +184,20 @@ public class WorkProgressController {
 				taskassign.setCreateDate(task.getCreateDate());
 				taskassign.setExpectedFinishDate(task.getExpectedFinishDate());
 				Status statuss = statusSer.findByStatusNameAndStatusType(task.getStatus(), "工作狀態");
+				
+				Status oldStatus = taskassign.getStatus();
 				taskassign.setStatus(statuss);
 				taskRep.save(taskassign);
+				
+				// 發送通知：狀態變更
+				if (!"已完成".equals(oldStatus.getStatusName()) && "已完成".equals(statuss.getStatusName())) {
+					String message = "任務《" + task.getTaskName() + "》已完成。";
+					notifyService.sendNotification(taskassign.getReveiew().getEmployeeId(), message);
+				} else if (!"未通過".equals(oldStatus.getStatusName()) && "未通過".equals(statuss.getStatusName())) {
+					String message = "任務《" + task.getTaskName() + "》未通過審核，請重新確認內容。";
+					notifyService.sendNotification(taskassign.getAssign().getEmployeeId(), message);
+				}
+				
 			}
 		});
 		long countByWorkprogess = taskRep.countByWorkprogess(work);
