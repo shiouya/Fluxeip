@@ -33,6 +33,8 @@ public class ScheduleService {
 	private ShiftTypeService shiftTypeService;
 	@Autowired
 	private EmployeeRepository employeeRepository;
+	@Autowired
+	private NotifyService notifyService;
 
 	// 透過id搜尋班表
 	public Schedule findScheduleById(Integer schedulId) {
@@ -163,6 +165,8 @@ public class ScheduleService {
 
 		LocalDate date = scheduleRequest.getDate();
 		List<LocalDate> weekdaysInMonth = getWeekdaysInMonth(date);
+		
+		boolean notifySchedule = false; //通知
 
 		System.out.println(weekdaysInMonth);
 		for(LocalDate day:weekdaysInMonth) {
@@ -178,8 +182,17 @@ public class ScheduleService {
 				schedule.setScheduleDate(day);
 
 				scheduleRepository.save(schedule);
+				
+				notifySchedule = true;//通知
+				
 			}
 
+		}
+		//通知
+		if (notifySchedule) {
+			String monthStr = date.getMonthValue() + "月";
+			String message = "您在 " + monthStr + " 的班表已排定，請前往班表頁面確認。";
+			notifyService.sendNotification(employee.getEmployeeId(), message);
 		}
 	}
 
