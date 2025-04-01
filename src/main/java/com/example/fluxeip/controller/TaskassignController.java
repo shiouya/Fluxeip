@@ -117,12 +117,12 @@ public class TaskassignController {
 		taskassign.setReveiew(review);
 		taskassign.setCreateDate(entity.getCreateDate());
 		taskassign.setExpectedFinishDate(entity.getExpectedFinishDate());
-		Status status = staSer.findByName("未完成");
+		Status status = staSer.findByStatusNameAndStatusType("未完成", "工作狀態");
 		taskassign.setStatus(status);
 		taskRep.save(taskassign); // 儲存更新後的資料
 		
 		long countByWorkprogess = taskRep.countByWorkprogess(workProgess);
-		Status finishStatus = staSer.findByName("已完成");
+		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workProgess, finishStatus);
 		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
 		double roundedProgress = Math.round(progress * 100.0) / 100.0;
@@ -164,7 +164,7 @@ public class TaskassignController {
 		if(task.isPresent()) {
 			taskassign = task.get();
 		}
-		Status statu = staSer.findByName(status);
+		Status statu = staSer.findByStatusNameAndStatusType(status, "工作狀態");
 		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		taskassign.setStatus(statu);
 		WorkProgess workprogess = taskassign.getWorkprogess();
@@ -194,7 +194,7 @@ public class TaskassignController {
 		
 		WorkProgess workprogess = taskassign.getWorkprogess();
 		long countByWorkprogess = taskRep.countByWorkprogess(workprogess);
-		Status finishStatus = staSer.findByName("已完成");
+		Status finishStatus = staSer.findByStatusNameAndStatusType("已完成", "工作狀態");
 		long countByWorkprogessAndStatus = taskRep.countByWorkprogessAndStatus(workprogess, finishStatus);
 		Double progress=(double) countByWorkprogessAndStatus/countByWorkprogess*100;
 		double roundedProgress = Math.round(progress * 100.0) / 100.0;
