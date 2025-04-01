@@ -1,5 +1,6 @@
 package com.example.fluxeip.controller;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +120,18 @@ public class ScheduleController {
 			response.put("message", "false");
 			response.put("success", "false");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 404 Not Found
+		}
+	}
+	
+	@DeleteMapping("/month/{id}")
+	public ResponseEntity<?> deleteMonthSchedule(@PathVariable("id") Integer empId,@RequestParam LocalDate date) {
+
+		try {
+			scheduleService.deleteMonthSchedule(empId, date);
+			return ResponseEntity.status(HttpStatus.OK).body("Schedule deleted successfully");
+		}catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
 		}
 	}
 	

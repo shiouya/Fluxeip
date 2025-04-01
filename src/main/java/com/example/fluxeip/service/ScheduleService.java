@@ -220,6 +220,24 @@ public class ScheduleService {
 		return true;
 	}
 
+	//刪除整月班表
+	@Transactional
+	public void deleteMonthSchedule(Integer empId,LocalDate firstDay) {
+		
+		LocalDate firstDayOfMonth = firstDay.withDayOfMonth(1);
+		LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
+		
+		List<Schedule> schedulesInInterval = schedulesInInterval(empId, firstDayOfMonth, lastDayOfMonth);
+		
+		if(schedulesInInterval==null||schedulesInInterval.size()==0) {
+			throw new RuntimeException("查無本月班表，無法刪除");
+		}else {
+			for(Schedule schedule:schedulesInInterval) {
+				scheduleRepository.delete(schedule);
+			}
+		}
+	}
+	
 	// 判斷部門
 	private boolean isRightDepartment(Employee emp, String departmentName, ShiftType shiftType) {
 
