@@ -65,7 +65,7 @@ public class TaskassignController {
 		if (work != null) {
 			workProgess = work.get();
 		}
-		Status statu = staSer.findByName(status);
+		Status statu = staSer.findByStatusNameAndStatusType(status, "工作狀態");
 		List<Taskassign> Taskassigns = taskRep.findByWorkprogessAndStatus(workProgess, statu);
 		return Taskassigns;
 	}
@@ -150,12 +150,13 @@ public class TaskassignController {
 		if(emp.isPresent()) {
 			employee = emp.get();
 		}
-		Status statu = staSer.findByName(status);
+		Status statu = staSer.findByStatusNameAndStatusType(status, "工作狀態");
 		List<Taskassign> taskassign = taskRep.findByAssignAndStatus(employee,statu);
 		
 		return ResponseEntity.ok(taskassign);
 	}
 	
+	//審核
 	@PutMapping("/taskassign/update/{id}/{status}")
 	public boolean reviewTaskassign(@PathVariable Integer id,@PathVariable String status) {
 		Optional<Taskassign> task = taskRep.findById(id);
