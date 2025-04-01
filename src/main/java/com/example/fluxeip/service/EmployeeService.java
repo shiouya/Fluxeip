@@ -94,4 +94,13 @@ public class EmployeeService {
         return employeeRepository.findEmployeesByDepartmentAndPosition(department, position, status, pageable);
     }
 
+	public Department getDepartmentByEmployeeId(Integer empId) {
+	    Optional<Employee> employeeOpt = employeeRepository.findById(empId);
+	    if (employeeOpt.isPresent()) {
+	        Employee employee = employeeOpt.get();
+	        return employee.getDepartment();  // 假設 Employee 類別有一個 getDepartment() 方法
+	    }
+	    return null;  // 如果找不到員工，則返回 null
+	}
+
 }
