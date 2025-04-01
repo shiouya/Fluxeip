@@ -34,12 +34,14 @@ public class ScheduleService {
 	@Autowired
 	private EmployeeRepository employeeRepository;
 
+	// 透過id搜尋班表
 	public Schedule findScheduleById(Integer schedulId) {
 		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
 
 		return schedule.orElse(null);
 	}
 
+	// 透過id搜尋response
 	public ScheduleResponse findScheduleResponseById(Integer schedulId) {
 		Optional<Schedule> schedule = scheduleRepository.findById(schedulId);
 
@@ -54,6 +56,7 @@ public class ScheduleService {
 		}
 	}
 
+	// 透過員工搜尋response
 	public List<ScheduleResponse> findScheduleResponseByEmpId(Integer empId) {
 		List<Schedule> schedules = scheduleRepository.findByEmployeeEmployeeId(empId);
 
@@ -68,6 +71,7 @@ public class ScheduleService {
 		return responses;
 	}
 
+	// 透過員工和日期搜尋response
 	public List<ScheduleResponse> findSchedulesByEmployeeAndDate(Integer empId, LocalDate date) {
 
 		List<Schedule> schedules = scheduleRepository.findScheduleByEmployeeIdAndDate(empId, date);
@@ -83,6 +87,7 @@ public class ScheduleService {
 		return responses;
 	}
 
+	// 查詢員工一周班表
 	public List<ScheduleResponse> findEmpScheduleWeek(Integer empId, String startDate) {
 
 		LocalDate start = LocalDate.parse(startDate);
@@ -101,6 +106,7 @@ public class ScheduleService {
 
 	}
 
+	// 新增班表
 	@Transactional
 	public void createSchedule(ScheduleRequest scheduleRequest) {
 
@@ -139,6 +145,45 @@ public class ScheduleService {
 
 	}
 
+	// 新增整月班表
+	@Transactional
+	public void insertMonthlySchedule(ScheduleRequest scheduleRequest) {
+
+		Integer shiftId = scheduleRequest.getShiftTypeId();
+		ShiftType shiftType = shiftTypeService.findShiftTypeById(shiftId);
+
+		if (shiftType.getEstimatedHours().multiply(new BigDecimal(5)).compareTo(new BigDecimal(40)) == 1) {
+			throw new RuntimeException("該班別可能導致超時工作，無法自動排班，請嘗試其他班別!");
+		}
+		String depName = scheduleRequest.getDepartmentName();
+		Department dep = departmentService.findByName(depName);
+
+		Integer empId = scheduleRequest.getEmployeeId();
+		Employee employee = employeeService.find(empId);
+
+		LocalDate date = scheduleRequest.getDate();
+		List<LocalDate> weekdaysInMonth = getWeekdaysInMonth(date);
+
+		System.out.println(weekdaysInMonth);
+		for(LocalDate day:weekdaysInMonth) {
+			if (scheduleRepository.countByEmployeeAndDate(empId, day) > 0) {
+				throw new RuntimeException("該日期已有排班");
+			}else {
+				Schedule schedule = new Schedule();
+
+				schedule.setDepartment(dep);
+				schedule.setEmployee(employee);
+				schedule.setShiftType(shiftType);
+
+				schedule.setScheduleDate(day);
+
+				scheduleRepository.save(schedule);
+			}
+
+		}
+	}
+
+	// 更新班表
 	@Transactional
 	public void updateScheduleById(Integer scheduleId, Integer shiftTypeId) {
 
@@ -163,6 +208,7 @@ public class ScheduleService {
 
 	}
 
+	// 刪除班表
 	@Transactional
 	public boolean deleteScheduleById(Integer scheduleId) {
 
@@ -174,6 +220,25 @@ public class ScheduleService {
 		return true;
 	}
 
+	//刪除整月班表
+	@Transactional
+	public void deleteMonthSchedule(Integer empId,LocalDate firstDay) {
+		
+		LocalDate firstDayOfMonth = firstDay.withDayOfMonth(1);
+		LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
+		
+		List<Schedule> schedulesInInterval = schedulesInInterval(empId, firstDayOfMonth, lastDayOfMonth);
+		
+		if(schedulesInInterval==null||schedulesInInterval.size()==0) {
+			throw new RuntimeException("查無本月班表，無法刪除");
+		}else {
+			for(Schedule schedule:schedulesInInterval) {
+				scheduleRepository.delete(schedule);
+			}
+		}
+	}
+	
+	// 判斷部門
 	private boolean isRightDepartment(Employee emp, String departmentName, ShiftType shiftType) {
 
 		if (emp.getDepartment().getDepartmentName().equals(departmentName)
@@ -183,6 +248,7 @@ public class ScheduleService {
 		return false;
 	}
 
+	// 轉換成response
 	private ScheduleResponse changeScheduleIntoResponse(Schedule schedule) {
 		ScheduleResponse scheduleResponse = new ScheduleResponse();
 
@@ -196,6 +262,7 @@ public class ScheduleService {
 
 	}
 
+	// 違反一例一休
 	private boolean isViolatingLaborLawDays(LocalDate date, int empId) {
 
 		for (int i = 0; i < 7; i++) {
@@ -209,6 +276,7 @@ public class ScheduleService {
 		return false;
 	}
 
+	// 超時工作
 	private boolean isViolatingLaborLawHours(LocalDate date, int empId) {
 
 		List<Schedule> schedules = schedulesInInterval(empId, date.with(DayOfWeek.MONDAY),
@@ -226,12 +294,36 @@ public class ScheduleService {
 		return false;
 	}
 
+	// 透過時間區間查詢班表
 	public List<Schedule> schedulesInInterval(int employeeId, LocalDate startDate, LocalDate endDate) {
 		return scheduleRepository.findByEmployeeEmployeeIdAndScheduleDateBetween(employeeId, startDate, endDate);
 	}
 
+	// 透過部門搜尋全體員工
 	public List<Employee> findAllEmpByDepartmentId(Integer departmentId) {
 		return employeeRepository.findByDepartmentDepartmentId(departmentId);
+	}
+
+	// 找平日
+	private static List<LocalDate> getWeekdaysInMonth(LocalDate date) {
+		List<LocalDate> weekdays = new ArrayList<>();
+
+		// 獲取該月的第一天和最後一天
+		LocalDate firstDayOfMonth = date.withDayOfMonth(1);
+		LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
+
+		// 遍歷該月的所有日期
+		LocalDate currentDay = firstDayOfMonth;
+		while (!currentDay.isAfter(lastDayOfMonth)) {
+			// 如果是平日（不是週六或週日），加入列表
+			if (currentDay.getDayOfWeek() != DayOfWeek.SATURDAY && currentDay.getDayOfWeek() != DayOfWeek.SUNDAY) {
+				weekdays.add(currentDay);
+			}
+			// 移動到下一天
+			currentDay = currentDay.plusDays(1);
+		}
+
+		return weekdays;
 	}
 
 }
