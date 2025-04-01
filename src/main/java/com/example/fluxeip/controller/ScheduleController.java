@@ -63,6 +63,7 @@ public class ScheduleController {
 		return ResponseEntity.ok(scheduleResponse);
 	}
 
+	//新增單日班表
 	@PostMapping
 	public ResponseEntity<String> createSchedule(@RequestBody ScheduleRequest request) {
 		try {
@@ -75,6 +76,21 @@ public class ScheduleController {
 		}
 
 	}
+	
+	//新增整月班表
+	@PostMapping("/month")
+	public ResponseEntity<String> createMonthlySchedule(@RequestBody ScheduleRequest request) {
+		try {
+			scheduleService.insertMonthlySchedule(request);
+
+			return ResponseEntity.status(HttpStatus.CREATED).body("Schedule created successfully");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(e.getMessage());
+		}
+
+	}
+	
 
 	@PutMapping("/{id}")
 	public ResponseEntity<String> updateSchedule(@RequestParam Integer shiftTypeId,
