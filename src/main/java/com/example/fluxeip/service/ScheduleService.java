@@ -188,7 +188,7 @@ public class ScheduleService {
 			}
 
 		}
-		//通知
+		//通知排班
 		if (notifySchedule) {
 			String monthStr = date.getMonthValue() + "月";
 			String message = "您在 " + monthStr + " 的班表已排定，請前往班表頁面確認。";
@@ -212,6 +212,13 @@ public class ScheduleService {
 		existingSchedule.setShiftType(shiftType);
 
 		scheduleRepository.save(existingSchedule);
+		
+		
+		//通知更新
+		String formattedDate = date.getMonthValue() + "月" + date.getDayOfMonth() + "日";
+		String message = "您在 " + formattedDate + " 的班別已被更新，請前往班表頁面查看。";
+		notifyService.sendNotification(empId, message);
+		
 
 		if (isViolatingLaborLawDays(date, empId)) {
 			throw new RuntimeException("違反勞基法，不符合一例一休");

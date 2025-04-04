@@ -1,26 +1,29 @@
 package com.example.fluxeip.service;
 
-import com.example.fluxeip.dto.MeetingRequest;
-import com.example.fluxeip.dto.MeetingResponse;
-import com.example.fluxeip.model.Employee;
-import com.example.fluxeip.model.Meeting;
-import com.example.fluxeip.model.Room;
-import com.example.fluxeip.model.Status;
-import com.example.fluxeip.repository.EmployeeRepository;
-import com.example.fluxeip.repository.MeetingRepository;
-import com.example.fluxeip.repository.RoomRepository;
-import com.example.fluxeip.repository.StatusRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.fluxeip.dto.AttendeeResponse;
+import com.example.fluxeip.dto.MeetingRequest;
+import com.example.fluxeip.dto.MeetingResponse;
+import com.example.fluxeip.model.Attendee;
+import com.example.fluxeip.model.Employee;
+import com.example.fluxeip.model.Meeting;
+import com.example.fluxeip.model.Room;
+import com.example.fluxeip.model.Status;
+import com.example.fluxeip.repository.AttendeeRepository;
+import com.example.fluxeip.repository.EmployeeRepository;
+import com.example.fluxeip.repository.MeetingRepository;
+import com.example.fluxeip.repository.RoomRepository;
+import com.example.fluxeip.repository.StatusRepository;
 
 @Service
 @Transactional
@@ -40,6 +43,9 @@ public class MeetingService {
 
 	@Autowired
 	private NotifyService notifyService;
+
+	@Autowired
+	private AttendeeRepository attendeeRepository;
 
 	// 查詢有會議
 	public List<MeetingResponse> findAll() {
@@ -119,38 +125,31 @@ public class MeetingService {
 			return true;
 		}
 	}
-	
+
 	// 檢查是否有重疊的會議(新贈用)
 	public boolean isOverlapping(Integer roomId, LocalDateTime startTime, LocalDateTime endTime) {
-	    List<Meeting> meetings = meetingRepository.findByRoomId(roomId);
+		List<Meeting> meetings = meetingRepository.findByRoomId(roomId);
 
-	    for (Meeting m : meetings) {
-	        // 只檢查 審核中 / 已審核，不要算進 未核准
-	        int statusId = m.getStatus().getStatusId();
-	        if (statusId != 4 && statusId != 5 && statusId != 6) continue;
+		for (Meeting m : meetings) {
+			// 只檢查 審核中 / 已審核，不要算進 未核准
+			int statusId = m.getStatus().getStatusId();
+			if (statusId != 4 && statusId != 5 && statusId != 6)
+				continue;
 
-	        // 判斷是否時間重疊：只要有交集就是衝突
-	        boolean isOverlap = m.getStartTime().isBefore(endTime) && m.getEndTime().isAfter(startTime);
-	        if (isOverlap) {
-	            return true; // 有重疊
-	        }
-	    }
+			// 判斷是否時間重疊：只要有交集就是衝突
+			boolean isOverlap = m.getStartTime().isBefore(endTime) && m.getEndTime().isAfter(startTime);
+			if (isOverlap) {
+				return true; // 有重疊
+			}
+		}
 
-	    return false; // 沒有重疊
+		return false; // 沒有重疊
 	}
-	
-	
-	
-	
-	
-	
-	
+
 //	public boolean isOverlapping(Integer roomId, LocalDateTime start, LocalDateTime end) {
 //	    return meetingRepository.existsByRoomAndTimeOverlapValidStatus(roomId, start, end);
 //	}
-	
-	
-	
+
 //	private boolean isOverlapping(Integer roomId, LocalDateTime startTime, LocalDateTime endTime) {
 //		return meetingRepository.existsByRoomIdAndStartTimeBeforeAndEndTimeAfter(roomId, endTime, startTime);
 //	}
@@ -165,52 +164,50 @@ public class MeetingService {
 	// 新增
 	public Optional<MeetingResponse> create(MeetingRequest meetingRequest) {
 
-	    // 1. 檢查時間是否合法（起時間 < 結束時間，非週末，非上下班時間等）
-	    if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-	        return Optional.empty();
-	    }
+		// 1. 檢查時間是否合法（起時間 < 結束時間，非週末，非上下班時間等）
+		if (!isValidTime(meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+			return Optional.empty();
+		}
 
-	    // 2. 檢查是否有時間重疊（只考慮「審核中」「已審核」的會議）
-	    if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
-	        return Optional.empty(); // 有重疊，不允許新增
-	    }
+		// 2. 檢查是否有時間重疊（只考慮「審核中」「已審核」的會議）
+		if (isOverlapping(meetingRequest.getRoomId(), meetingRequest.getStartTime(), meetingRequest.getEndTime())) {
+			return Optional.empty(); // 有重疊，不允許新增
+		}
 
-	    // 3. 查詢使用者與會議室
-	    Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
-	    Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
-	    Optional<Status> optStatus = statusRepository.findById(5); // 預設「審核中」狀態
+		// 3. 查詢使用者與會議室
+		Optional<Employee> optEmployee = employeeRepository.findById(meetingRequest.getEmployeeId());
+		Optional<Room> optRoom = roomRepository.findById(meetingRequest.getRoomId());
+		Optional<Status> optStatus = statusRepository.findById(5); // 預設「審核中」狀態
 
-	    if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
-	        return Optional.empty(); // 必要資料查不到
-	    }
+		if (optEmployee.isEmpty() || optRoom.isEmpty() || optStatus.isEmpty()) {
+			return Optional.empty(); // 必要資料查不到
+		}
 
-	    // 4. 建立 Meeting Entity 並存入
-	    Meeting meeting = new Meeting();
-	    meeting.setTitle(meetingRequest.getTitle());
-	    meeting.setNotes(meetingRequest.getNotes());
-	    meeting.setStartTime(meetingRequest.getStartTime());
-	    meeting.setEndTime(meetingRequest.getEndTime());
-	    meeting.setEmployee(optEmployee.get());
-	    meeting.setRoom(optRoom.get());
-	    meeting.setStatus(optStatus.get());
+		// 4. 建立 Meeting Entity 並存入
+		Meeting meeting = new Meeting();
+		meeting.setTitle(meetingRequest.getTitle());
+		meeting.setNotes(meetingRequest.getNotes());
+		meeting.setStartTime(meetingRequest.getStartTime());
+		meeting.setEndTime(meetingRequest.getEndTime());
+		meeting.setEmployee(optEmployee.get());
+		meeting.setRoom(optRoom.get());
+		meeting.setStatus(optStatus.get());
 
-	    Meeting savedMeeting = meetingRepository.save(meeting);
+		Meeting savedMeeting = meetingRepository.save(meeting);
 
-	    // 5. 發送通知給審核人
-	    try {
-	        Integer approverId = 1002; 
-	        String message = "有新的會議室預約需要您審核\n"
-	        		+ "（申請人：" + savedMeeting.getEmployee().getEmployeeName() + "）\n"
-	                + "（主題：" + savedMeeting.getTitle() + "）";
+		// 5. 發送通知給審核人
+		try {
+			Integer approverId = 1002;
+			String message = "有新的會議室預約需要您審核\n" + "（申請人：" + savedMeeting.getEmployee().getEmployeeName() + "）\n" + "（主題："
+					+ savedMeeting.getTitle() + "）";
 
-	        notifyService.sendNotification(approverId, message);
-	    } catch (Exception e) {
-	        System.out.println("⚠ 發送通知失敗：" + e.getMessage());
-	    }
+			notifyService.sendNotification(approverId, message);
+		} catch (Exception e) {
+			System.out.println("⚠ 發送通知失敗：" + e.getMessage());
+		}
 
-	    return Optional.of(new MeetingResponse(savedMeeting));
+		return Optional.of(new MeetingResponse(savedMeeting));
 	}
-
 
 	// 更新
 	public Optional<MeetingResponse> update(Integer id, MeetingRequest meetingRequest) {
@@ -357,6 +354,138 @@ public class MeetingService {
 		meetingRepository.save(meeting);
 
 		return Optional.of(meeting);
+
 	}
+
+	public boolean addAttendees(Integer meetingId, List<Integer> employeeIds) {
+	    Optional<Meeting> optMeeting = meetingRepository.findById(meetingId);
+
+	    if (optMeeting.isEmpty() || employeeIds == null || employeeIds.isEmpty()) {
+	        return false;
+	    }
+
+	    Meeting meeting = optMeeting.get();
+	    Integer hostId = meeting.getEmployee().getEmployeeId();
+
+	    // 撈出目前已存在的與會者清單
+	    List<Attendee> existingAttendees = attendeeRepository.findByMeetingId(meetingId);
+	    List<Integer> existingIds = existingAttendees.stream()
+	            .map(a -> a.getEmployee().getEmployeeId())
+	            .toList();
+
+	    for (Integer employeeId : employeeIds) {
+	        // 跳過主辦人自己
+	        if (employeeId.equals(hostId)) {
+	            continue;
+	        }
+
+	        // 跳過已存在的與會人員
+	        if (existingIds.contains(employeeId)) {
+	            continue;
+	        }
+
+	        Optional<Employee> optEmployee = employeeRepository.findById(employeeId);
+	        if (optEmployee.isEmpty()) {
+	            continue;
+	        }
+
+	        Attendee attendee = new Attendee();
+	        attendee.setMeeting(meeting);
+	        attendee.setEmployee(optEmployee.get());
+	        attendee.setIsAttending(null); // 尚未回覆
+	        attendee.setRespondTime(null);
+
+	        attendeeRepository.save(attendee);
+
+	        // 發送通知
+	        String message = "你被邀請參加會議：「" + meeting.getTitle() + "」請確認是否出席。";
+	        try {
+	            notifyService.sendNotification(employeeId, message);
+	        } catch (Exception e) {
+	            System.out.println("通知發送失敗：" + e.getMessage());
+	        }
+	    }
+
+	    return true;
+	}
+
+	
+	// 回覆
+	public boolean respondToMeeting(Integer attendeeId, Integer employeeId, boolean isAccepted) {
+	    Optional<Attendee> optAttendee = attendeeRepository.findById(attendeeId);
+
+	    if (optAttendee.isEmpty()) {
+	        return false;
+	    }
+
+	    Attendee attendee = optAttendee.get();
+
+	    if (!attendee.getEmployee().getEmployeeId().equals(employeeId)) {
+	        return false;
+	    }
+
+	    attendee.setIsAttending(isAccepted);
+	    attendee.setRespondTime(LocalDateTime.now());
+
+	    attendeeRepository.save(attendee);
+
+	    // 發送通知
+	    Integer hostId = attendee.getMeeting().getEmployee().getEmployeeId();
+	    String statusText = isAccepted ? "已確認參加" : "已拒絕參加";
+	    String message =  attendee.getEmployee().getEmployeeName() +
+	            " " + statusText + " 會議「" + attendee.getMeeting().getTitle()+ "」";
+
+	    try {
+	        notifyService.sendNotification(hostId, message);
+	    } catch (Exception e) {
+	        System.out.println("通知主辦人失敗：" + e.getMessage());
+	    }
+
+	    return true;
+	}
+
+
+	// 看自己參加過哪些會議
+	public List<AttendeeResponse> findAttendeeMeetingsByEmployeeId(Integer employeeId) {
+
+		List<Attendee> attendees = attendeeRepository.findByEmployeeEmployeeId(employeeId);
+
+		if (attendees == null || attendees.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		List<AttendeeResponse> responses = new ArrayList<>();
+
+		for (Attendee attendee : attendees) {
+
+			AttendeeResponse response = new AttendeeResponse(attendee);
+			responses.add(response);
+		}
+		return responses;
+	}
+
+	//回覆統計查詢
+	public List<AttendeeResponse> findAttendeesByMeetingId(Integer meetingId) {
+	    // 查詢指定會議的所有與會者
+	    List<Attendee> attendees = attendeeRepository.findByMeetingId(meetingId);
+
+	    // 2如果沒有任何與會者，回傳空的 List
+	    if (attendees == null || attendees.isEmpty()) {
+	        return new ArrayList<>();
+	    }
+
+	    // 3準備一個回傳用的結果列表
+	    List<AttendeeResponse> responseList = new ArrayList<>();
+
+	    // 4一筆一筆轉換成 AttendeeResponse（DTO）
+	    for (Attendee attendee : attendees) {
+	        AttendeeResponse response = new AttendeeResponse(attendee);
+	        responseList.add(response);
+	    }
+
+	    // 回傳轉換後的結果
+	    return responseList;
+	}
+
 
 }
