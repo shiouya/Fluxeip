@@ -30,7 +30,6 @@ public class ClockController {
             return ResponseEntity.badRequest().body("無效的token");
         }
 
-        System.out.println("上班打卡: " + employeeId);
         String message = clockService.clockIn(employeeId);
         return ResponseEntity.ok(message);
     }
@@ -42,7 +41,6 @@ public class ClockController {
             return ResponseEntity.badRequest().body("無效的token");
         }
 
-        System.out.println("下班打卡: " + employeeId);
         String message = clockService.clockOut(employeeId);
         return ResponseEntity.ok(message);
     }
@@ -54,7 +52,6 @@ public class ClockController {
             return ResponseEntity.badRequest().body("無效的token");
         }
 
-        System.out.println("外出打卡開始: " + employeeId);
         String message = clockService.startFieldWork(employeeId);
         return ResponseEntity.ok(message);
     } 
@@ -66,7 +63,6 @@ public class ClockController {
             return ResponseEntity.badRequest().body("無效的token");
         }
 
-        System.out.println("外出結束打卡: " + employeeId);
         String message = clockService.endFieldWork(employeeId);
         return ResponseEntity.ok(message);
     }

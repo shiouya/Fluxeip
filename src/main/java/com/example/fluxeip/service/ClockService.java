@@ -98,9 +98,13 @@ public class ClockService {
         // 檢查異常
         String exceptionMessage = checkForExceptions(now, shiftType, typeName, attendance);
         if (exceptionMessage != null) {
-            long violationMinutes = calculateViolationMinutes(now, shiftType, typeName);
+            long violationMinutes = 0;
+            if ("遲到".equals(exceptionMessage) || "早退".equals(exceptionMessage)) {
+                violationMinutes = calculateViolationMinutes(now, shiftType, typeName);
+            }
             recordViolation(employee, attendance, exceptionMessage, violationMinutes);
         }
+
         if(exceptionMessage=="遲到"||exceptionMessage=="早退"||exceptionMessage==null) {
         // 記錄打卡
         AttendanceLogs log = new AttendanceLogs();
