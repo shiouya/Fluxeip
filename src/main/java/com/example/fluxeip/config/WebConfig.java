@@ -16,6 +16,11 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/images/**")
                 .addResourceLocations("file:" + uploadDir + "/");
+        
+        // 會議室檔案attachment
+        String attachmentDir = Paths.get(projectRoot, "uploads/attachment/").toString();
+        registry.addResourceHandler("/uploads/attachment/**")
+                .addResourceLocations("file:" + attachmentDir + "/");
     }
     
 //    @Override

@@ -99,5 +99,20 @@ public class FileService {
         }
         return null;
     }
+    
+    //刪除
+    public void deleteFile(String relativePath) throws IOException {
+        if (relativePath == null || relativePath.isEmpty()) return;
+
+        // 移除開頭的 "uploads/attachment/"，只留下檔名
+        String fileName = relativePath.replaceFirst("^uploads/attachment/", "");
+        
+        // 組出完整檔案路徑
+        Path filePath = rootLocation.resolve(fileName);
+
+        // 刪除檔案（如果存在）
+        Files.deleteIfExists(filePath);
+    }
+
 
 }

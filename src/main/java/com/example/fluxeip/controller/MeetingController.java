@@ -1,5 +1,7 @@
 package com.example.fluxeip.controller;
 
+import com.example.fluxeip.dto.AttendeeRequest;
+import com.example.fluxeip.dto.AttendeeResponse;
 import com.example.fluxeip.dto.MeetingRequest;
 import com.example.fluxeip.dto.MeetingResponse;
 import com.example.fluxeip.model.Meeting;
@@ -153,5 +155,61 @@ public class MeetingController {
 			return ResponseEntity.badRequest().body(new MeetingResponse("審核失敗"));
 		}
 	}
+
+	// 選擇參加人員
+	@PostMapping("/{meetingId}/attendees")
+	public ResponseEntity<MeetingResponse> addAttendees(@PathVariable Integer meetingId,
+			@RequestBody AttendeeRequest attendeeRequest) {
+			
+		boolean success = meetingService.addAttendees(meetingId, attendeeRequest.getEmployeeIds());
+		
+		if(success) {
+			return ResponseEntity.ok(new MeetingResponse("已成功加入與會人員"));
+		}else {
+			return ResponseEntity.badRequest().body(new MeetingResponse("加入失敗，請確認會議與員工資料正確"));
+		}
+	}
+	
+	// 看自己參加過哪些會議
+	@GetMapping("/attendees/{employeeId}")
+	public ResponseEntity<List<AttendeeResponse>> getAttendeeMeetings(@PathVariable Integer employeeId) {
+	    List<AttendeeResponse> responses = meetingService.findAttendeeMeetingsByEmployeeId(employeeId);
+
+	    if (responses.isEmpty()) {
+	        return ResponseEntity.noContent().build();
+	    }
+	    return ResponseEntity.ok(responses);
+	}
+
+	//回覆
+	@PutMapping("/attendees/{attendeeId}/response")
+	public ResponseEntity<MeetingResponse> respondToMeeting(
+	        @PathVariable Integer attendeeId,
+	        @RequestParam boolean accept,
+	        @RequestParam Integer employeeId) {
+
+		boolean result = meetingService.respondToMeeting(attendeeId, employeeId, accept);
+		
+	    if (result) {
+	        String msg = accept ? "您已確認參加此會議" : "您已拒絕參加此會議";
+	        return ResponseEntity.ok(new MeetingResponse(msg));
+	    } else {
+	        return ResponseEntity.badRequest().body(new MeetingResponse("操作失敗，請確認與會者資訊是否正確"));
+	    }
+	}
+
+	//回覆查詢
+	@GetMapping("/{meetingId}/attendees")
+	public ResponseEntity<List<AttendeeResponse>> getAttendeesByMeeting(@PathVariable Integer meetingId) {
+	    List<AttendeeResponse> responses = meetingService.findAttendeesByMeetingId(meetingId);
+
+	    if (responses.isEmpty()) {
+	        return ResponseEntity.noContent().build();
+	    }
+
+	    return ResponseEntity.ok(responses);
+	}
+
+	
 
 }
