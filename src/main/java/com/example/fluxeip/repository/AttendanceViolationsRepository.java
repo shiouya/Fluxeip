@@ -33,5 +33,7 @@ public interface AttendanceViolationsRepository extends JpaRepository<Attendance
 		        @Param("startDate") LocalDateTime startDate,
 		        @Param("endDate") LocalDateTime endDate);
 
-	Optional<AttendanceViolations> findByViolationType(Type type);
+	@Query("SELECT av FROM AttendanceViolations av WHERE av.attendance = :attendance AND av.violationType = :type")
+	Optional<AttendanceViolations> findByAttendanceAndViolationType(@Param("attendance") Attendance attendance, @Param("type") Type type);
+
 }

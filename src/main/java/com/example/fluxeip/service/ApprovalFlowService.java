@@ -724,8 +724,8 @@ public class ApprovalFlowService {
 				log.setClockType(clockInTypeOpt.orElseThrow(() -> new RuntimeException("上班打卡類型不存在")));
 				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
 				attendanceLogsRepository.save(log);
-				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByViolationType(
-						typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
+				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByAttendanceAndViolationType(
+						attendance,typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
 				if (lateOpt.isPresent()) {
 					attendanceViolationsRepository.deleteById(lateOpt.get().getId());
 				}
@@ -751,8 +751,8 @@ public class ApprovalFlowService {
 				log.setClockTime(missingDate.atTime(shiftType.getFinishTime()));
 				attendanceLogsRepository.save(log);
 
-				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByViolationType(
-						typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
+				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByAttendanceAndViolationType(
+						attendance,typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
 				if (earlyLeaveOpt.isPresent()) {
 					attendanceViolationsRepository.deleteById(earlyLeaveOpt.get().getId());
 				}
@@ -843,8 +843,8 @@ public class ApprovalFlowService {
 				log.setClockType(clockInTypeOpt.orElseThrow(() -> new RuntimeException("上班打卡類型不存在")));
 				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
 				attendanceLogsRepository.save(log);
-				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByViolationType(
-						typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
+				Optional<AttendanceViolations> lateOpt = attendanceViolationsRepository.findByAttendanceAndViolationType(
+						attendance,typeRepository.findByTypeName("遲到").orElseThrow(() -> new RuntimeException("遲到違規類型不存在")));
 				if (lateOpt.isPresent()) {
 					attendanceViolationsRepository.deleteById(lateOpt.get().getId());
 				}
@@ -870,8 +870,8 @@ public class ApprovalFlowService {
 				log.setClockTime(missingDate.atTime(shiftType.getStartTime()));
 				attendanceLogsRepository.save(log);
 
-				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByViolationType(
-						typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
+				Optional<AttendanceViolations> earlyLeaveOpt = attendanceViolationsRepository.findByAttendanceAndViolationType(
+						attendance,typeRepository.findByTypeName("早退").orElseThrow(() -> new RuntimeException("早退違規類型不存在")));
 				if (earlyLeaveOpt.isPresent()) {
 					attendanceViolationsRepository.deleteById(earlyLeaveOpt.get().getId());
 				}
