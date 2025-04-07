@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fluxeip.dto.ShiftTypeRequest;
 import com.example.fluxeip.dto.ShiftTypeResponse;
-import com.example.fluxeip.model.ShiftType;
 import com.example.fluxeip.service.ShiftTypeService;
 
 @RestController
@@ -31,6 +30,14 @@ public class ShiftTypeController {
 	private ShiftTypeService shiftTypeService;
 	
 	@GetMapping
+	public ResponseEntity<List<ShiftTypeResponse>> showAllShiftTypeIsActive() {
+
+		List<ShiftTypeResponse> allShiftType = shiftTypeService.findAllShiftTypeIsActive();
+
+		return ResponseEntity.ok(allShiftType);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<ShiftTypeResponse>> showAllShiftType(){
 		
 		List<ShiftTypeResponse> allShiftType = shiftTypeService.findAllShiftType();

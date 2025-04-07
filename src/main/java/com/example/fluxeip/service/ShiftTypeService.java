@@ -27,7 +27,7 @@ public class ShiftTypeService {
 	@Autowired
 	private DepartmentService departmentService;
 
-	public List<ShiftTypeResponse> findAllShiftType() {
+	public List<ShiftTypeResponse> findAllShiftTypeIsActive() {
 
 		List<ShiftType> allShiftType = shiftTypeRepository.findByIsActiveTrueOrderByDepartment();
 
@@ -39,6 +39,18 @@ public class ShiftTypeService {
 		return responses;
 	}
 	
+	public List<ShiftTypeResponse> findAllShiftType() {
+
+		List<ShiftType> allShiftType = shiftTypeRepository.findAll();
+
+		ArrayList<ShiftTypeResponse> responses = new ArrayList<ShiftTypeResponse>();
+
+		for (ShiftType shiftType : allShiftType) {
+			responses.add(toResponse(shiftType));
+		}
+		return responses;
+	}
+
 	public ShiftType findShiftTypeById(Integer shiftTypeId) {
 		Optional<ShiftType> shiftType = shiftTypeRepository.findById(shiftTypeId);
 		return shiftType.orElse(null);
