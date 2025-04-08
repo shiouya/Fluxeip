@@ -30,7 +30,7 @@ public class EmailService {
         // 使用MimeMessageHelper來設置郵件的各個參數
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setTo(to);
-        helper.setSubject("入取通知");
+		helper.setSubject("錄取通知");
 
         // 設定HTML格式的郵件內容
         String htmlContent = "<html><body>"

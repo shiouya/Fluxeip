@@ -2,7 +2,6 @@ package com.example.fluxeip.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,15 +36,19 @@ public class ContactService {
 			ContactsDto contact = new ContactsDto();
 			EmployeeDetail empDet = employeeDetailService.empDetByIdFind(emp.getEmployeeId());
 			
-			contact.setDepartment(emp.getDepartment().getDepartmentName());
-			contact.setEmail(empDet.getEmail());
-			contact.setName(emp.getEmployeeName());
-			contact.setPhone(empDet.getPhone());
-			contact.setPhoto(empDet.getEmployeePhoto());
-			contact.setPosition(emp.getPosition().getPositionName());
-			contact.setEmpId(emp.getEmployeeId());
+			if ("在職".equals(emp.getStatus().getStatusName())) {
+				contact.setDepartment(emp.getDepartment().getDepartmentName());
+				contact.setEmail(empDet.getEmail());
+				contact.setName(emp.getEmployeeName());
+				contact.setPhone(empDet.getPhone());
+				contact.setPhoto(empDet.getEmployeePhoto());
+				contact.setPosition(emp.getPosition().getPositionName());
+				contact.setEmpId(emp.getEmployeeId());
+
+				contacts.add(contact);
+			}
 			
-			contacts.add(contact);
+
 		}
 		
 		return contacts;

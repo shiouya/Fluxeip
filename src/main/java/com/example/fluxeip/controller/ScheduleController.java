@@ -1,6 +1,7 @@
 package com.example.fluxeip.controller;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,8 +139,14 @@ public class ScheduleController {
 	@GetMapping("/dep/{id}")
 	public ResponseEntity<?> findAllEmp(@PathVariable("id") Integer departmentId){
 		
-		List<Employee> allEmp = scheduleService.findAllEmpByDepartmentId(departmentId);
+		List<Employee> emps = scheduleService.findAllEmpByDepartmentId(departmentId);
+		List<Employee> allEmp = new ArrayList<Employee>();
 		
+		for (Employee emp : emps) {
+			if ("在職".equals(emp.getStatus().getStatusName())) {
+				allEmp.add(emp);
+			}
+		}
 		return ResponseEntity.ok(allEmp);
 	}
 	
